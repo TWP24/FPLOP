@@ -214,17 +214,24 @@ def allocate(
 
     candidates.sort(key=lambda wv: -wv[1].value)
     spent: set[int] = set()
+    used_gws: set[int] = set()
     for i, (w, v) in enumerate(candidates):
         wid = id(w)
         if wid in spent:
             continue
         if used_per_month.get(v.month, 0) >= max_per_month:
             continue
+        # FPL allows exactly one chip per gameweek. Two chips can share a month, but
+        # not a week — without this the planner happily stacked a bench boost and a
+        # triple captain on the same Saturday and counted both.
+        if v.gw in used_gws:
+            continue
         # Never play the same chip type twice in one month.
         if any(c.month == v.month and c.chip == v.chip for c in chosen):
             continue
         chosen.append(v)
         spent.add(wid)
+        used_gws.add(v.gw)
         used_per_month[v.month] = used_per_month.get(v.month, 0) + 1
 
     return sorted(chosen, key=lambda v: (month_of[v.month].start_event, -v.value))
