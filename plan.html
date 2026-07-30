@@ -1,0 +1,181 @@
+<title>FPL monthly plan</title>
+<style>
+:root{
+  --paper:#FCFBFD; --ink:#1B0A20; --mut:#6F6377; --line:#E7E2EB;
+  --card:#FFFFFF; --accent:#7B2D8E; --accent-wash:#F4EAF7;
+  --data:#00875A; --data-wash:#E6F2ED; --warn:#C2410C;
+  --shadow:0 1px 2px rgba(27,10,32,.05), 0 6px 20px rgba(27,10,32,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#120D15; --ink:#EDE8F0; --mut:#9A8FA3; --line:#2A2130;
+    --card:#191220; --accent:#C77DDB; --accent-wash:#231331;
+    --data:#3FD69B; --data-wash:#12271F; --warn:#F0A868;
+    --shadow:none;
+  }
+}
+:root[data-theme=dark]{
+  --paper:#120D15; --ink:#EDE8F0; --mut:#9A8FA3; --line:#2A2130;
+  --card:#191220; --accent:#C77DDB; --accent-wash:#231331;
+  --data:#3FD69B; --data-wash:#12271F; --warn:#F0A868;
+  --shadow:none;
+}
+:root[data-theme=light]{
+  --paper:#FCFBFD; --ink:#1B0A20; --mut:#6F6377; --line:#E7E2EB;
+  --card:#FFFFFF; --accent:#7B2D8E; --accent-wash:#F4EAF7;
+  --data:#00875A; --data-wash:#E6F2ED; --warn:#C2410C;
+  --shadow:0 1px 2px rgba(27,10,32,.05), 0 6px 20px rgba(27,10,32,.05);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; padding:28px 18px 72px; background:var(--paper); color:var(--ink);
+  font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:960px; margin:0 auto; display:flex; flex-direction:column; gap:34px}
+.mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+      font-variant-numeric:tabular-nums}
+
+header{display:flex; flex-direction:column; gap:5px}
+h1{font-size:23px; font-weight:680; letter-spacing:-.02em; margin:0; text-wrap:balance}
+.stamp{font-size:12px; color:var(--mut); letter-spacing:.02em}
+.eyebrow{font-size:11px; text-transform:uppercase; letter-spacing:.10em;
+         color:var(--accent); font-weight:700}
+
+section{display:flex; flex-direction:column; gap:11px}
+h2{font-size:12px; text-transform:uppercase; letter-spacing:.09em; color:var(--mut);
+   margin:0; font-weight:700}
+h2 span{text-transform:none; letter-spacing:0; font-weight:500; opacity:.8}
+
+.strip{display:grid; grid-template-columns:repeat(auto-fit,minmax(138px,1fr)); gap:10px}
+.tile{background:var(--card); border:1px solid var(--line); border-radius:11px;
+      padding:12px 14px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:3px}
+.tile .k{font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--mut);
+         font-weight:650}
+.tile .v{font-size:21px; font-weight:670; letter-spacing:-.02em; line-height:1.15}
+.tile .v u{text-decoration:none; font-size:12px; font-weight:500; color:var(--mut)}
+
+.scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;
+        border:1px solid var(--line); border-radius:11px; background:var(--card);
+        box-shadow:var(--shadow)}
+table{width:100%; border-collapse:collapse; font-size:14px; min-width:540px}
+th{text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.07em;
+   color:var(--mut); font-weight:650; padding:9px 10px; border-bottom:1px solid var(--line);
+   white-space:nowrap}
+td{padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+.r{text-align:right}
+.nm{font-weight:570}
+.dim{color:var(--mut)}
+.badge{width:26px; color:var(--accent); font-weight:750; font-size:11px}
+.bench td{opacity:.60}
+.q{color:var(--warn); font-weight:750; cursor:help}
+
+tr.target td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+tr.target{background:var(--accent-wash)}
+.tag{display:inline-block; background:var(--accent); color:var(--paper); font-size:9.5px;
+     font-weight:750; letter-spacing:.06em; padding:2px 6px; border-radius:20px;
+     vertical-align:1.5px; margin-left:6px}
+
+.chip{display:inline-block; border:1px solid var(--accent); color:var(--accent);
+      border-radius:6px; padding:1.5px 6px; font-size:11px; font-weight:650;
+      margin:2px 5px 2px 0; white-space:nowrap}
+.chip u{text-decoration:none; font-weight:500; opacity:.72}
+.fx{display:inline-block; font-size:10.5px; color:var(--mut); margin:2px 9px 0 0}
+
+.meter{position:relative; min-width:168px; height:22px}
+.meter .fill{position:absolute; left:0; top:7px; height:8px; border-radius:5px;
+             background:var(--data); opacity:.85}
+.meter .tick{position:absolute; top:2px; width:2px; height:18px; background:var(--accent);
+             border-radius:2px}
+.meter .val{position:absolute; right:0; top:3px; font-size:11.5px; color:var(--mut)}
+
+.legend{display:flex; flex-wrap:wrap; gap:16px; font-size:12px; color:var(--mut);
+        align-items:center}
+.legend i{font-style:normal; display:inline-flex; align-items:center; gap:6px}
+.swatch{width:16px; height:8px; border-radius:4px; background:var(--data); opacity:.85}
+.needle{width:2px; height:14px; background:var(--accent); border-radius:2px}
+
+.note{background:var(--card); border:1px solid var(--line);
+      border-left:3px solid var(--accent); border-radius:10px; padding:14px 16px;
+      font-size:13.5px}
+.note h3{margin:0 0 7px; font-size:12px; text-transform:uppercase; letter-spacing:.07em;
+         color:var(--mut); font-weight:700}
+.note ul{margin:0; padding-left:17px; display:flex; flex-direction:column; gap:5px}
+footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); padding-top:15px}
+</style>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Season 2026/27 · monthly prize league</div>
+    <h1>FPL monthly plan</h1>
+    <div class="stamp mono">Refreshed 2026-07-30 19:40 UTC &nbsp;·&nbsp;
+        next deadline GW1 &nbsp;·&nbsp; 20 managers</div>
+  </header>
+
+  <div class="strip">
+    <div class="tile"><div class="k">Squad cost</div>
+      <div class="v mono">£100.0<u>m</u></div></div>
+    <div class="tile"><div class="k">Formation</div>
+      <div class="v mono">4-4-2</div></div>
+    <div class="tile"><div class="k">Captain</div>
+      <div class="v" style="font-size:16px">B.Fernandes</div></div>
+    <div class="tile"><div class="k">Months targeted</div>
+      <div class="v mono">5<u> of 10</u></div></div>
+    <div class="tile"><div class="k">Chip value</div>
+      <div class="v mono">+53<u> pts</u></div></div>
+  </div>
+
+  <section>
+    <h2>Starting XI</h2>
+    <div class="scroll"><table>
+      <thead><tr><th></th><th>Player</th><th>Team</th><th>Pos</th><th class="r">£m</th>
+        <th class="r">xP</th><th>Fixtures</th></tr></thead>
+      <tbody><tr><td class="badge mono"></td><td class="nm">Raya</td><td class="dim mono">ARS</td><td class="dim mono">GKP</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">9.5</td><td class="dim mono" style="font-size:11.5px">2H/4A</td></tr><tr><td class="badge mono">V</td><td class="nm">Gabriel</td><td class="dim mono">ARS</td><td class="dim mono">DEF</td><td class="r mono">8.0</td><td class="r mono" style="font-weight:650">11.0</td><td class="dim mono" style="font-size:11.5px">2H/4A</td></tr><tr><td class="badge mono"></td><td class="nm">Virgil</td><td class="dim mono">LIV</td><td class="dim mono">DEF</td><td class="r mono">6.5</td><td class="r mono" style="font-weight:650">9.9</td><td class="dim mono" style="font-size:11.5px">3A/3H</td></tr><tr><td class="badge mono"></td><td class="nm">Guéhi</td><td class="dim mono">MCI</td><td class="dim mono">DEF</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">9.6</td><td class="dim mono" style="font-size:11.5px">3H/3A</td></tr><tr><td class="badge mono"></td><td class="nm">Senesi</td><td class="dim mono">TOT</td><td class="dim mono">DEF</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">9.1</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono">C</td><td class="nm">B.Fernandes</td><td class="dim mono">MUN</td><td class="dim mono">MID</td><td class="r mono">12.0</td><td class="r mono" style="font-weight:650">12.5</td><td class="dim mono" style="font-size:11.5px">2A/2H</td></tr><tr><td class="badge mono"></td><td class="nm">Rice</td><td class="dim mono">ARS</td><td class="dim mono">MID</td><td class="r mono">7.5</td><td class="r mono" style="font-weight:650">9.4</td><td class="dim mono" style="font-size:11.5px">2H/4A</td></tr><tr><td class="badge mono"></td><td class="nm">Anderson</td><td class="dim mono">MCI</td><td class="dim mono">MID</td><td class="r mono">6.5</td><td class="r mono" style="font-weight:650">9.2</td><td class="dim mono" style="font-size:11.5px">3H/3A</td></tr><tr><td class="badge mono"></td><td class="nm">Enzo</td><td class="dim mono">CHE</td><td class="dim mono">MID</td><td class="r mono">7.0</td><td class="r mono" style="font-weight:650">8.9</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono"></td><td class="nm">Thiago</td><td class="dim mono">BRE</td><td class="dim mono">FWD</td><td class="r mono">8.0</td><td class="r mono" style="font-weight:650">9.5</td><td class="dim mono" style="font-size:11.5px">3H/3A</td></tr><tr><td class="badge mono"></td><td class="nm">João Pedro</td><td class="dim mono">CHE</td><td class="dim mono">FWD</td><td class="r mono">7.5</td><td class="r mono" style="font-weight:650">8.7</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr></tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Bench <span>— in substitution order</span></h2>
+    <div class="scroll"><table class="bench">
+      <thead><tr><th></th><th>Player</th><th>Team</th><th>Pos</th><th class="r">£m</th>
+        <th class="r">xP</th><th>Fixtures</th></tr></thead>
+      <tbody><tr><td class="badge mono"></td><td class="nm">Dubravka</td><td class="dim mono">TOT</td><td class="dim mono">GKP</td><td class="r mono">4.0</td><td class="r mono" style="font-weight:650">5.7</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono"></td><td class="nm">Shaw</td><td class="dim mono">MUN</td><td class="dim mono">DEF</td><td class="r mono">4.5</td><td class="r mono" style="font-weight:650">7.8</td><td class="dim mono" style="font-size:11.5px">2A/2H</td></tr><tr><td class="badge mono"></td><td class="nm">Calvert-Lewin</td><td class="dim mono">LEE</td><td class="dim mono">FWD</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">7.4</td><td class="dim mono" style="font-size:11.5px">3A/3H</td></tr><tr><td class="badge mono"></td><td class="nm">Hughes</td><td class="dim mono">CRY</td><td class="dim mono">MID</td><td class="r mono">4.5</td><td class="r mono" style="font-weight:650">3.2</td><td class="dim mono" style="font-size:11.5px">3A/4H</td></tr></tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Season plan <span>— which months to contest</span></h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Month</th><th>GWs</th><th class="r">#</th>
+        <th>Projected vs winning score</th><th>Chips &amp; fixtures</th></tr></thead>
+      <tbody><tr class=""><td class="nm">August</td><td class="dim mono">1–2</td><td class="r mono">2</td><td><div class="meter"><span class="fill" style="width:30.6%"></span><span class="tick" style="left:35.2%"></span><span class="val mono">121 / 139</span></div></td><td><span class=dim>—</span></td></tr><tr class="target"><td class="nm">September<span class=tag>TARGET</span></td><td class="dim mono">3–5</td><td class="r mono">3</td><td><div class="meter"><span class="fill" style="width:45.1%"></span><span class="tick" style="left:49.9%"></span><span class="val mono">179 / 198</span></div></td><td><span class="chip">Free Hit<u> GW5 · +4</u></span><span class="chip">Wildcard<u> GW3 · +3</u></span></td></tr><tr class=""><td class="nm">October</td><td class="dim mono">6–9</td><td class="r mono">4</td><td><div class="meter"><span class="fill" style="width:57.1%"></span><span class="tick" style="left:65.7%"></span><span class="val mono">226 / 260</span></div></td><td><span class=dim>—</span></td></tr><tr class=""><td class="nm">November</td><td class="dim mono">10–12</td><td class="r mono">3</td><td><div class="meter"><span class="fill" style="width:43.0%"></span><span class="tick" style="left:49.4%"></span><span class="val mono">170 / 196</span></div></td><td><span class=dim>—</span></td></tr><tr class="target"><td class="nm">December<span class=tag>TARGET</span></td><td class="dim mono">13–18</td><td class="r mono">6</td><td><div class="meter"><span class="fill" style="width:92.0%"></span><span class="tick" style="left:100.0%"></span><span class="val mono">364 / 396</span></div></td><td><span class="chip">Bench Boost<u> GW14 · +13</u></span><span class="chip">Triple Cap<u> GW14 · +7</u></span></td></tr><tr class=""><td class="nm">January</td><td class="dim mono">19–23</td><td class="r mono">5</td><td><div class="meter"><span class="fill" style="width:72.6%"></span><span class="tick" style="left:83.5%"></span><span class="val mono">287 / 331</span></div></td><td><span class=dim>—</span></td></tr><tr class="target"><td class="nm">February<span class=tag>TARGET</span></td><td class="dim mono">24–27</td><td class="r mono">4</td><td><div class="meter"><span class="fill" style="width:58.6%"></span><span class="tick" style="left:66.6%"></span><span class="val mono">232 / 264</span></div></td><td><span class="chip">Wildcard<u> GW24 · +3</u></span></td></tr><tr class="target"><td class="nm">March<span class=tag>TARGET</span></td><td class="dim mono">28–30</td><td class="r mono">3</td><td><div class="meter"><span class="fill" style="width:45.3%"></span><span class="tick" style="left:50.9%"></span><span class="val mono">179 / 202</span></div></td><td><span class="chip">Free Hit<u> GW29 · +4</u></span></td></tr><tr class="target"><td class="nm">April<span class=tag>TARGET</span></td><td class="dim mono">31–33</td><td class="r mono">3</td><td><div class="meter"><span class="fill" style="width:49.7%"></span><span class="tick" style="left:51.5%"></span><span class="val mono">197 / 204</span></div></td><td><span class="chip">Bench Boost<u> GW31 · +13</u></span><span class="chip">Triple Cap<u> GW31 · +7</u></span></td></tr><tr class=""><td class="nm">May</td><td class="dim mono">34–38</td><td class="r mono">5</td><td><div class="meter"><span class="fill" style="width:72.0%"></span><span class="tick" style="left:82.8%"></span><span class="val mono">285 / 328</span></div></td><td><span class=dim>—</span></td></tr></tbody>
+    </table></div>
+    <div class="legend">
+      <i><span class="swatch"></span> your projected points</i>
+      <i><span class="needle"></span> what the month's winner scores</i>
+      <i>the gap between them is what a chip has to close</i>
+    </div>
+  </section>
+
+  <div class="note">
+    <h3>How to read this</h3>
+    <ul>
+      <li>You cannot contest all ten months — eight chips across ten months means
+          picking your battles. <b>TARGET</b> months are where the chips land.</li>
+      <li><b>?</b> marks a player with no Premier League history, whose role is inferred
+          from price alone. Check these against team news before trusting them.</li>
+      <li>Chip values are low right now because the fixture list has no double or blank
+          gameweeks in it yet. They appear from around December, and Bench Boost and
+          Free Hit get much more valuable when they do. This page re-prices daily.</li>
+      <li>A two-gameweek month is close to a coin toss whatever your squad looks like.
+          Spend chips where there are more gameweeks to work with.</li>
+    </ul>
+  </div>
+
+  <footer>
+    Built from the live FPL API. Validated by walk-forward backtest across three
+    completed seasons under real transfer rules. Expected points are estimates, not
+    predictions.
+  </footer>
+</div>

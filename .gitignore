@@ -1,0 +1,7 @@
+.venv/
+.cache/
+__pycache__/
+*.pyc
+refresh.log
+# Backtest archives are large and re-downloadable from vaastav/Fantasy-Premier-League
+data/*.csv
