@@ -15,6 +15,7 @@ from __future__ import annotations
 import html
 
 from .plan import SeasonPlan
+from .xp import calibrate
 
 POS = {1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}
 CHIP_LABEL = {
@@ -222,6 +223,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
             f'<td class="dim mono">{POS[p.pos]}</td>'
             f'<td class="r mono">{p.price:.1f}</td>'
             f'<td class="r mono" style="font-weight:650">{p.xp:.1f}</td>'
+            f'<td class="r mono dim">{calibrate(p.xp, p.n_fixtures, p.pos):.1f}</td>'
             f'<td class="dim mono" style="font-size:11.5px">{_esc(p.fdr_string)}</td></tr>'
         )
 
@@ -286,7 +288,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     <h2>Starting XI</h2>
     <div class="scroll"><table>
       <thead><tr><th></th><th>Player</th><th>Team</th><th>Pos</th><th class="r">£m</th>
-        <th class="r">xP</th><th>Fixtures</th></tr></thead>
+        <th class="r">xP</th><th class="r" title="What that xP has historically realised">real</th>
+        <th>Fixtures</th></tr></thead>
       <tbody>{xi}</tbody>
     </table></div>
   </section>
@@ -295,7 +298,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     <h2>Bench <span>— in substitution order</span></h2>
     <div class="scroll"><table class="bench">
       <thead><tr><th></th><th>Player</th><th>Team</th><th>Pos</th><th class="r">£m</th>
-        <th class="r">xP</th><th>Fixtures</th></tr></thead>
+        <th class="r">xP</th><th class="r">real</th><th>Fixtures</th></tr></thead>
       <tbody>{bench}</tbody>
     </table></div>
   </section>
@@ -319,6 +322,11 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
   <div class="note">
     <h3>How to read this</h3>
     <ul>
+      <li><b>xP</b> is what the model predicts; <b>real</b> is what that prediction has
+          historically returned. Measured over 8,392 player-months, the model runs about
+          6% hot and over-spreads at the top — a defender projected high realises around
+          0.79 of it. The optimiser deliberately ranks on the raw number, which it does
+          better on; <b>real</b> is the one to believe.</li>
       <li>You cannot contest all ten months — eight chips across ten months means
           picking your battles. <b>TARGET</b> months are where the chips land.</li>
       <li><b>?</b> marks a player with no Premier League history, whose role is inferred

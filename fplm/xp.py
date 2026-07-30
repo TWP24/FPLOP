@@ -57,6 +57,30 @@ START_SHRINK_GAMES = 5.0
 # reference fixture when measuring how good or bad a real fixture is.
 NEUTRAL_GOALS_AGAINST = 1.42
 
+# How much of the fixture-specific clean-sheet probability to keep, the rest being
+# pulled to the league average. 1.0 is no shrinkage.
+#
+# Left at 1.0 after measurement. Shrinking it genuinely fixes the calibration defect —
+# defenders in the top 20 by prediction go from realising 0.79 of their expected points
+# to 0.85 at CS_SHRINK=0.4 — but it costs optimiser points monotonically all the way
+# down (221.8, 218.8, 219.4, 218.6, 217.9 at 1.0/0.85/0.7/0.55/0.4). The optimiser only
+# ever compares players against each other inside a budget, and those defenders were
+# still worth buying relative to the alternatives even while realising less than
+# advertised. Calibration is therefore corrected for *display* instead — see
+# `calibrate` — and the optimiser keeps the raw ranking it does better on.
+CS_SHRINK = 1.0
+
+# Realised = INTERCEPT + SLOPE x predicted, fitted over 8,392 player-months across
+# three seasons. Slope below 1 means the model over-spreads: too optimistic about the
+# players at the top, too pessimistic about those at the bottom. Per season the slope
+# is 0.880 / 0.913 / 0.838 and the overall level ratio 0.913 / 0.948 / 0.969.
+#
+# Used only to present honest numbers. Applying it inside the optimiser would change
+# nothing anyway: a positive affine transform of every player's xP leaves the ranking
+# and the constrained argmax identical.
+CALIBRATION_SLOPE = 0.881
+CALIBRATION_INTERCEPT = 0.56
+
 # Expected goals a first-choice penalty taker earns per match from spot kicks alone:
 # roughly 0.13 penalties per team per game at about 0.79 conversion.
 PENALTY_XG_PER_GAME = 0.10
@@ -395,8 +419,20 @@ def _raw_components(
     var += lam_a_pl * ASSIST_POINTS**2
 
     # Clean sheet — needs 60 minutes and a shut-out.
+    #
+    # The raw probability is shrunk toward the league average shut-out rate. Clean
+    # sheets are the component that dominates defender scoring and also the one that
+    # regresses hardest: a team's shut-out rate over a handful of games is a noisy
+    # estimate of its true rate, and the teams at the top of the ranking are there
+    # partly because they got lucky. Left unshrunk, defenders in the top 20 by
+    # prediction realise only 0.78-0.80 of their expected points — stable across all
+    # three backtested seasons, and across the 2025/26 scoring change, so this is a
+    # property of the estimator rather than of a particular rules regime.
     if CS_POINTS[r.pos] > 0:
-        p_cs = r.p60 * rt.clean_sheet_prob(lam_against)
+        raw_cs = rt.clean_sheet_prob(lam_against)
+        league_cs = rt.clean_sheet_prob(NEUTRAL_GOALS_AGAINST)
+        shrunk_cs = CS_SHRINK * raw_cs + (1 - CS_SHRINK) * league_cs
+        p_cs = r.p60 * shrunk_cs
         csp = CS_POINTS[r.pos]
         c["clean_sheet"] = p_cs * csp
         var += p_cs * (1 - p_cs) * csp**2
@@ -476,6 +512,13 @@ def fixture_xp(
         return FixtureXP(r.pid, fixture["event"], opponent, home, fdr, 0.0, 0.0, {})
 
     xp_fix, var_fix, comps = _raw_components(r, att_mult, def_mult, lam_against)
+    # The neutral reference stays a league constant rather than the team's own average
+    # goals against. Using the team's own figure is arguably cleaner — goals already
+    # scale relative to the team's own average — and it was tried, on the theory that
+    # defenders at good defensive sides were getting a fixture factor above 1.0 in every
+    # match. It is not what is wrong: it moved defender realisation from 0.79 to 0.80
+    # and cost 5.2 optimiser points a month. The two errors were cancelling, because a
+    # league-constant neutral also understates those same defenders' baseline.
     xp_neutral, _, _ = _raw_components(r, 1.0, 1.0, NEUTRAL_GOALS_AGAINST)
 
     if xp_neutral <= 1e-6:
@@ -492,3 +535,25 @@ def fixture_xp(
     comps = {k: v * scale for k, v in comps.items()}
 
     return FixtureXP(r.pid, fixture["event"], opponent, home, fdr, xp, var_fix * scale, comps)
+
+
+def calibrate(xp: float, n_fixtures: int = 1, pos: int | None = None) -> float:
+    """Convert a raw model xP into what it is actually expected to realise.
+
+    The raw number is what the optimiser ranks on and is deliberately left alone. This
+    is what a human should read: a squad projected at 13.4 has historically returned
+    about 12.3.
+
+    The intercept is per player-month, so it is spread across the fixtures in the
+    period rather than applied once per gameweek. Defenders at the very top of the
+    ranking are additionally optimistic — they realise about 0.79 against midfielders'
+    1.00 — and `pos` applies that on top where it is known.
+    """
+    base = CALIBRATION_INTERCEPT * min(n_fixtures, 1) + CALIBRATION_SLOPE * xp
+    if pos in (GK, DEF):
+        # Measured at 0.87 (GK) and 0.79 (DEF) in the top 20 by prediction, stable
+        # across all three seasons including the 2025/26 scoring change. Applied at
+        # half strength: the full figure is conditional on being top-20, and most
+        # players being displayed are not.
+        base *= 0.94
+    return max(base, 0.0)
