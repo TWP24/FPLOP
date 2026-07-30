@@ -30,6 +30,28 @@ POS_NAME = {GK: "GKP", DEF: "DEF", MID: "MID", FWD: "FWD"}
 # Bench players only score through automatic substitutions, so their expected points
 # are heavily discounted rather than ignored — enough to break ties toward a bench
 # that can actually cover a blank.
+#
+# This was a guess until it was swept. Across 24 backtest months, scored with real
+# per-gameweek autosubs, the curve is a wide flat plateau:
+#
+#     0.00   224.5      0.12   233.4      0.30   230.0
+#     0.06   231.2      0.16   234.0      0.50   229.1
+#     0.09   233.0      0.20   233.4      1.00   216.9   (points/month)
+#
+# Everything from 0.09 to 0.20 is one number inside the noise; only the ends are
+# real. Dropping to zero costs 8.9 points a month (2.5 se) because the optimiser
+# then fills the bench with players who never appear — 21.7% of blanks go
+# uncovered, against 7.6% at 0.12. Pushing it past 0.4 costs XI quality faster
+# than it buys bench cover.
+#
+# Two more principled variants were tried and both lost. Weighting bench slots by
+# their measured firing rates (0.65 / 0.31 / 0.11 per gameweek, keeper 0.07) scored
+# 2 to 7 points a month *worse*: concentrating the budget on one good bench player
+# leaves the other two unable to appear, and bench value turns out to be about
+# positional coverage rather than slot order. Scaling the weight with each squad's
+# own rotation risk also failed, because that risk barely varies — P(some starter
+# blanks) ran 0.21 to 0.54 across the 24 months with sd 0.08, over a response
+# surface that is flat anyway.
 BENCH_WEIGHT = 0.12
 
 

@@ -25,6 +25,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from . import autosub
 from . import backtest as bt
 from . import optimise as opt
 from . import ratings as rt
@@ -439,23 +440,14 @@ class SeasonRunner:
         xi = self._best_xi(members, pred)
         cap = max(xi, key=lambda p: pred[p]) if xi else None
 
-        total = sum(actual.get(p, 0.0) for p in xi)
-
-        # Automatic substitutions, in predicted order.
+        # Automatic substitutions, in predicted bench order. The formation-validity
+        # rule matters: a 3-4-3 that loses a defender cannot bring on a midfielder,
+        # and the previous version of this happily did, over-crediting the bench.
         bench = [p for p in members if p not in set(xi)]
         bench.sort(key=lambda p: (self.pos.get(p) == GK, -pred.get(p, 0)))
-        missing = [p for p in xi if not played.get(p, False)]
-        for m in missing:
-            for b in list(bench):
-                if not played.get(b, False):
-                    continue
-                if self.pos.get(m) == GK and self.pos.get(b) != GK:
-                    continue
-                if self.pos.get(m) != GK and self.pos.get(b) == GK:
-                    continue
-                total += actual.get(b, 0.0)
-                bench.remove(b)
-                break
+        pos_of = {p: self.pos.get(p, MID) for p in members}
+        scoring = autosub.apply(xi, bench, pos_of, played)
+        total = sum(actual.get(p, 0.0) for p in scoring)
 
         if cap is not None:
             if played.get(cap, False):

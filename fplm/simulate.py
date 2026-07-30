@@ -27,6 +27,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from . import autosub
 from . import ratings as rt
 from .monthly import Month, PlayerMonth
 from .optimise import Squad
@@ -82,6 +83,12 @@ class MonthSimulator:
 
         self.points = np.zeros((n_sims, self.n), dtype=np.float32)
         self.played = np.zeros((n_sims, self.n), dtype=bool)
+        # Automatic substitutions are a per-gameweek decision, so the per-gameweek
+        # ledger is kept alongside the monthly totals. Scoring subs off the monthly
+        # aggregate — which is what this used to do — only ever benched a player who
+        # missed the entire month, and understated every simulated score.
+        self.points_gw: dict[int, np.ndarray] = {}
+        self.played_gw: dict[int, np.ndarray] = {}
 
         # Populated by build_field, then read back by field_ownership().
         self.field_starts: dict[int, int] = {}
@@ -103,6 +110,10 @@ class MonthSimulator:
 
         S = self.n_sims
         rng = self.rng
+
+        for ev in sorted({f["event"] for f in month_fixtures}):
+            self.points_gw[ev] = np.zeros((S, self.n), dtype=np.float32)
+            self.played_gw[ev] = np.zeros((S, self.n), dtype=bool)
 
         for f in month_fixtures:
             lam_h, lam_a = rt.match_lambdas(team_ratings, f["team_h"], f["team_a"])
@@ -232,6 +243,9 @@ class MonthSimulator:
         cols = np.array(idx)
         self.points[:, cols] += pts
         self.played[:, cols] |= appeared
+        ev = fixture["event"]
+        self.points_gw[ev][:, cols] += pts
+        self.played_gw[ev][:, cols] |= appeared
 
     # ------------------------------------------------------------------ #
 
@@ -245,46 +259,112 @@ class MonthSimulator:
     def score_picks(
         self, squad_ids: list[int], starters: list[int], captain: int, vice: int
     ) -> np.ndarray:
+        """Score a squad in every simulation, gameweek by gameweek.
+
+        Substitutions and captaincy are resolved *per gameweek*, as FPL resolves them.
+        The previous version worked off month totals, so it only ever benched a player
+        who missed every fixture in the month and only ever promoted the vice-captain
+        if the captain missed the lot. In a six-gameweek month that lost roughly 3% of
+        the score and was the reason `build` reported a simulated mean below its own
+        analytic expected points.
+        """
         cols = {pid: self.index[pid] for pid in squad_ids}
-        start_set = set(starters)
-        bench_ids = [p for p in squad_ids if p not in start_set]
-
-        s_idx = np.array([cols[p] for p in starters])
-        total = (self.points[:, s_idx] * self.played[:, s_idx]).sum(axis=1)
-
-        # --- Automatic substitutions ---------------------------------------
         pos_of = {pid: self.table[pid].pos for pid in squad_ids}
-        bench_gk = [p for p in bench_ids if pos_of[p] == GK]
-        bench_out = [p for p in bench_ids if pos_of[p] != GK]
-        start_gk = [p for p in starters if pos_of[p] == GK]
+        start_set = set(starters)
 
-        if bench_gk and start_gk:
-            gi, bi = cols[start_gk[0]], cols[bench_gk[0]]
-            swap = (~self.played[:, gi]) & self.played[:, bi]
-            total += swap * self.points[:, bi]
-
-        out_start = [p for p in starters if pos_of[p] != GK]
-        if bench_out and out_start:
-            o_idx = np.array([cols[p] for p in out_start])
-            missing = (~self.played[:, o_idx]).sum(axis=1)
-
-            b_idx = np.array([cols[p] for p in bench_out])
-            b_played = self.played[:, b_idx]
-            b_pts = self.points[:, b_idx]
-            # Rank of each available bench player in bench order.
-            rank = np.cumsum(b_played, axis=1)
-            for k in range(1, len(bench_out) + 1):
-                kth = ((rank == k) & b_played).astype(np.float32)
-                total += (missing >= k) * (b_pts * kth).sum(axis=1)
-
-        # --- Captain, with the vice taking over if the captain does not play
-        ci, vi = cols[captain], cols[vice]
-        total += np.where(
-            self.played[:, ci],
-            self.points[:, ci],
-            np.where(self.played[:, vi], self.points[:, vi], 0.0),
+        pos_rank = {GK: 0, DEF: 1, MID: 2, FWD: 3}
+        xi = sorted(starters, key=lambda p: (pos_rank[pos_of[p]], -self.table[p].xp))
+        bench = sorted(
+            (p for p in squad_ids if p not in start_set),
+            key=lambda p: (pos_of[p] != GK, -self.table[p].xp),
         )
+
+        events = sorted(self.points_gw)
+        if not events:  # nothing simulated
+            return np.zeros(self.n_sims, dtype=np.float32)
+
+        xi_idx = np.array([cols[p] for p in xi])
+        bench_idx = np.array([cols[p] for p in bench]) if bench else np.array([], int)
+        ci, vi = cols[captain], cols[vice]
+
+        # Blank pattern is summarised by how many starters at each position blanked.
+        # `xi` is grouped by position, so those counts fix the order substitutions are
+        # attempted in, and legality depends on nothing else. That collapses 2**15
+        # possible patterns to a few dozen states actually seen.
+        groups = {pos: np.array([i for i, p in enumerate(xi) if pos_of[p] == pos])
+                  for pos in (GK, DEF, MID, FWD)}
+        base_counts = {pos: len(groups[pos]) for pos in (GK, DEF, MID, FWD)}
+
+        total = np.zeros(self.n_sims, dtype=np.float32)
+        for ev in events:
+            pts, played = self.points_gw[ev], self.played_gw[ev]
+            xi_played = played[:, xi_idx]
+            total += (pts[:, xi_idx] * xi_played).sum(axis=1)
+
+            if len(bench):
+                blank = ~xi_played
+                state = np.zeros(self.n_sims, dtype=np.int64)
+                for pos in (GK, DEF, MID, FWD):
+                    g = groups[pos]
+                    n = blank[:, g].sum(axis=1) if len(g) else np.zeros(self.n_sims, int)
+                    state = state * 6 + n
+                b_played = played[:, bench_idx]
+                for j in range(len(bench)):
+                    state = state * 2 + b_played[:, j]
+
+                uniq, inv = np.unique(state, return_inverse=True)
+                for u, key in enumerate(uniq):
+                    used = self._subs_for_state(
+                        int(key), xi, bench, pos_of, base_counts, groups
+                    )
+                    if not used:
+                        continue
+                    mask = inv == u
+                    idx = np.array([cols[p] for p in used])
+                    total[mask] += pts[np.ix_(mask, idx)].sum(axis=1)
+
+            # Captain this gameweek, with the vice taking over if he did not play.
+            total += np.where(
+                played[:, ci],
+                pts[:, ci],
+                np.where(played[:, vi], pts[:, vi], 0.0),
+            )
         return total
+
+    def _subs_for_state(self, key, xi, bench, pos_of, base_counts, groups):
+        """Decode one blank/availability state and run FPL's substitution rule on it."""
+        avail = []
+        for j in range(len(bench) - 1, -1, -1):
+            avail.append(bool(key & 1))
+            key >>= 1
+        avail.reverse()
+        nblank = {}
+        for pos in (FWD, MID, DEF, GK):
+            nblank[pos] = key % 6
+            key //= 6
+
+        blank_seq = [pos for pos in (GK, DEF, MID, FWD) for _ in range(nblank[pos])]
+        if not blank_seq:
+            return []
+        played = {b: avail[j] for j, b in enumerate(bench)}
+        # Only the blanking starters' positions matter, so stand in for them.
+        fake_xi = []
+        used_slots = dict(nblank)
+        for pos in (GK, DEF, MID, FWD):
+            for i, gi in enumerate(groups[pos]):
+                fake_xi.append((pos, i < used_slots[pos]))
+        pseudo = {}
+        xi_ids, pos_map = [], {}
+        for k, (pos, is_blank) in enumerate(fake_xi):
+            pid = -(k + 1)
+            xi_ids.append(pid)
+            pos_map[pid] = pos
+            pseudo[pid] = not is_blank
+        for b in bench:
+            pos_map[b] = pos_of[b]
+            pseudo[b] = played[b]
+        scoring = autosub.apply(xi_ids, list(bench), pos_map, pseudo)
+        return [p for p in scoring if p > 0]
 
     # ------------------------------------------------------------------ #
 

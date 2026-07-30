@@ -128,6 +128,15 @@ tr.target{background:var(--accent-wash)}
 .note h3{margin:0 0 7px; font-size:12px; text-transform:uppercase; letter-spacing:.07em;
          color:var(--mut); font-weight:700}
 .note ul{margin:0; padding-left:17px; display:flex; flex-direction:column; gap:5px}
+tr.mrule td{background:var(--accent-wash); font-size:10.5px; font-weight:700;
+            text-transform:uppercase; letter-spacing:.08em; color:var(--accent);
+            padding:5px 10px}
+.move{display:inline-block; font-size:12px; margin-right:10px; white-space:nowrap}
+.move s{color:var(--mut); text-decoration:line-through}
+.move b{font-weight:620}
+.moves{min-width:230px}
+.hit{display:inline-block; color:var(--warn); font-weight:700; font-size:11px;
+     border:1px solid var(--warn); border-radius:5px; padding:0 5px; margin-left:4px}
 footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); padding-top:15px}
 """
 
@@ -136,7 +145,69 @@ def _esc(s) -> str:
     return html.escape(str(s))
 
 
-def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan") -> str:
+def _gameweek_section(gwplans) -> str:
+    """The week-by-week forward plan: transfers, captain, chips, projected points."""
+    if not gwplans:
+        return ""
+
+    rows = ""
+    total_hits = sum(g.hits for g in gwplans)
+    total_moves = sum(len(g.moves) for g in gwplans)
+    total_pts = sum(g.net_projected for g in gwplans)
+    peak = max((g.net_projected for g in gwplans), default=1) or 1
+
+    last_month = None
+    for g in gwplans:
+        # A rule between months makes the scoring periods legible at a glance.
+        if g.month != last_month:
+            rows += (f'<tr class="mrule"><td colspan="6">{_esc(g.month)}</td></tr>')
+            last_month = g.month
+
+        moves = "".join(
+            f'<span class="move"><s>{_esc(m.out_name)}</s> &rarr; '
+            f'<b>{_esc(m.in_name)}</b></span>'
+            for m in g.moves
+        ) or '<span class="dim">roll transfer</span>'
+        if g.hits:
+            moves += f'<span class="hit">&minus;{4 * g.hits}</span>'
+
+        chip = (f'<span class="chip">{_esc(g.chip_label)}</span>' if g.chip else '')
+        w = 100 * g.net_projected / peak
+        rows += (
+            f'<tr class="{"target" if g.chip else ""}">'
+            f'<td class="mono nm">{g.gw}</td>'
+            f'<td class="nm">{_esc(g.captain_name)}</td>'
+            f'<td class="dim mono">{_esc(g.formation)}</td>'
+            f'<td><div class="meter"><span class="fill" style="width:{w:.1f}%"></span>'
+            f'<span class="val mono">{g.net_projected:.0f}</span></div></td>'
+            f'<td>{chip or "<span class=dim>—</span>"}</td>'
+            f'<td class="moves">{moves}</td></tr>'
+        )
+
+    return f"""<section>
+    <h2>Gameweek plan <span>— projected to the end of the season</span></h2>
+    <div class="strip">
+      <div class="tile"><div class="k">Projected total</div>
+        <div class="v mono">{total_pts:.0f}<u> pts</u></div></div>
+      <div class="tile"><div class="k">Transfers</div>
+        <div class="v mono">{total_moves}</div></div>
+      <div class="tile"><div class="k">Hits taken</div>
+        <div class="v mono">{total_hits}<u> ({4 * total_hits} pts)</u></div></div>
+    </div>
+    <div class="scroll"><table>
+      <thead><tr><th>GW</th><th>Captain</th><th>Form</th><th>Projected</th>
+        <th>Chip</th><th>Transfers</th></tr></thead>
+      <tbody>{rows}</tbody>
+    </table></div>
+    <div class="legend">
+      <i>Weeks further out say "a good squad for these fixtures" more than
+         "these exact players" — the near weeks are the actionable ones.</i>
+    </div>
+  </section>"""
+
+
+def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
+           gwplans=None) -> str:
     squad = plan.squad
     cap = next((p for p in squad.players if p.pid == squad.captain), None)
     total_chip = sum(m.chip_value for m in plan.months)
@@ -160,6 +231,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan") 
     )
     bench = "".join(row(p) for p in squad.bench)
 
+    gw_section = _gameweek_section(gwplans)
     scale = max([m.field_target for m in plan.months] + [1])
     months = ""
     for m in plan.months:
@@ -242,6 +314,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan") 
     </div>
   </section>
 
+  {gw_section}
+
   <div class="note">
     <h3>How to read this</h3>
     <ul>
@@ -265,7 +339,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan") 
 </div>"""
 
 
-def write(plan: SeasonPlan, path: str, rivals: int = 19, title: str = "FPL monthly plan") -> str:
+def write(plan: SeasonPlan, path: str, rivals: int = 19,
+          title: str = "FPL monthly plan", gwplans=None) -> str:
     with open(path, "w") as fh:
-        fh.write(render(plan, rivals=rivals, title=title))
+        fh.write(render(plan, rivals=rivals, title=title, gwplans=gwplans))
     return path

@@ -23,6 +23,7 @@ import statistics
 from collections import defaultdict
 from pathlib import Path
 
+from . import autosub
 from . import optimise as opt
 from . import ratings as rt
 from . import xp as xpmod
@@ -227,7 +228,12 @@ def elements_from_history(history: list[dict], upto_gw: int) -> list[dict]:
                 "bonus": a["bonus"],
                 "yellow_cards": a["yellow_cards"],
                 "total_points": a["total_points"],
-                "penalties_order": None,
+                # Was hardcoded None, which silently zeroed the set-piece uplift in
+                # xp.py for every backtest — the change measured as a perfect no-op.
+                # players_raw.csv carries the real order; merged_gw does not.
+                "penalties_order": a.get("penalties_order"),
+                "direct_freekicks_order": a.get("freekicks_order"),
+                "corners_and_indirect_freekicks_order": a.get("corners_order"),
                 "news": "",
             }
         )
@@ -382,9 +388,17 @@ def run_backtest(args) -> None:
         # --- Actuals ------------------------------------------------------
         actual: dict[int, float] = defaultdict(float)
         fpl_xp: dict[int, float] = defaultdict(float)
+        # Per-gameweek truth as well as the monthly total, because automatic
+        # substitutions are a per-gameweek decision and cannot be scored from a
+        # month-level aggregate.
+        gw_pts: dict[int, dict[int, float]] = defaultdict(dict)
+        gw_played: dict[int, dict[int, bool]] = defaultdict(dict)
         for r in future:
             actual[r["pid"]] += r["points"]
             fpl_xp[r["pid"]] += r["fpl_xp"]
+            g = r["gw"]
+            gw_pts[g][r["pid"]] = gw_pts[g].get(r["pid"], 0.0) + r["points"]
+            gw_played[g][r["pid"]] = gw_played[g].get(r["pid"], False) or r["minutes"] > 0
 
         prior_minutes: dict[int, float] = defaultdict(float)
         prior_points: dict[int, float] = defaultdict(float)
@@ -424,14 +438,14 @@ def run_backtest(args) -> None:
         sub = {p: table[p] for p in pool}
         squad = opt.solve(sub, lam=0.0, cons=opt.Constraints(min_expected_minutes=20))
         if squad:
-            opt_pts = _actual_squad_points(squad, actual)
+            opt_pts = _actual_squad_points(squad, actual, gw_pts, gw_played)
 
         # Template baseline: the fifteen most-selected players that form a legal squad,
         # proxied here by prior points per game since ownership is not in this file.
         tmpl = _greedy_legal_squad(sub, key=lambda p: prior_points[p.pid])
         if tmpl:
-            tmpl_pts = _actual_squad_points(tmpl, actual)
-        med_pts = _median_random_squad(sub, actual)
+            tmpl_pts = _actual_squad_points(tmpl, actual, gw_pts, gw_played)
+        med_pts = _median_random_squad(sub, actual, gw_pts, gw_played)
 
         print(
             f"{month.name:<10}{f'{month.start_event}-{month.stop_event}':<8}{len(pool):>5}"
@@ -457,7 +471,7 @@ def run_backtest(args) -> None:
         print(f"{DIM}FPL rho = same, using FPL's own published xP. PPG rho = points "
               f"per game to date.{RESET}")
         print(f"{DIM}optimiser / template / median = actual points scored by a squad "
-              f"built each way, XI + captain.{RESET}")
+              f"built each way: XI + captain, with automatic substitutions.{RESET}")
         edge = statistics.mean(agg["opt"]) - statistics.mean(agg["med"])
         print(f"\n{BOLD}Optimiser beat the median squad by {edge:+.0f} points per "
               f"month on average.{RESET}\n")
@@ -465,10 +479,43 @@ def run_backtest(args) -> None:
         print("No months scored — check the CSV.\n")
 
 
-def _actual_squad_points(squad: opt.Squad, actual: dict[int, float]) -> float:
-    """Points the chosen XI plus captain actually scored."""
-    total = sum(actual.get(p.pid, 0.0) for p in squad.xi)
-    return total + actual.get(squad.captain, 0.0)
+def _actual_squad_points(
+    squad: opt.Squad,
+    actual: dict[int, float],
+    gw_pts: dict[int, dict[int, float]] | None = None,
+    gw_played: dict[int, dict[int, bool]] | None = None,
+) -> float:
+    """Points a squad actually scored: XI plus captain, with automatic substitutions.
+
+    Substitutions used to be missing entirely here, which made this a biased ruler for
+    anything to do with the bench — a bench player was worth exactly zero, so every
+    pound spent on one was pure loss and `BENCH_WEIGHT` could only ever measure as
+    harmful. Measured across 24 months the autosubs are worth **15.5 points a month**,
+    so the old figure understated the optimiser's squad by about 8%.
+
+    Falls back to the old XI-only sum when no per-gameweek data is supplied.
+    """
+    if gw_pts is None or gw_played is None:
+        total = sum(actual.get(p.pid, 0.0) for p in squad.xi)
+        return total + actual.get(squad.captain, 0.0)
+
+    xi = [p.pid for p in squad.xi]
+    bench = [p.pid for p in squad.bench]
+    pos = {p.pid: p.pos for p in squad.players}
+
+    total = 0.0
+    for gw in sorted(gw_pts):
+        pts = gw_pts[gw]
+        played = gw_played.get(gw, {})
+        for pid in autosub.apply(xi, bench, pos, played):
+            total += pts.get(pid, 0.0)
+        # The vice-captain takes over only if the captain did not play that gameweek.
+        c, v = squad.captain, squad.vice
+        if played.get(c, False):
+            total += pts.get(c, 0.0)
+        elif played.get(v, False):
+            total += pts.get(v, 0.0)
+    return total
 
 
 def _greedy_legal_squad(table: dict[int, PlayerMonth], key) -> opt.Squad | None:
@@ -525,7 +572,12 @@ def _best_xi_local(picked: list[PlayerMonth]) -> list[PlayerMonth]:
     return xi
 
 
-def _median_random_squad(table: dict[int, PlayerMonth], actual: dict[int, float]) -> float:
+def _median_random_squad(
+    table: dict[int, PlayerMonth],
+    actual: dict[int, float],
+    gw_pts: dict[int, dict[int, float]] | None = None,
+    gw_played: dict[int, dict[int, bool]] | None = None,
+) -> float:
     """Median actual score of legal squads drawn at random from the credible pool."""
     import random
 
@@ -555,5 +607,7 @@ def _median_random_squad(table: dict[int, PlayerMonth], actual: dict[int, float]
             continue
         xi = _best_xi_local(picked)
         cap = max(xi, key=lambda p: p.xp)
-        scores.append(sum(actual.get(p.pid, 0) for p in xi) + actual.get(cap.pid, 0))
+        vice = max((p for p in xi if p.pid != cap.pid), key=lambda p: p.xp, default=cap)
+        sq = opt.Squad(picked, [p.pid for p in xi], cap.pid, vice.pid, 0.0, spend)
+        scores.append(_actual_squad_points(sq, actual, gw_pts, gw_played))
     return statistics.median(scores) if scores else float("nan")

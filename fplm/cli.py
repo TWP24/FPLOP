@@ -315,8 +315,15 @@ def cmd_plan(args) -> None:
         min_minutes=args.min_minutes, budget=args.budget, current_squad=current,
     )
 
+    from . import forecast as fcmod
+
+    gwplans = None
+    if not args.no_gameweeks:
+        gwplans = fcmod.build(boot, fixtures, p, budget=args.budget,
+                              min_minutes=args.min_minutes)
+
     out = args.out or "plan.html"
-    dashboard.write(p, out, rivals=args.rivals, title=args.title)
+    dashboard.write(p, out, rivals=args.rivals, title=args.title, gwplans=gwplans)
     print(f"\n{BOLD}Season plan — next deadline GW{p.next_gw}{RESET}")
     print(_hr())
     for m in p.months:
@@ -411,6 +418,8 @@ def main(argv: list[str] | None = None) -> None:
                     help="1.0 plans purely for monthly prizes, 0.0 purely for the season.")
     sp.add_argument("--out", help="HTML output path (default plan.html)")
     sp.add_argument("--title", default="FPL monthly plan")
+    sp.add_argument("--no-gameweeks", action="store_true",
+                    help="Skip the week-by-week forward plan (faster).")
     sp.set_defaults(func=cmd_plan)
 
     sp = sub.add_parser("backtest", help="Validate the model on the 2025/26 season.")

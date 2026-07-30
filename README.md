@@ -113,23 +113,18 @@ owning players they do not. `build` picks λ from `--rivals` automatically.
 29,757 player-gameweeks, no leakage across the month boundary.
 
 ```
-Month     GWs         n    rho  PPG rho    MAE   optimiser  template  median
-2025-10   7-9       209  0.330    0.311   4.96         172       157     123
-2025-11   10-13     278  0.368    0.321   6.07         168       160     151
-2025-12   14-19     316  0.440    0.424   7.65         307       nan     229
-2026-01   20-24     367  0.412    0.413   6.37         247       253     184
-2026-02   25-28     391  0.420    0.435   5.70         219       234     154
-2026-03   29-31     405  0.467    0.481   4.10         159       149     108
-2026-04   32-34     414  0.461    0.486   4.41         177       134     116
-2026-05   35-38     422  0.427    0.478   5.32         228       219     147
-MEAN                     0.420    0.419   5.51         211       189     152
+                       rho  PPG rho    MAE   optimiser  template  median
+2023/24  MEAN        0.450    0.469   5.18         231       205     152
+2024/25  MEAN        0.462    0.454   5.10         240       208     162
+2025/26  MEAN        0.420    0.419   5.51         229       204     171
+pooled (24 months)   0.444    0.447   5.27         233       206     162
 ```
 
 - `rho` — rank correlation of predicted vs actual monthly points.
 - `optimiser / template / median` — points a squad built each way *actually* scored.
 
-**The optimiser's squad scored 211 points per month against 152 for a median legal
-squad, and 189 for a template squad.** That is the number that matters; rank correlation
+**The optimiser's squad scored 233 points per month against 162 for a median legal
+squad.** That is the number that matters; rank correlation
 is only a means to it.
 
 Two honest caveats:
