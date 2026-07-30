@@ -57,6 +57,15 @@ START_SHRINK_GAMES = 5.0
 # reference fixture when measuring how good or bad a real fixture is.
 NEUTRAL_GOALS_AGAINST = 1.42
 
+# Expected goals a first-choice penalty taker earns per match from spot kicks alone:
+# roughly 0.13 penalties per team per game at about 0.79 conversion.
+PENALTY_XG_PER_GAME = 0.10
+# ...but a taker who already had the job last season has that value baked into their
+# historical xG, so adding it all again would double-count. This is the share assumed
+# to represent a *change* of duty rather than continuation. Half is a deliberate
+# compromise: the API exposes who takes them now but not who took them before.
+PENALTY_NEW_ROLE_SHARE = 0.5
+
 FULL_SEASON_MINUTES = 38 * 90
 
 
@@ -97,8 +106,20 @@ class PlayerRates:
     p60_given_start: float = 1.0
 
     penalties_order: int | None = None
+    freekicks_order: int | None = None
+    corners_order: int | None = None
     news: str = ""
     flags: list[str] = field(default_factory=list)
+
+    @property
+    def set_piece_load(self) -> str:
+        """Compact summary of dead-ball duty, e.g. "P1 F1 C2"."""
+        bits = []
+        for tag, val in (("P", self.penalties_order), ("F", self.freekicks_order),
+                         ("C", self.corners_order)):
+            if val:
+                bits.append(f"{tag}{val}")
+        return " ".join(bits)
 
     @property
     def available(self) -> bool:
@@ -270,6 +291,8 @@ def build_rates(boot: dict, minutes_override: dict[int, float] | None = None) ->
             ),
             emp_weight=m / (m + EMPIRICAL_SHRINK_MINUTES),
             penalties_order=e.get("penalties_order"),
+            freekicks_order=e.get("direct_freekicks_order"),
+            corners_order=e.get("corners_and_indirect_freekicks_order"),
             news=e.get("news", ""),
             flags=flags,
         )
@@ -354,8 +377,14 @@ def _raw_components(
     p_any = min(r.p_start + r.p_cameo, 1.0)
     var += p_any * (1 - p_any) * 1.0 + r.p60 * (1 - r.p60) * 1.0
 
-    # Goals.
+    # Goals. First-choice penalty takers get an explicit uplift, because a change of
+    # dead-ball duty is invisible to historical per-90 rates: a player who took none
+    # last season and takes them all this season looks identical in the data. Only the
+    # portion NOT already reflected in their own history is added — see
+    # PENALTY_XG_PER_GAME for how that is split.
     lam_g = r.xg90 * mshare * att_mult
+    if r.penalties_order == 1:
+        lam_g += PENALTY_XG_PER_GAME * PENALTY_NEW_ROLE_SHARE * mshare * att_mult
     gp = GOAL_POINTS[r.pos]
     c["goals"] = lam_g * gp
     var += lam_g * gp**2

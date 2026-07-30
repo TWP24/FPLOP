@@ -328,6 +328,18 @@ class SeasonRunner:
                         q = _copy.copy(p)
                         q.xp = own_now.get(pid, 0.0)
                         view[pid] = q
+                elif obj == "oracle":
+                    # Perfect foresight: the "prediction" is what actually happened.
+                    # Still bound by one free transfer a week, the budget, and every
+                    # other squad rule — so this is the ceiling for *prediction*, not
+                    # the ceiling for the game. The gap between a real model and this
+                    # is all the headroom any amount of modelling could ever recover.
+                    truth = self.actual.get(gw, {})
+                    view = {}
+                    for pid, p in table.items():
+                        q = _copy.copy(p)
+                        q.xp = truth.get(pid, 0.0)
+                        view[pid] = q
                 elif obj == "form":
                     # Rank by what happened last gameweek, with a nod to ownership —
                     # the casual manager's actual decision rule.
