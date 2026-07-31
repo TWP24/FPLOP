@@ -254,3 +254,35 @@ curl -L -o data/merged_gw_2025-26.csv \
 
 `--entry` is your FPL team id (the number in your team's URL), used to plan transfers
 from your actual squad rather than building from scratch.
+
+---
+
+## Running it without your Mac
+
+`refresh.sh` plus the launchd agent keeps the plan current on your own machine, and
+copies it into iCloud Drive so it reaches your phone. That needs the Mac to be on at
+some point each day, which is no good if you are away.
+
+`.github/workflows/refresh.yml` removes that dependency. It rebuilds the plan on
+GitHub's runners every morning and publishes it to GitHub Pages, so the Mac can be shut
+and the URL still updates.
+
+To turn it on:
+
+1. Push this repo to GitHub (private is fine — Pages works on private repos on paid
+   plans; on a free plan the repo needs to be public for Pages, and there is nothing
+   sensitive in here beyond an FPL entry id).
+2. **Settings → Pages → Source: GitHub Actions**.
+3. **Settings → Secrets and variables → Actions → Variables**, add:
+   - `FPL_ENTRY` — your entry id, so the plan starts from your real squad
+   - `FPL_LEAGUE` — your mini-league id, to fill the League tab
+   - `FPL_RIVALS` — league size minus you (defaults to 19)
+4. **Actions → Refresh FPL plan → Run workflow** to check it before trusting the schedule.
+
+The page then lives at `https://<user>.github.io/fplm/`, which you can bookmark or add
+to your phone's home screen.
+
+Two things worth knowing. GitHub schedules run in UTC and ignore daylight saving, so
+06:50 UTC is 07:50 Irish summer time and 06:50 in winter. And GitHub disables scheduled
+workflows in repositories with no activity for 60 days — a daily commit is not required,
+but the repo cannot go completely untouched for two months.

@@ -1,0 +1,69 @@
+name: Refresh FPL plan
+
+# Runs on GitHub's machines, not yours. The Mac can be shut, you can be abroad, and
+# the plan still rebuilds every morning and publishes to a real URL.
+#
+# 06:50 UTC is 07:50 Irish summer time. GitHub runs schedules in UTC and does not
+# observe daylight saving, so this lands at 06:50 local in winter. Scheduled runs are
+# also queued rather than exact, and can slip by several minutes when GitHub is busy.
+on:
+  schedule:
+    - cron: "50 6 * * *"
+  workflow_dispatch: {}        # lets you trigger a rebuild by hand from the Actions tab
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two rebuilds publish at once.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build the plan
+        env:
+          # Set these as repository variables (Settings > Secrets and variables >
+          # Actions > Variables) rather than editing them in here.
+          FPL_ENTRY: ${{ vars.FPL_ENTRY }}
+          FPL_LEAGUE: ${{ vars.FPL_LEAGUE }}
+          FPL_RIVALS: ${{ vars.FPL_RIVALS || '19' }}
+        run: |
+          python -m fplm.cli plan \
+            --refresh \
+            --rivals "$FPL_RIVALS" \
+            ${FPL_ENTRY:+--entry "$FPL_ENTRY"} \
+            ${FPL_LEAGUE:+--league "$FPL_LEAGUE"} \
+            --out site/index.html
+          # A plan that failed to build should fail the run rather than publish an
+          # empty page over a good one.
+          test -s site/index.html
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
