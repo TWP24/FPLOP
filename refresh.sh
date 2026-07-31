@@ -20,7 +20,17 @@ cd "$(dirname "$0")" || exit 1
 ICLOUD="$HOME/Library/Mobile Documents/com~apple~CloudDocs/FPL"
 if [ -d "$(dirname "$ICLOUD")" ]; then
   mkdir -p "$ICLOUD"
-  cp plan.html "$ICLOUD/plan.html" 2>>refresh.log && echo "  synced to iCloud" >> refresh.log
+  # Stream the bytes rather than cp: plan.html carries extended attributes that
+  # iCloud Drive refuses, and cp fails with "Operation not permitted" trying to
+  # preserve them. Redirection copies content only.
+  # Remove before writing. A file previously created by a process holding Full Disk
+  # Access cannot be overwritten by this agent, but it CAN create a fresh one.
+  rm -f "$ICLOUD/plan.html" 2>/dev/null
+  if cat plan.html > "$ICLOUD/plan.html" 2>>refresh.log; then
+    echo "  synced to iCloud ($(wc -c < "$ICLOUD/plan.html" | tr -d ' ') bytes)" >> refresh.log
+  else
+    echo "  !! iCloud sync FAILED" >> refresh.log
+  fi
 fi
 
 echo "$(date -u '+%Y-%m-%dT%H:%MZ') refreshed" >> refresh.log
