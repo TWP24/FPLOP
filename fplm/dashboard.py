@@ -484,7 +484,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     <div class="legend"><i>Grey is predicted, green is what actually happened, in tenths
       from weakest prediction to strongest. Equal heights would be perfect. The model
       runs about 6% hot and most so at the top &mdash; which is why the squad tables
-      carry a <b>real</b> column beside <b>xP</b>.</i></div>
+      carry an <b>xP adj</b> column beside <b>xP</b>.</i></div>
   </section>'''
 
     gw_section = _gameweek_section(gwplans)
@@ -566,7 +566,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     <h2>Starting XI</h2>
     <div class="scroll"><table>
       <thead><tr><th></th><th>Player</th><th>Team</th><th>Pos</th><th class="r">£m</th>
-        <th class="r">xP</th><th class="r" title="What that xP has historically realised">real</th>
+        <th class="r">xP</th><th class="r" title="xP corrected for the model's measured bias — still a forecast, not an outcome">xP adj</th>
         <th>Fixtures</th></tr></thead>
       <tbody>{xi}</tbody>
     </table></div>
@@ -576,7 +576,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     <h2>Bench <span>— in substitution order</span></h2>
     <div class="scroll"><table class="bench">
       <thead><tr><th></th><th>Player</th><th>Team</th><th>Pos</th><th class="r">£m</th>
-        <th class="r">xP</th><th class="r">real</th><th>Fixtures</th></tr></thead>
+        <th class="r">xP</th><th class="r">xP adj</th><th>Fixtures</th></tr></thead>
       <tbody>{bench}</tbody>
     </table></div>
   </section>
@@ -625,11 +625,13 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
   <div class="note">
     <h3>How to read this</h3>
     <ul>
-      <li><b>xP</b> is what the model predicts; <b>real</b> is what that prediction has
-          historically returned. Measured over 8,392 player-months, the model runs about
-          6% hot and over-spreads at the top — a defender projected high realises around
-          0.79 of it. The optimiser deliberately ranks on the raw number, which it does
-          better on; <b>real</b> is the one to believe.</li>
+      <li><b>Both columns are forecasts — neither is actual points.</b> <b>xP</b> is the
+          model's raw output, which is what the optimiser ranks on. <b>xP adj</b> is the
+          same number corrected for bias the model is known to have: measured over 8,392
+          player-months it runs about 6% hot and over-spreads at the top, so a defender
+          projected high realises around 0.79 of it. <b>xP adj</b> is the one to believe
+          for "what will this actually score". Real outcomes appear on the
+          <b>Charts</b> tab, from gameweek 1 onward.</li>
       <li>You cannot contest all ten months — eight chips across ten months means
           picking your battles. <b>TARGET</b> months are where the chips land.</li>
       <li><b>?</b> marks a player with no Premier League history, whose role is inferred

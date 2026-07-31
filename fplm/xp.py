@@ -567,9 +567,10 @@ def fixture_xp(
 def calibrate(xp: float, n_fixtures: int = 1, pos: int | None = None) -> float:
     """Convert a raw model xP into what it is actually expected to realise.
 
-    The raw number is what the optimiser ranks on and is deliberately left alone. This
-    is what a human should read: a squad projected at 13.4 has historically returned
-    about 12.3.
+    Still a forecast, not an outcome — it is the prediction with a measured bias taken
+    out of it, not anything that has happened. The raw number is what the optimiser
+    ranks on and is deliberately left alone; this is the one a human should read. A
+    player projected at 13.4 has historically returned about 12.3.
 
     The intercept is per player-month, so it is spread across the fixtures in the
     period rather than applied once per gameweek. Defenders at the very top of the
