@@ -79,6 +79,7 @@ def _month_context(rows, months, n2i, m):
         allfx.append({"event": r["gw"], "team_h": h, "team_a": a,
                       "team_h_difficulty": 3, "team_a_difficulty": 3})
     af, ag = xpmod.team_baseline_lambdas(tr, allfx)
+    xpmod.reconcile_to_team_rates(rates, af, xpmod.RECONCILE)
 
     fbt = defaultdict(list)
     for f in fixtures:

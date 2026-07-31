@@ -53,6 +53,21 @@ EMPIRICAL_SHRINK_MINUTES = 5000.0
 # Games of observation before the price-implied start-rate prior is outweighed.
 START_SHRINK_GAMES = 5.0
 
+# How much of the way to pull each team's player rates toward the team model's own
+# expected goals. 0.0 leaves them inconsistent, 1.0 forces exact agreement.
+#
+# Measured and left OFF. The sweep looked promising — optimiser points peak at +4.04 a
+# month at 0.5, and calibration improves monotonically with it (level ratio 0.944 to
+# 0.968, slope 0.881 to 0.901). The paired per-month test kills it: t = 1.30 over 24
+# months, only 8 improved against 5 worsened, and the whole effect is one season
+# (2023/24 +11.12, then +0.88 and +0.12). Removing the two largest months leaves +0.50.
+#
+# Pre-season it changes two players out of fifteen and moves no-Premier-League-history
+# rates from 0.1630 to 0.1616. The promoted-club players it was supposed to rescue are
+# already excluded on expected minutes rather than on expected goals, so the correction
+# never reaches them.
+RECONCILE = 0.0
+
 # Goals conceded by an average team against an average opponent, used as the neutral
 # reference fixture when measuring how good or bad a real fixture is.
 NEUTRAL_GOALS_AGAINST = 1.42
@@ -557,3 +572,46 @@ def calibrate(xp: float, n_fixtures: int = 1, pos: int | None = None) -> float:
         # players being displayed are not.
         base *= 0.94
     return max(base, 0.0)
+
+
+def reconcile_to_team_rates(
+    rates: dict[int, PlayerRates],
+    avg_for: dict[int, float],
+    strength: float | None = None,
+) -> None:
+    """Force each team's player rates to agree with the team-level goals model.
+
+    Adapted from AIrsenal (Alan Turing Institute), whose architecture makes this
+    impossible to get wrong: a Bayesian Dixon-Coles model produces the probability of
+    every scoreline, and player points are then computed *conditional* on the team's
+    goals. Players necessarily share out exactly what the team is expected to score.
+
+    This model estimates the two halves independently and they disagree badly. Summing
+    each squad's minutes-weighted xG per 90 against the team model's own expected goals
+    gives ratios from 0.23 to 1.18 across the twenty clubs. Promoted sides are the worst
+    case by far: their players have no Premier League history, so their individual rates
+    collapse toward zero while the team model correctly expects them to score about 0.89
+    a game. Nothing else in the model notices, and every one of their players is
+    therefore priced as if they will never score.
+
+    Modifies `rates` in place. `strength` blends between leaving rates alone and
+    imposing exact agreement.
+    """
+    strength = RECONCILE if strength is None else strength
+    if strength <= 0:
+        return
+
+    implied: dict[int, float] = {}
+    for r in rates.values():
+        implied[r.team] = implied.get(r.team, 0.0) + r.xg90 * (r.exp_minutes / 90.0)
+
+    for r in rates.values():
+        target = avg_for.get(r.team)
+        got = implied.get(r.team, 0.0)
+        if not target or got <= 1e-6:
+            continue
+        # Geometric blend, so a partial correction is symmetric in over- and
+        # under-estimation rather than favouring one direction.
+        factor = (target / got) ** strength
+        r.xg90 *= factor
+        r.xa90 *= factor
