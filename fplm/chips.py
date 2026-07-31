@@ -31,6 +31,43 @@ CHIP_LABEL = {
 }
 
 
+# Blank and double gameweeks do not exist in the fixture list yet — all 380 fixtures
+# currently sit one-per-team-per-gameweek — but they are close to certain to appear, and
+# the chip planner is otherwise allocating against a fiction.
+#
+# The mechanism is structural rather than random. Premier League fixtures get postponed
+# when they clash with FA Cup rounds, and the postponed games return later as doubles.
+# The historical pattern is consistent: one or two blanks in late February and March
+# around the fifth round and quarter-finals, a larger blank on FA Cup semi-final weekend
+# (usually GW32-34), and the rescheduled games landing as doubles in the run-in
+# (GW34-37).
+#
+# These are PRIORS, not measurements. They are here so the planner holds its second set
+# of chips back for the window where they are worth most, instead of spending a Bench
+# Boost in February on a normal gameweek. Every one is re-derived from the real fixture
+# list the moment the postponements are actually published, at which point these
+# multipliers stop mattering.
+BLANK_WINDOW = range(32, 35)   # FA Cup semi-final weekend and neighbours
+DOUBLE_WINDOW = range(33, 38)  # rescheduled fixtures land in the run-in
+
+# A bench boost in a double gameweek pays four bench players across two fixtures rather
+# than one, so it roughly doubles. A triple captain likewise. A free hit is worth most
+# in a blank, when your own squad cannot field eleven players and a fresh one can.
+# Discounted for the chance the window lands elsewhere.
+DGW_UPLIFT = {"bboost": 1.75, "3xc": 1.70, "wildcard": 1.15}
+BGW_UPLIFT = {"freehit": 2.60, "wildcard": 1.20}
+
+
+def window_uplift(chip: str, gw: int) -> float:
+    """Prior multiplier on a chip's value for landing in a likely blank or double."""
+    factor = 1.0
+    if gw in DOUBLE_WINDOW:
+        factor = max(factor, DGW_UPLIFT.get(chip, 1.0))
+    if gw in BLANK_WINDOW:
+        factor = max(factor, BGW_UPLIFT.get(chip, 1.0))
+    return factor
+
+
 @dataclass
 class ChipWindow:
     name: str
@@ -212,6 +249,13 @@ def allocate(
             if v:
                 candidates.append((w, v))
 
+    # Price in the blank/double prior before ranking, so the second set of chips is
+    # held back for the window where it is worth most.
+    candidates = [
+        (w, ChipValue(v.chip, v.month, v.gw,
+                      v.value * window_uplift(v.chip, v.gw), v.note))
+        for w, v in candidates
+    ]
     candidates.sort(key=lambda wv: -wv[1].value)
     spent: set[int] = set()
     used_gws: set[int] = set()
