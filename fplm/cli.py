@@ -333,21 +333,21 @@ def cmd_plan(args) -> None:
     if args.entry:
         tracking.fill_actuals(args.entry)
 
-    league_view = None
+    league_views = []
     if args.league:
         from . import rivals as rvmod
 
         month_now = p.months[0].month.name if p.months else None
-        league_view = rvmod.build(
-            args.league, p.next_gw, p.tables.get(month_now, {}) if month_now else {},
-            my_entry=args.entry,
-        )
-        state = "ok" if league_view.available else league_view.note
-        print(f"{DIM}league {args.league}: {state}{RESET}")
+        tbl = p.tables.get(month_now, {}) if month_now else {}
+        for lid in args.league:
+            v = rvmod.build(lid, p.next_gw, tbl, my_entry=args.entry)
+            league_views.append(v)
+            state = f"{len(v.with_picks)} rivals priced" if v.available else v.note
+            print(f"{DIM}league {lid} ({v.league_name}): {state}{RESET}")
 
     out = args.out or "plan.html"
     dashboard.write(p, out, rivals=args.rivals, title=args.title, gwplans=gwplans,
-                    league_view=league_view, boot_ref=boot, fixtures_ref=fixtures)
+                    league_view=league_views, boot_ref=boot, fixtures_ref=fixtures)
     print(f"\n{BOLD}Season plan — next deadline GW{p.next_gw}{RESET}")
     print(_hr())
     for m in p.months:
@@ -442,8 +442,9 @@ def main(argv: list[str] | None = None) -> None:
                     help="1.0 plans purely for monthly prizes, 0.0 purely for the season.")
     sp.add_argument("--out", help="HTML output path (default plan.html)")
     sp.add_argument("--title", default="FPL monthly plan")
-    sp.add_argument("--league", type=int,
-                    help="Your mini-league id, to price rivals' actual squads.")
+    sp.add_argument("--league", type=int, nargs="*", default=[],
+                    help="One or more mini-league ids, to price rivals' actual squads. "
+                         "Ownership is reported per league, since it differs between them.")
     sp.add_argument("--no-gameweeks", action="store_true",
                     help="Skip the week-by-week forward plan (faster).")
     sp.set_defaults(func=cmd_plan)

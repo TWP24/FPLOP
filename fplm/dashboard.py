@@ -274,11 +274,17 @@ def _gameweek_section(gwplans) -> str:
   </section>"""
 
 
-def _league_section(view, my_squad, table) -> str:
-    """Your mini-league: rivals priced through the same model, and real ownership."""
+def _league_section(views, my_squad, table) -> str:
+    """Your mini-leagues: rivals priced through the same model, and real ownership.
+
+    Rendered once per league rather than pooled. Ownership is the whole point of this
+    view and it is league-specific — a player who is template in a twenty-person work
+    league can be a genuine differential in a smaller one, and averaging the two would
+    describe neither.
+    """
     from . import rivals as rv
 
-    if view is None:
+    if not views:
         return """<section>
     <h2>Your league</h2>
     <div class="note"><h3>No league connected</h3>
@@ -291,12 +297,19 @@ def _league_section(view, my_squad, table) -> str:
       not FPL&rsquo;s global figure, which describes six million strangers.</p>
       <p style="margin:8px 0 0" class="dim">Find the id in your league URL
       (<code>.../leagues/<b>123456</b>/standings/c</code>), then run with
-      <code>--league 123456</code>.</p></div>
+      <code>--league 123456 789012</code> &mdash; as many as you have.</p></div>
   </section>"""
+
+    return "".join(_one_league(v, my_squad, table) for v in views)
+
+
+def _one_league(view, my_squad, table) -> str:
+    """One league's standings, ownership and differentials."""
+    from . import rivals as rv
 
     if not view.available:
         return f"""<section>
-    <h2>Your league <span>&mdash; {_esc(view.league_name)}</span></h2>
+    <h2>{_esc(view.league_name)} <span>&mdash; league {view.league_id}</span></h2>
     <div class="note"><h3>Not available yet</h3>
       <p style="margin:0">{_esc(view.note)}. This fills in automatically once the
       first deadline passes, and every rival&rsquo;s squad then gets priced through the
@@ -331,7 +344,7 @@ def _league_section(view, my_squad, table) -> str:
         return out or f'<tr><td colspan="4" class="dim">no {label}</td></tr>'
 
     return f"""<section>
-    <h2>Your league <span>&mdash; {_esc(view.league_name)}, GW{view.gameweek}</span></h2>
+    <h2>{_esc(view.league_name)} <span>&mdash; {len(view.with_picks)} rivals, GW{view.gameweek}</span></h2>
     <div class="scroll"><table>
       <thead><tr><th>#</th><th>Team</th><th>Manager</th><th class="r">Projected</th>
         <th>Captain</th><th class="r">Total</th><th>Chip</th></tr></thead>
@@ -343,7 +356,8 @@ def _league_section(view, my_squad, table) -> str:
   </section>
 
   <section>
-    <h2>Where you differ <span>&mdash; ownership measured in your league, not globally</span></h2>
+    <h2>Where you differ in {_esc(view.league_name)} <span>&mdash; ownership measured in
+      this league, not globally</span></h2>
     <div class="scroll"><table>
       <thead><tr><th colspan="4">Your differentials &mdash; the league mostly does not own these</th></tr>
         <tr><th>Player</th><th>Team</th><th class="r">xP</th><th>League ownership</th></tr></thead>
@@ -490,11 +504,14 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     gw_section = _gameweek_section(gwplans)
     n_months = len(plan.months)
     n_gws = len(gwplans) if gwplans else 0
-    league_badge = (f"<b>{len(league_view.with_picks)}</b>"
-                    if league_view is not None and league_view.available else "")
+    _views = league_view if isinstance(league_view, list) else (
+        [league_view] if league_view is not None else [])
+    league_badge = f"<b>{len(_views)}</b>" if len(_views) > 1 else (
+        f"<b>{len(_views[0].with_picks)}</b>"
+        if _views and _views[0].available else "")
     month_now = plan.months[0].month.name if plan.months else None
     league_section = _league_section(
-        league_view, [p.pid for p in squad.players],
+        _views, [p.pid for p in squad.players],
         plan.tables.get(month_now, {}) if month_now else {},
     )
     scale = max([m.field_target for m in plan.months] + [1])

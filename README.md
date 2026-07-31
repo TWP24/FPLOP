@@ -275,7 +275,9 @@ To turn it on:
 2. **Settings → Pages → Source: GitHub Actions**.
 3. **Settings → Secrets and variables → Actions → Variables**, add:
    - `FPL_ENTRY` — your entry id, so the plan starts from your real squad
-   - `FPL_LEAGUE` — your mini-league id, to fill the League tab
+   - `FPL_LEAGUE` — your mini-league id, or several space-separated
+     (`123456 789012`). Each gets its own block, because ownership differs between
+     leagues and a player who is template in one can be a differential in another.
    - `FPL_RIVALS` — league size minus you (defaults to 19)
 4. **Actions → Refresh FPL plan → Run workflow** to check it before trusting the schedule.
 
