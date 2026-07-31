@@ -130,12 +130,32 @@ def build(
         squad = opt.solve(own_view, lam=0.0,
                           cons=opt.Constraints(budget=budget, min_expected_minutes=0.0))
         if squad is not None:
-            # Re-price on expected points so everything downstream reads real numbers.
-            squad = opt.Squad(
-                players=[now_tbl[p.pid] for p in squad.players],
-                starters=squad.starters, captain=squad.captain, vice=squad.vice,
-                lam=0.0, cost=squad.cost,
+            # The fifteen come from ownership, but the eleven must not. Solving on
+            # ownership also picks the XI on ownership, which benched a 7.2 xP
+            # midfielder for a 1.4 xP defender purely because more people owned the
+            # defender. You always field your best eleven regardless of how the squad
+            # was assembled, so re-solve the XI and the armband on expected points with
+            # the fifteen held fixed.
+            fifteen = {p.pid for p in squad.players}
+            cost = squad.cost
+            refield = opt.solve(
+                {pid: v for pid, v in now_tbl.items() if pid in fifteen},
+                lam=0.0,
+                cons=opt.Constraints(budget=999.0, min_expected_minutes=0.0,
+                                     include=fifteen),
             )
+            if refield is not None:
+                squad = opt.Squad(
+                    players=[now_tbl[p.pid] for p in refield.players],
+                    starters=refield.starters, captain=refield.captain,
+                    vice=refield.vice, lam=0.0, cost=cost,
+                )
+            else:
+                squad = opt.Squad(
+                    players=[now_tbl[p.pid] for p in squad.players],
+                    starters=squad.starters, captain=squad.captain, vice=squad.vice,
+                    lam=0.0, cost=cost,
+                )
     else:
         squad = opt.solve(blended, lam=opt.suggested_lam(rivals), cons=cons)
 

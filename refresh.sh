@@ -1,11 +1,11 @@
 #!/bin/sh
 # Daily refresh: pull live FPL data and rebuild the plan dashboard.
-# FPL entry 2272028 ("Djed and Buried"). Squad picks only become readable
+# FPL entry 2358018 ("Djed & Buried"). Squad picks only become readable
 # after each gameweek deadline, so before GW1 this is ignored and the plan
 # is built from scratch rather than from your actual squad.
-FPL_ENTRY="${FPL_ENTRY:-2272028}"
+FPL_ENTRY="${FPL_ENTRY:-2358018}"
 # Space-separated for several leagues: export FPL_LEAGUE="123456 789012"
-FPL_LEAGUE="${FPL_LEAGUE:-}"
+FPL_LEAGUE="${FPL_LEAGUE:-109579}"
 cd "$(dirname "$0")" || exit 1
 ./.venv/bin/python -m fplm.cli plan \
   --refresh \
