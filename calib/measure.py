@@ -30,7 +30,7 @@ from fplm import ratings as rt  # noqa: E402
 from fplm import xp as xpmod  # noqa: E402
 from fplm.monthly import PlayerMonth  # noqa: E402
 
-SEASONS = ["2023-24", "2024-25", "2025-26"]
+SEASONS = ["2022-23", "2023-24", "2024-25", "2025-26"]
 POS_NAME = {1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}
 
 

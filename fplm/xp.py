@@ -66,6 +66,18 @@ START_SHRINK_GAMES = 5.0
 # rates from 0.1630 to 0.1616. The promoted-club players it was supposed to rescue are
 # already excluded on expected minutes rather than on expected goals, so the correction
 # never reaches them.
+#
+# Adding 2022/23 to the harness later took the pooled result to t = 2.27, nominally
+# significant — and then showed exactly why it should still be off. The effect is
+# entirely in the two older seasons and absent from the two recent ones:
+#
+#     2022/23  +13.00      2024/25  +0.88
+#     2023/24  +11.12      2025/26  +0.12
+#
+# That is a regime, not noise. Expected-goals data entered FPL in 2022/23, and while it
+# was young the player-level rates were poor enough that borrowing strength from the
+# team model genuinely helped. It has since stopped helping. 2026/27 resembles the
+# recent regime, so the pooled figure is evidence from a world that no longer exists.
 RECONCILE = 0.0
 
 # Goals conceded by an average team against an average opponent, used as the neutral
