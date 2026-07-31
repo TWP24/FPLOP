@@ -487,6 +487,13 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
 
 def write(plan: SeasonPlan, path: str, rivals: int = 19,
           title: str = "FPL monthly plan", gwplans=None, league_view=None) -> str:
+    # Create the parent directory. Writing beside an existing file works everywhere,
+    # so this only bites when the output goes somewhere new — which is exactly what
+    # CI does, publishing to site/index.html on a fresh checkout.
+    import os
+
+    parent = os.path.dirname(os.path.abspath(path))
+    os.makedirs(parent, exist_ok=True)
     with open(path, "w") as fh:
         fh.write(render(plan, rivals=rivals, title=title, gwplans=gwplans,
                         league_view=league_view))
