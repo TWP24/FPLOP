@@ -15,4 +15,12 @@ cd "$(dirname "$0")" || exit 1
   ${FPL_LEAGUE:+--league "$FPL_LEAGUE"} \
   ${FPL_MINUTES_CSV:+--minutes-csv "$FPL_MINUTES_CSV"} \
   --out plan.html >> refresh.log 2>&1
+# Copy to iCloud Drive so the phone picks it up. iOS previews a self-contained HTML
+# file straight from the Files app, and iCloud syncs it without any server involved.
+ICLOUD="$HOME/Library/Mobile Documents/com~apple~CloudDocs/FPL"
+if [ -d "$(dirname "$ICLOUD")" ]; then
+  mkdir -p "$ICLOUD"
+  cp plan.html "$ICLOUD/plan.html" 2>>refresh.log && echo "  synced to iCloud" >> refresh.log
+fi
+
 echo "$(date -u '+%Y-%m-%dT%H:%MZ') refreshed" >> refresh.log
