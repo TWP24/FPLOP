@@ -322,6 +322,17 @@ def cmd_plan(args) -> None:
         gwplans = fcmod.build(boot, fixtures, p, budget=args.budget,
                               min_minutes=args.min_minutes)
 
+    # Write this gameweek's prediction down before the deadline, and pull in the
+    # actuals for any gameweek already played, so the model can be scored honestly.
+    from . import tracking
+
+    if p.months:
+        gw_xp = p.months[0].squad_xp / max(p.months[0].n_gws, 1)
+        cap = next((x.name for x in p.squad.players if x.pid == p.squad.captain), "")
+        tracking.record_prediction(p.next_gw, gw_xp, captain=cap)
+    if args.entry:
+        tracking.fill_actuals(args.entry)
+
     league_view = None
     if args.league:
         from . import rivals as rvmod

@@ -35,14 +35,23 @@ def _esc(s) -> str:
 # --------------------------------------------------------------------- #
 
 
-def fixture_ticker(boot: dict, fixtures: list[dict], start_gw: int, n: int = 10) -> str:
-    """Colour grid of every club's next `n` fixtures, hardest to easiest.
+def fixture_ticker(boot: dict, fixtures: list[dict], start_gw: int, n: int = 8,
+                   only_teams: set[int] | None = None,
+                   labels: dict[int, str] | None = None) -> str:
+    """Colour grid of upcoming fixtures, easiest run at the top.
 
-    Sorted by total difficulty so the good and bad runs separate visually. This is the
-    chart that answers "who should I be buying in three weeks", which no per-month
-    average can.
+    Defaults to every club, but `only_teams` narrows it to the clubs you actually own.
+    Twenty rows of ten is a wall of colour to scan; eight rows of eight is something
+    you can read in a glance and act on, which is the whole point of a ticker.
     """
-    teams = {t["id"]: t["short_name"] for t in boot["teams"]}
+    # Opponent names always come from the full map — filtering the rows must not
+    # filter the lookup, or any fixture against an unshown club raises.
+    names = {t["id"]: t["short_name"] for t in boot["teams"]}
+    teams = dict(names)
+    if only_teams:
+        teams = {k: v for k, v in teams.items() if k in only_teams}
+    if labels:
+        teams = {k: labels.get(k, v) for k, v in teams.items()}
     gws = list(range(start_gw, min(start_gw + n, 39)))
 
     # team -> gw -> list of (opponent, difficulty, home)
@@ -50,15 +59,19 @@ def fixture_ticker(boot: dict, fixtures: list[dict], start_gw: int, n: int = 10)
     for f in fixtures:
         if f["event"] not in gws:
             continue
-        grid[f["team_h"]][f["event"]].append((teams[f["team_a"]], f["team_h_difficulty"], True))
-        grid[f["team_a"]][f["event"]].append((teams[f["team_h"]], f["team_a_difficulty"], False))
+        if f["team_h"] in grid:
+            grid[f["team_h"]][f["event"]].append(
+                (names[f["team_a"]], f["team_h_difficulty"], True))
+        if f["team_a"] in grid:
+            grid[f["team_a"]][f["event"]].append(
+                (names[f["team_h"]], f["team_a_difficulty"], False))
 
     def total(t):
         return sum(d for g in gws for _, d, _ in grid[t][g]) or 99
 
     order = sorted(teams, key=total)
 
-    cw, ch, lw, top = 46, 26, 44, 22
+    cw, ch, lw, top = 58, 34, 58, 24
     W = lw + cw * len(gws) + 8
     H = top + ch * len(order) + 6
 
@@ -70,24 +83,28 @@ def fixture_ticker(boot: dict, fixtures: list[dict], start_gw: int, n: int = 10)
 
     for r, t in enumerate(order):
         y = top + r * ch
-        out.append(f'<text x="0" y="{y + 17}" class="cy">{_esc(teams[t])}</text>')
+        out.append(f'<text x="0" y="{y + 21}" class="cy">{_esc(teams[t])}</text>')
         for i, g in enumerate(gws):
             x = lw + cw * i
             cells = grid[t][g]
             if not cells:
                 out.append(f'<rect x="{x+1}" y="{y+1}" width="{cw-3}" height="{ch-3}" '
-                           f'rx="4" class="blank"/>'
-                           f'<text x="{x+cw/2-1}" y="{y+17}" class="cb" text-anchor="middle">—</text>')
+                           f'rx="5" class="blank"/>'
+                           f'<text x="{x+cw/2-1}" y="{y+21}" class="cb" text-anchor="middle">—</text>')
                 continue
             n_c = len(cells)
             for j, (opp, diff, home) in enumerate(cells):
                 sub = (cw - 3) / n_c
                 out.append(
-                    f'<rect x="{x+1+j*sub}" y="{y+1}" width="{sub-1}" height="{ch-3}" rx="4" '
+                    f'<rect x="{x+1+j*sub}" y="{y+1}" width="{sub-1}" height="{ch-3}" rx="5" '
                     f'fill="{FDR_FILL.get(diff, FDR_FILL[3])}"/>'
-                    f'<text x="{x+1+j*sub+sub/2}" y="{y+17}" text-anchor="middle" '
+                    f'<text x="{x+1+j*sub+sub/2}" y="{y+16}" text-anchor="middle" '
                     f'class="cf">{_esc(opp if home else opp.lower())}</text>'
                 )
+            # A difficulty number under the opponent, so it reads without the legend.
+            if n_c == 1:
+                out.append(f'<text x="{x+cw/2}" y="{y+28}" text-anchor="middle" '
+                           f'class="cd">{cells[0][1]}</text>')
     out.append("</svg>")
     return "".join(out)
 
@@ -139,7 +156,7 @@ def score_distribution(scores, target: float, mean: float) -> str:
     return "".join(out)
 
 
-def value_frontier(table: dict, owned: set[int], limit: int = 190) -> str:
+def value_frontier(table: dict, owned: set[int], limit: int = 70) -> str:
     """Expected points against price, with your squad marked.
 
     The efficient frontier is the visible upper-left edge. A ranked table tells you who
@@ -176,11 +193,12 @@ def value_frontier(table: dict, owned: set[int], limit: int = 190) -> str:
     for p in pts:
         if p.pid in owned:
             continue
-        out.append(f'<circle cx="{sx(p.price):.1f}" cy="{sy(p.xp):.1f}" r="3" class="dot"/>')
+        out.append(f'<circle cx="{sx(p.price):.1f}" cy="{sy(p.xp):.1f}" r="4" class="dot">'
+                   f'<title>{_esc(p.name)} — £{p.price:.1f}m, {p.xp:.1f} xP</title></circle>')
     for p in pts:
         if p.pid not in owned:
             continue
-        out.append(f'<circle cx="{sx(p.price):.1f}" cy="{sy(p.xp):.1f}" r="5" class="dotown">'
+        out.append(f'<circle cx="{sx(p.price):.1f}" cy="{sy(p.xp):.1f}" r="6.5" class="dotown">'
                    f'<title>{_esc(p.name)} — £{p.price:.1f}m, {p.xp:.1f} xP</title></circle>')
     # Name the handful that matter: yours, and anything outstanding you do not own.
     best = sorted(pts, key=lambda p: -(p.xp / max(p.price, 0.1)))[:5]
@@ -245,3 +263,94 @@ def sparkline(values: list[float], W: int = 150, H: int = 30) -> str:
     pts = " ".join(f"{i*step:.1f},{H - 3 - (v-lo)/rng*(H-6):.1f}" for i, v in enumerate(values))
     return (f'<svg viewBox="0 0 {W} {H}" width="{W}" height="{H}" class="spark" aria-hidden="true">'
             f'<polyline points="{pts}" fill="none" class="sparkline"/></svg>')
+
+
+def actual_vs_xp(records: dict, W: int = 620, H: int = 250) -> str:
+    """Predicted against actual, gameweek by gameweek, plus the running totals.
+
+    Bars are what happened; the line is what was predicted. Where the bar sits above
+    the line the squad beat its own forecast. The faint pair at the bottom is the
+    cumulative version, which is the one that matters — single gameweeks are mostly
+    noise, and a model can miss by twenty points a week and still be unbiased.
+    """
+    played = sorted((r for r in records.values() if r.played and r.predicted > 0),
+                    key=lambda r: r.gw)
+    if len(played) < 1:
+        return ""
+
+    pad_l, pad_b, pad_t, pad_r = 38, 30, 18, 12
+    plot_h = H - pad_b - pad_t
+    hi = max(max(r.actual, r.predicted) for r in played) * 1.15 or 1
+    bw = (W - pad_l - pad_r) / max(len(played), 1)
+
+    def sy(v):
+        return H - pad_b - (v / hi) * plot_h
+
+    out = [f'<svg viewBox="0 0 {W} {H}" width="100%" height="{H}" role="img" '
+           f'aria-label="Actual points against predicted, by gameweek">']
+    for g in range(0, 5):
+        v = hi * g / 4
+        out.append(f'<line x1="{pad_l}" y1="{sy(v):.1f}" x2="{W-pad_r}" y2="{sy(v):.1f}" '
+                   f'class="grid"/><text x="{pad_l-6}" y="{sy(v)+4:.1f}" text-anchor="end" '
+                   f'class="cy">{v:.0f}</text>')
+
+    for i, r in enumerate(played):
+        x = pad_l + i * bw
+        beat = r.actual >= r.predicted
+        out.append(f'<rect x="{x+bw*0.18:.1f}" y="{sy(r.actual):.1f}" width="{bw*0.64:.1f}" '
+                   f'height="{H-pad_b-sy(r.actual):.1f}" rx="2" '
+                   f'class="{"barwin" if beat else "barlose"}">'
+                   f'<title>GW{r.gw}: {r.actual:.0f} actual vs {r.predicted:.0f} predicted</title>'
+                   f'</rect>')
+        out.append(f'<text x="{x+bw/2:.1f}" y="{H-pad_b+13:.1f}" text-anchor="middle" '
+                   f'class="cx">{r.gw}</text>')
+
+    pts = " ".join(f"{pad_l + i*bw + bw/2:.1f},{sy(r.predicted):.1f}"
+                   for i, r in enumerate(played))
+    out.append(f'<polyline points="{pts}" fill="none" class="predline"/>')
+    for i, r in enumerate(played):
+        out.append(f'<circle cx="{pad_l + i*bw + bw/2:.1f}" cy="{sy(r.predicted):.1f}" '
+                   f'r="3" class="preddot"/>')
+
+    out.append(f'<text x="{W-pad_r}" y="{pad_t}" text-anchor="end" class="cq">'
+               f'bars = actual &middot; line = predicted</text>')
+    out.append("</svg>")
+    return "".join(out)
+
+
+def calibration_bars(deciles: list[tuple[float, float]], W: int = 620, H: int = 210) -> str:
+    """Predicted against realised across the prediction range, from the backtest.
+
+    Each pair is a tenth of all player-months, ordered by prediction. Equal heights
+    would mean a perfectly calibrated model. The pattern here is the honest one: the
+    model runs a little hot, and most so at the top end where it matters.
+    """
+    if not deciles:
+        return ""
+    pad_l, pad_b, pad_t, pad_r = 34, 34, 16, 12
+    n = len(deciles)
+    gw = (W - pad_l - pad_r) / n
+    hi = max(max(p, a) for p, a in deciles) * 1.15 or 1
+
+    def sy(v):
+        return H - pad_b - (v / hi) * (H - pad_b - pad_t)
+
+    out = [f'<svg viewBox="0 0 {W} {H}" width="100%" height="{H}" role="img" '
+           f'aria-label="Predicted against realised points by decile">']
+    for g in range(0, 4):
+        v = hi * g / 3
+        out.append(f'<line x1="{pad_l}" y1="{sy(v):.1f}" x2="{W-pad_r}" y2="{sy(v):.1f}" '
+                   f'class="grid"/><text x="{pad_l-6}" y="{sy(v)+4:.1f}" text-anchor="end" '
+                   f'class="cy">{v:.0f}</text>')
+    for i, (pred, act) in enumerate(deciles):
+        x = pad_l + i * gw
+        out.append(f'<rect x="{x+gw*0.14:.1f}" y="{sy(pred):.1f}" width="{gw*0.34:.1f}" '
+                   f'height="{H-pad_b-sy(pred):.1f}" rx="2" class="barpred"/>')
+        out.append(f'<rect x="{x+gw*0.52:.1f}" y="{sy(act):.1f}" width="{gw*0.34:.1f}" '
+                   f'height="{H-pad_b-sy(act):.1f}" rx="2" class="barwin"/>')
+        out.append(f'<text x="{x+gw/2:.1f}" y="{H-pad_b+13:.1f}" text-anchor="middle" '
+                   f'class="cx">{i+1}</text>')
+    out.append(f'<text x="{W/2}" y="{H-4}" text-anchor="middle" class="cx">'
+               f'tenths of all players, weakest predicted to strongest &rarr;</text>')
+    out.append("</svg>")
+    return "".join(out)

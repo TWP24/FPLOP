@@ -15,10 +15,17 @@ from __future__ import annotations
 import html
 
 from .plan import SeasonPlan
-from . import charts
+from . import charts, tracking
 from .xp import calibrate
 
 POS = {1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}
+
+# Predicted vs realised by decile, measured over 8,392 player-months across 2022/23 to
+# 2025/26. Static because it describes the model, not this week's data.
+CALIBRATION_DECILES = [
+    (2.3, 2.7), (3.9, 4.3), (5.2, 4.9), (6.3, 6.2), (7.4, 6.6),
+    (8.7, 8.1), (10.1, 9.1), (11.7, 11.3), (14.2, 13.2), (19.9, 18.2),
+]
 CHIP_LABEL = {
     "wildcard": "Wildcard",
     "freehit": "Free Hit",
@@ -177,6 +184,10 @@ svg .cy{font-weight:650}
 svg .cf{font-size:9.5px; fill:#fff; font-weight:600}
 svg .cb{font-size:10px; fill:var(--mut)}
 svg .cq{font-size:9px; fill:var(--mut)}
+svg .cd{font-size:9px; fill:var(--mut); font-weight:650}
+svg .barpred{fill:var(--mut); opacity:.35}
+svg .predline{stroke:var(--chart); stroke-width:2.5; stroke-linejoin:round}
+svg .preddot{fill:var(--chart)}
 svg .pt{font-size:9.5px; fill:var(--mut)}
 svg .blank{fill:var(--line)}
 svg .grid{stroke:var(--line); stroke-width:1}
@@ -390,16 +401,19 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
       {rivals}-rival field &mdash; chance alone would be {100/(rivals+1):.1f}%.</i></div>
   </section>''' if dist_svg else ""
 
-    ticker_svg = charts.fixture_ticker(boot_ref, fixtures_ref, plan.next_gw, 10) \
+    my_clubs = {p.team for p in squad.players}
+    ticker_svg = charts.fixture_ticker(boot_ref, fixtures_ref, plan.next_gw, 8,
+                                       only_teams=my_clubs) \
         if boot_ref and fixtures_ref else ""
     ticker_block = f'''<section>
-    <h2>Fixture ticker <span>&mdash; next 10 gameweeks, easiest runs at the top</span></h2>
+    <h2>Your fixtures <span>&mdash; the {len(my_clubs)} clubs you own, next 8 gameweeks</span></h2>
     <div class="chartbox">{ticker_svg}</div>
     <div class="fdrkey">
       <i><b style="background:var(--fdr1)"></b>1</i><i><b style="background:var(--fdr2)"></b>2</i>
       <i><b style="background:var(--fdr3)"></b>3</i><i><b style="background:var(--fdr4)"></b>4</i>
       <i><b style="background:var(--fdr5)"></b>5</i>
-      <i>UPPERCASE = home, lowercase = away. Two blocks in a cell is a double gameweek.</i>
+      <i>UPPERCASE = home, lowercase = away. Easiest run at the top. Two blocks in one
+        cell is a double gameweek, a dash is a blank.</i>
     </div>
   </section>''' if ticker_svg else ""
 
@@ -420,6 +434,58 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
       weak attack helps your defenders; facing a weak defence helps your forwards. One
       difficulty number cannot tell you which you are getting.</i></div>
   </section>''' if team_svg else ""
+
+    track_recs = tracking.load()
+    track = tracking.summary(track_recs)
+    avx_svg = charts.actual_vs_xp(track_recs)
+    if avx_svg:
+        r = track
+        verdict = ("running hot — the squad is beating its forecast"
+                   if r["ratio"] > 1.04 else
+                   "running cold — the model is over-predicting"
+                   if r["ratio"] < 0.96 else "well calibrated")
+        avx_block = f'''<section>
+    <h2>Actual vs predicted <span>&mdash; {r["n"]} gameweeks played</span></h2>
+    <div class="strip">
+      <div class="tile"><div class="k">Predicted</div>
+        <div class="v mono">{r["predicted"]:.0f}</div></div>
+      <div class="tile"><div class="k">Actual</div>
+        <div class="v mono">{r["actual"]:.0f}</div></div>
+      <div class="tile"><div class="k">Ratio</div>
+        <div class="v mono">{r["ratio"]:.2f}<u> {verdict.split(" —")[0]}</u></div></div>
+      <div class="tile"><div class="k">Avg miss</div>
+        <div class="v mono">{r["mae"]:.1f}<u> pts/GW</u></div></div>
+      <div class="tile"><div class="k">Beat forecast</div>
+        <div class="v mono">{r["beat"]}<u> of {r["n"]}</u></div></div>
+    </div>
+    <div class="chartbox">{avx_svg}</div>
+    <div class="legend"><i>Bars are what you actually scored, the line is what was
+      predicted before the deadline. Predictions are written down once and never
+      revised, so this is a fair test rather than a flattering one. Verdict:
+      <b>{verdict}</b>.</i></div>
+  </section>'''
+    else:
+        avx_block = '''<section>
+    <h2>Actual vs predicted</h2>
+    <div class="note"><h3>Starts at GW1</h3>
+      <p style="margin:0 0 8px">Each gameweek&rsquo;s prediction is written down before
+      the deadline and scored against what actually happened afterwards. Nothing else
+      here keeps a record &mdash; every run rebuilds from scratch &mdash; so without
+      this there is no way to tell whether the model is working <i>now</i>, on this
+      season, rather than on the seasons it was tested against.</p>
+      <p style="margin:0">Predictions are never revised once written. A forecast you
+      can edit after the fact is not a forecast.</p></div>
+  </section>'''
+
+    # How the model performed on four backtested seasons, as context for the above.
+    calib_block = f'''<section>
+    <h2>Model accuracy <span>&mdash; 8,392 player-months across four seasons</span></h2>
+    <div class="chartbox">{charts.calibration_bars(CALIBRATION_DECILES)}</div>
+    <div class="legend"><i>Grey is predicted, green is what actually happened, in tenths
+      from weakest prediction to strongest. Equal heights would be perfect. The model
+      runs about 6% hot and most so at the top &mdash; which is why the squad tables
+      carry a <b>real</b> column beside <b>xP</b>.</i></div>
+  </section>'''
 
     gw_section = _gameweek_section(gwplans)
     n_months = len(plan.months)
@@ -544,6 +610,10 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     </div>
 
     <div class="panel p5">
+  {avx_block}
+
+  {calib_block}
+
   {ticker_block}
 
   {value_block}

@@ -8,3 +8,7 @@ refresh.log
 # they are ~77MB of third-party data that would otherwise be republished here.
 data/
 !data/README.md
+
+# Prediction log — written by the tool, but it is a record, not a build artifact.
+# Kept out of git so CI runs never overwrite the local one, and vice versa.
+predictions.json
