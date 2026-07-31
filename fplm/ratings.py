@@ -114,6 +114,23 @@ def _fdr_signal(boot: dict, fixtures: list[dict]) -> dict[int, float]:
 def build(boot: dict, fixtures: list[dict], prior_weight: float = 0.5) -> dict[int, TeamRating]:
     """Blend squad data with FPL's prior into per-team attack/defence multipliers.
 
+    KNOWN ISSUE, unhandled by choice (July 2026). Two things change the moment the
+    season starts, and neither raises an error:
+
+      * `strength_overall_home/away` changes *units*, not just values. Pre-season it is
+        a 1-5 scale (Arsenal 4 and 5); in-season it is roughly 1000-1400 (Arsenal 1305
+        and 1355, per the 2025/26 end-of-season snapshot). This function z-scores it, so
+        nothing breaks loudly — the signal simply starts being measured on a different
+        scale from the squad xG it is blended with.
+      * `strength_attack_home/away` and `strength_defence_home/away` are all zero
+        pre-season and populate once games are played. They are separate attack and
+        defence figures split by venue, which is exactly what the Poisson model wants,
+        and are strictly better than the proxy derived here. This function ignores them.
+
+    Both were left alone deliberately: they cannot be tested before real values exist,
+    and the existing pipeline is what has been backtested. Revisit after GW1, when the
+    live values can actually be inspected.
+
     `prior_weight` is the floor weight given to FPL's own ratings. Teams without
     enough Premier League history (promoted clubs) are pushed to weight 1.0.
     """
@@ -125,6 +142,7 @@ def build(boot: dict, fixtures: list[dict], prior_weight: float = 0.5) -> dict[i
     }
 
     # FPL's prior: high strength_overall and high faced-difficulty both mean "good team".
+    # KNOWN ISSUE, deliberately not handled — see the note above `build`.
     z_overall = _zscore(overall)
     z_fdr = _zscore(fdr)
     z_prior = {tid: 0.5 * z_overall[tid] + 0.5 * z_fdr[tid] for tid in z_overall}
