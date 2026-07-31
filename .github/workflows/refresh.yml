@@ -10,6 +10,9 @@ on:
   schedule:
     - cron: "50 6 * * *"
   workflow_dispatch: {}        # lets you trigger a rebuild by hand from the Actions tab
+  push:
+    branches: [main]           # so a change to the model is proven, not assumed
+    paths-ignore: ["README.md"]
 
 permissions:
   contents: read
