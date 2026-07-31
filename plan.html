@@ -112,13 +112,31 @@ tr.mrule td{background:var(--accent-wash); font-size:10.5px; font-weight:700;
 .moves{min-width:230px}
 .hit{display:inline-block; color:var(--warn); font-weight:700; font-size:11px;
      border:1px solid var(--warn); border-radius:5px; padding:0 5px; margin-left:4px}
+/* Tabs, driven entirely by hidden radios so the page needs no JavaScript. */
+.tabin{position:absolute; opacity:0; pointer-events:none}
+nav.tabs{display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--line);
+         margin-bottom:6px}
+nav.tabs label{padding:9px 14px; font-size:13px; font-weight:600; color:var(--mut);
+  cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
+  white-space:nowrap; border-radius:7px 7px 0 0; transition:color .12s, background .12s}
+nav.tabs label:hover{color:var(--ink); background:var(--accent-wash)}
+nav.tabs label b{font-weight:600; font-variant-numeric:tabular-nums; opacity:.55;
+                 margin-left:5px; font-size:11.5px}
+.panel{display:none; flex-direction:column; gap:26px}
+#t1:checked~.panels .p1, #t2:checked~.panels .p2,
+#t3:checked~.panels .p3, #t4:checked~.panels .p4{display:flex}
+#t1:checked~nav.tabs label[for=t1], #t2:checked~nav.tabs label[for=t2],
+#t3:checked~nav.tabs label[for=t3], #t4:checked~nav.tabs label[for=t4]{
+  color:var(--accent); border-bottom-color:var(--accent)}
+.tabin:focus-visible~nav.tabs label{outline:2px solid var(--accent); outline-offset:2px}
+@media (max-width:520px){ nav.tabs label{padding:8px 10px; font-size:12.5px} }
 footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); padding-top:15px}
 </style>
 <div class="wrap">
   <header>
     <div class="eyebrow">Season 2026/27 · monthly prize league</div>
     <h1>FPL monthly plan</h1>
-    <div class="stamp mono">Refreshed 2026-07-31 08:49 UTC &nbsp;·&nbsp;
+    <div class="stamp mono">Refreshed 2026-07-31 08:54 UTC &nbsp;·&nbsp;
         next deadline GW1 &nbsp;·&nbsp; 20 managers</div>
   </header>
 
@@ -135,6 +153,19 @@ footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); paddi
       <div class="v mono">+71<u> pts</u></div></div>
   </div>
 
+  <input class="tabin" type="radio" name="tab" id="t1" checked>
+  <input class="tabin" type="radio" name="tab" id="t2">
+  <input class="tabin" type="radio" name="tab" id="t3">
+  <input class="tabin" type="radio" name="tab" id="t4">
+  <nav class="tabs">
+    <label for="t1">Squad</label>
+    <label for="t2">Season<b>10</b></label>
+    <label for="t3">Gameweeks<b>38</b></label>
+    <label for="t4">League</label>
+  </nav>
+
+  <div class="panels">
+    <div class="panel p1">
   <section>
     <h2>Starting XI</h2>
     <div class="scroll"><table>
@@ -154,6 +185,9 @@ footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); paddi
     </table></div>
   </section>
 
+    </div>
+
+    <div class="panel p2">
   <section>
     <h2>Season plan <span>— which months to contest</span></h2>
     <div class="scroll"><table>
@@ -168,6 +202,9 @@ footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); paddi
     </div>
   </section>
 
+    </div>
+
+    <div class="panel p3">
   <section>
     <h2>Gameweek plan <span>— projected to the end of the season</span></h2>
     <div class="strip">
@@ -188,8 +225,25 @@ footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); paddi
          "these exact players" — the near weeks are the actionable ones.</i>
     </div>
   </section>
+    </div>
 
-  
+    <div class="panel p4">
+  <section>
+    <h2>Your league</h2>
+    <div class="note"><h3>No league connected</h3>
+      <p style="margin:0 0 8px">Pass your mini-league id and this fills with every
+      rival&rsquo;s actual squad, priced through the same model as yours &mdash; their
+      projected points, their captain, and the ownership that matters.</p>
+      <p style="margin:0"><b>Why it matters:</b> a player most of your league owns
+      cannot win you the month, because his haul lifts everyone. Ownership measured
+      across your nineteen rivals is the number the differential maths needs &mdash;
+      not FPL&rsquo;s global figure, which describes six million strangers.</p>
+      <p style="margin:8px 0 0" class="dim">Find the id in your league URL
+      (<code>.../leagues/<b>123456</b>/standings/c</code>), then run with
+      <code>--league 123456</code>.</p></div>
+  </section>
+    </div>
+  </div>
 
   <div class="note">
     <h3>How to read this</h3>

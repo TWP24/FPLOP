@@ -138,6 +138,24 @@ tr.mrule td{background:var(--accent-wash); font-size:10.5px; font-weight:700;
 .moves{min-width:230px}
 .hit{display:inline-block; color:var(--warn); font-weight:700; font-size:11px;
      border:1px solid var(--warn); border-radius:5px; padding:0 5px; margin-left:4px}
+/* Tabs, driven entirely by hidden radios so the page needs no JavaScript. */
+.tabin{position:absolute; opacity:0; pointer-events:none}
+nav.tabs{display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--line);
+         margin-bottom:6px}
+nav.tabs label{padding:9px 14px; font-size:13px; font-weight:600; color:var(--mut);
+  cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
+  white-space:nowrap; border-radius:7px 7px 0 0; transition:color .12s, background .12s}
+nav.tabs label:hover{color:var(--ink); background:var(--accent-wash)}
+nav.tabs label b{font-weight:600; font-variant-numeric:tabular-nums; opacity:.55;
+                 margin-left:5px; font-size:11.5px}
+.panel{display:none; flex-direction:column; gap:26px}
+#t1:checked~.panels .p1, #t2:checked~.panels .p2,
+#t3:checked~.panels .p3, #t4:checked~.panels .p4{display:flex}
+#t1:checked~nav.tabs label[for=t1], #t2:checked~nav.tabs label[for=t2],
+#t3:checked~nav.tabs label[for=t3], #t4:checked~nav.tabs label[for=t4]{
+  color:var(--accent); border-bottom-color:var(--accent)}
+.tabin:focus-visible~nav.tabs label{outline:2px solid var(--accent); outline-offset:2px}
+@media (max-width:520px){ nav.tabs label{padding:8px 10px; font-size:12.5px} }
 footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); padding-top:15px}
 """
 
@@ -209,9 +227,23 @@ def _gameweek_section(gwplans) -> str:
 
 def _league_section(view, my_squad, table) -> str:
     """Your mini-league: rivals priced through the same model, and real ownership."""
-    if view is None:
-        return ""
     from . import rivals as rv
+
+    if view is None:
+        return """<section>
+    <h2>Your league</h2>
+    <div class="note"><h3>No league connected</h3>
+      <p style="margin:0 0 8px">Pass your mini-league id and this fills with every
+      rival&rsquo;s actual squad, priced through the same model as yours &mdash; their
+      projected points, their captain, and the ownership that matters.</p>
+      <p style="margin:0"><b>Why it matters:</b> a player most of your league owns
+      cannot win you the month, because his haul lifts everyone. Ownership measured
+      across your nineteen rivals is the number the differential maths needs &mdash;
+      not FPL&rsquo;s global figure, which describes six million strangers.</p>
+      <p style="margin:8px 0 0" class="dim">Find the id in your league URL
+      (<code>.../leagues/<b>123456</b>/standings/c</code>), then run with
+      <code>--league 123456</code>.</p></div>
+  </section>"""
 
     if not view.available:
         return f"""<section>
@@ -306,6 +338,10 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     bench = "".join(row(p) for p in squad.bench)
 
     gw_section = _gameweek_section(gwplans)
+    n_months = len(plan.months)
+    n_gws = len(gwplans) if gwplans else 0
+    league_badge = (f"<b>{len(league_view.with_picks)}</b>"
+                    if league_view is not None and league_view.available else "")
     month_now = plan.months[0].month.name if plan.months else None
     league_section = _league_section(
         league_view, [p.pid for p in squad.players],
@@ -361,6 +397,19 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
       <div class="v mono">+{total_chip:.0f}<u> pts</u></div></div>
   </div>
 
+  <input class="tabin" type="radio" name="tab" id="t1" checked>
+  <input class="tabin" type="radio" name="tab" id="t2">
+  <input class="tabin" type="radio" name="tab" id="t3">
+  <input class="tabin" type="radio" name="tab" id="t4">
+  <nav class="tabs">
+    <label for="t1">Squad</label>
+    <label for="t2">Season<b>{n_months}</b></label>
+    <label for="t3">Gameweeks<b>{n_gws}</b></label>
+    <label for="t4">League{league_badge}</label>
+  </nav>
+
+  <div class="panels">
+    <div class="panel p1">
   <section>
     <h2>Starting XI</h2>
     <div class="scroll"><table>
@@ -380,6 +429,9 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     </table></div>
   </section>
 
+    </div>
+
+    <div class="panel p2">
   <section>
     <h2>Season plan <span>— which months to contest</span></h2>
     <div class="scroll"><table>
@@ -394,9 +446,16 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     </div>
   </section>
 
-  {gw_section}
+    </div>
 
+    <div class="panel p3">
+  {gw_section}
+    </div>
+
+    <div class="panel p4">
   {league_section}
+    </div>
+  </div>
 
   <div class="note">
     <h3>How to read this</h3>
