@@ -341,6 +341,20 @@ class SeasonRunner:
                         q = _copy.copy(p)
                         q.xp = truth.get(pid, 0.0)
                         view[pid] = q
+                elif obj.startswith("blend"):
+                    # Popular *and* productive: rank on expected points, tilted toward
+                    # what the crowd owns. Pure ownership starts cheap enablers that
+                    # nobody actually plays for points; pure xP ignores that the crowd
+                    # knows things the model does not, such as who is actually fit.
+                    w = float(obj.split(":")[1])
+                    own_now = self.owned[gw]
+                    vals = [p.xp for p in table.values()]
+                    hi = max(vals) or 1.0
+                    view = {}
+                    for pid, p in table.items():
+                        q = _copy.copy(p)
+                        q.xp = (1 - w) * p.xp + w * own_now.get(pid, 0.0) * hi
+                        view[pid] = q
                 elif obj == "form":
                     # Rank by what happened last gameweek, with a nod to ownership —
                     # the casual manager's actual decision rule.

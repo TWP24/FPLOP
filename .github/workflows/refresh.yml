@@ -46,10 +46,13 @@ jobs:
           # Space-separated for several leagues, e.g. "123456 789012".
           FPL_LEAGUE: ${{ vars.FPL_LEAGUE }}
           FPL_RIVALS: ${{ vars.FPL_RIVALS || '19' }}
+          # 'template' starts from the most-owned legal fifteen; 'xp' from the model's.
+          FPL_START: ${{ vars.FPL_START || 'template' }}
         run: |
           python -m fplm.cli plan \
             --refresh \
             --rivals "$FPL_RIVALS" \
+            --start "${FPL_START:-template}" \
             ${FPL_ENTRY:+--entry "$FPL_ENTRY"} \
             ${FPL_LEAGUE:+--league $FPL_LEAGUE} \
             --out site/index.html
