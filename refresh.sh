@@ -1,6 +1,9 @@
 #!/bin/sh
 # Daily refresh: pull live FPL data and rebuild the plan dashboard.
-# Add your entry id once the season starts:  --entry 1234567
+# FPL entry 2272028 ("Djed and Buried"). Squad picks only become readable
+# after each gameweek deadline, so before GW1 this is ignored and the plan
+# is built from scratch rather than from your actual squad.
+FPL_ENTRY="${FPL_ENTRY:-2272028}"
 cd "$(dirname "$0")" || exit 1
 ./.venv/bin/python -m fplm.cli plan \
   --refresh \
