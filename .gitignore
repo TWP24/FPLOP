@@ -3,5 +3,8 @@
 __pycache__/
 *.pyc
 refresh.log
-# Backtest archives are large and re-downloadable from vaastav/Fantasy-Premier-League
-data/*.csv
+# Nothing in data/ belongs in the repo. The backtest CSVs come from
+# vaastav/Fantasy-Premier-League and the Understat scrapes are re-fetchable; together
+# they are ~77MB of third-party data that would otherwise be republished here.
+data/
+!data/README.md
