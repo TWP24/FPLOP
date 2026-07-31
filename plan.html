@@ -171,13 +171,18 @@ svg .sparkline{stroke:var(--chart); stroke-width:1.5}
         align-items:center; margin-top:2px}
 .fdrkey i{font-style:normal; display:inline-flex; align-items:center; gap:5px}
 .fdrkey b{width:14px; height:10px; border-radius:3px; display:inline-block}
+section.action{background:var(--accent-wash); border:1px solid var(--accent);
+  border-radius:12px; padding:15px 16px}
+section.action h2{color:var(--accent)}
+.warncell{color:var(--warn); font-size:12.5px}
+.okline{font-size:13.5px; color:var(--mut); padding:2px}
 footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); padding-top:15px}
 </style>
 <div class="wrap">
   <header>
     <div class="eyebrow">Season 2026/27 · monthly prize league</div>
     <h1>FPL monthly plan</h1>
-    <div class="stamp mono">Refreshed 2026-07-31 14:50 UTC &nbsp;·&nbsp;
+    <div class="stamp mono">Refreshed 2026-07-31 15:46 UTC &nbsp;·&nbsp;
         next deadline GW1 &nbsp;·&nbsp; 20 managers</div>
   </header>
 
@@ -193,6 +198,21 @@ footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); paddi
     <div class="tile"><div class="k">Chip value</div>
       <div class="v mono">+117<u> pts</u></div></div>
   </div>
+
+  <section class="action">
+    <h2>Before the deadline <span>&mdash; GW1, 21d 1h away</span></h2>
+    <div class="strip">
+      <div class="tile"><div class="k">Captain</div>
+        <div class="v" style="font-size:16px">B.Fernandes</div></div>
+      <div class="tile"><div class="k">Vice</div>
+        <div class="v" style="font-size:16px">Haaland</div></div>
+      <div class="tile"><div class="k">Transfer</div>
+        <div class="v" style="font-size:14px"><span class="dim">no transfer — roll it</span></div></div>
+      <div class="tile"><div class="k">Flags</div>
+        <div class="v mono">0<u> in squad</u></div></div>
+    </div>
+    <div class="okline">No injury or availability flags in your squad.</div>
+  </section>
 
   <input class="tabin" type="radio" name="tab" id="t1" checked>
   <input class="tabin" type="radio" name="tab" id="t2">

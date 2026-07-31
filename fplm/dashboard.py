@@ -205,12 +205,91 @@ svg .sparkline{stroke:var(--chart); stroke-width:1.5}
         align-items:center; margin-top:2px}
 .fdrkey i{font-style:normal; display:inline-flex; align-items:center; gap:5px}
 .fdrkey b{width:14px; height:10px; border-radius:3px; display:inline-block}
+section.action{background:var(--accent-wash); border:1px solid var(--accent);
+  border-radius:12px; padding:15px 16px}
+section.action h2{color:var(--accent)}
+.warncell{color:var(--warn); font-size:12.5px}
+.okline{font-size:13.5px; color:var(--mut); padding:2px}
 footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); padding-top:15px}
 """
 
 
 def _esc(s) -> str:
     return html.escape(str(s))
+
+
+def _action_panel(plan, squad, rates, gwplans, deadline: str) -> str:
+    """What to do before the next deadline, above everything else.
+
+    The rest of the page is analysis; this is instructions. It leads with availability
+    because expected minutes is the largest single input to the model and a squad with
+    an injured captain is the one thing worth knowing before anything else on the page.
+    """
+    import datetime as _dt
+
+    when = ""
+    if deadline:
+        try:
+            d = _dt.datetime.fromisoformat(deadline.replace("Z", "+00:00"))
+            delta = d - _dt.datetime.now(_dt.timezone.utc)
+            days, hrs = delta.days, delta.seconds // 3600
+            when = f"{days}d {hrs}h" if days >= 0 else "passed"
+        except ValueError:
+            when = ""
+
+    # Availability problems inside the squad, worst first.
+    alerts = []
+    for p in squad.players:
+        r = rates.get(p.pid)
+        if r is None:
+            continue
+        chance = None if r.status == "a" and not r.news else r.status
+        if r.status != "a" or r.news:
+            starting = p.pid in squad.starters
+            alerts.append((0 if starting else 1, p, r))
+    alerts.sort(key=lambda x: (x[0], -x[1].xp))
+
+    if alerts:
+        rows = "".join(
+            f'<tr><td class="nm">{_esc(p.name)}'
+            f'{" <span class=tag>STARTING</span>" if inxi == 0 else ""}</td>'
+            f'<td class="dim mono">{_esc(p.team_name)}</td>'
+            f'<td class="r mono">{p.xp:.1f}</td>'
+            f'<td class="warncell">{_esc(r.news or r.status)}</td></tr>'
+            for inxi, p, r in alerts
+        )
+        alert_block = f'''<div class="scroll"><table>
+        <thead><tr><th>Player</th><th>Team</th><th class="r">xP</th>
+          <th>Team news</th></tr></thead><tbody>{rows}</tbody></table></div>'''
+    else:
+        alert_block = ('<div class="okline">No injury or availability flags in your '
+                       'squad.</div>')
+
+    nxt = gwplans[0] if gwplans else None
+    moves = ""
+    if nxt and nxt.moves:
+        moves = "".join(f'<span class="move"><s>{_esc(m.out_name)}</s> &rarr; '
+                        f'<b>{_esc(m.in_name)}</b></span>' for m in nxt.moves)
+    elif nxt:
+        moves = '<span class="dim">no transfer — roll it</span>'
+
+    cap = next((p for p in squad.players if p.pid == squad.captain), None)
+    vice = next((p for p in squad.players if p.pid == squad.vice), None)
+
+    return f'''<section class="action">
+    <h2>Before the deadline <span>&mdash; GW{plan.next_gw}, {when} away</span></h2>
+    <div class="strip">
+      <div class="tile"><div class="k">Captain</div>
+        <div class="v" style="font-size:16px">{_esc(cap.name if cap else "—")}</div></div>
+      <div class="tile"><div class="k">Vice</div>
+        <div class="v" style="font-size:16px">{_esc(vice.name if vice else "—")}</div></div>
+      <div class="tile"><div class="k">Transfer</div>
+        <div class="v" style="font-size:14px">{moves or "&mdash;"}</div></div>
+      <div class="tile"><div class="k">Flags</div>
+        <div class="v mono">{len(alerts)}<u> in squad</u></div></div>
+    </div>
+    {alert_block}
+  </section>'''
 
 
 def _gameweek_section(gwplans) -> str:
@@ -375,7 +454,8 @@ def _one_league(view, my_squad, table) -> str:
 
 
 def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
-           gwplans=None, league_view=None, boot_ref=None, fixtures_ref=None) -> str:
+           gwplans=None, league_view=None, boot_ref=None, fixtures_ref=None,
+           rates_ref=None, deadline_ref="") -> str:
     squad = plan.squad
     cap = next((p for p in squad.players if p.pid == squad.captain), None)
     total_chip = sum(m.chip_value for m in plan.months)
@@ -501,6 +581,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
       carry an <b>xP adj</b> column beside <b>xP</b>.</i></div>
   </section>'''
 
+    action_panel = _action_panel(plan, squad, rates_ref or {}, gwplans, deadline_ref)
     gw_section = _gameweek_section(gwplans)
     n_months = len(plan.months)
     n_gws = len(gwplans) if gwplans else 0
@@ -563,6 +644,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     <div class="tile"><div class="k">Chip value</div>
       <div class="v mono">+{total_chip:.0f}<u> pts</u></div></div>
   </div>
+
+  {action_panel}
 
   <input class="tabin" type="radio" name="tab" id="t1" checked>
   <input class="tabin" type="radio" name="tab" id="t2">
@@ -671,7 +754,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
 
 def write(plan: SeasonPlan, path: str, rivals: int = 19,
           title: str = "FPL monthly plan", gwplans=None, league_view=None,
-          boot_ref=None, fixtures_ref=None) -> str:
+          boot_ref=None, fixtures_ref=None, rates_ref=None,
+          deadline_ref="") -> str:
     # Create the parent directory. Writing beside an existing file works everywhere,
     # so this only bites when the output goes somewhere new — which is exactly what
     # CI does, publishing to site/index.html on a fresh checkout.
@@ -682,5 +766,6 @@ def write(plan: SeasonPlan, path: str, rivals: int = 19,
     with open(path, "w") as fh:
         fh.write(render(plan, rivals=rivals, title=title, gwplans=gwplans,
                         league_view=league_view, boot_ref=boot_ref,
-                        fixtures_ref=fixtures_ref))
+                        fixtures_ref=fixtures_ref, rates_ref=rates_ref,
+                        deadline_ref=deadline_ref))
     return path
