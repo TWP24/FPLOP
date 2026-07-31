@@ -47,6 +47,10 @@ class SeasonPlan:
     squad: opt.Squad
     months: list[MonthPlan]
     tables: dict[str, dict[int, mo.PlayerMonth]]
+    team_ratings: dict = field(default_factory=dict)
+    sim_scores: object = None      # Monte Carlo month totals, for the distribution chart
+    sim_target: float = 0.0        # score the month's winner is expected to post
+    sim_p_win: float = 0.0
 
     @property
     def contested(self) -> list[MonthPlan]:
@@ -63,6 +67,7 @@ def build(
     min_minutes: float = 25.0,
     budget: float = 100.0,
     current_squad: set[int] | None = None,
+    simulate: bool = True,
 ) -> SeasonPlan:
     """Build a whole-season plan from today's data."""
     team_ratings = rt.build(boot, fixtures, prior_weight=prior_weight)
@@ -164,12 +169,32 @@ def build(
     for p in plans:
         p.contest = bool(p.chips)
 
+    # Simulate the month we are entering, so the dashboard can show the actual
+    # distribution of outcomes rather than a mean with an error bar. This is the only
+    # place the Monte Carlo runs for display; everything else uses it for decisions.
+    sim_scores, sim_target, sim_p_win = None, 0.0, 0.0
+    if simulate:
+        try:
+            from .simulate import MonthSimulator
+
+            sim = MonthSimulator(boot, fixtures, tables[current_month.name], rates,
+                                 team_ratings, current_month, n_sims=6000)
+            field = sim.build_field(rivals, cons)
+            res = sim.evaluate(squad, field)
+            sim_scores, sim_target, sim_p_win = res.scores, res.target, res.p_win
+        except Exception:  # noqa: BLE001 — a chart is never worth failing the build for
+            pass
+
     return SeasonPlan(
         generated=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         next_gw=next_gw,
         squad=squad,
         months=plans,
         tables=tables,
+        team_ratings=team_ratings,
+        sim_scores=sim_scores,
+        sim_target=sim_target,
+        sim_p_win=sim_p_win,
     )
 
 

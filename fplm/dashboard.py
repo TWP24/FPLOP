@@ -15,6 +15,7 @@ from __future__ import annotations
 import html
 
 from .plan import SeasonPlan
+from . import charts
 from .xp import calibrate
 
 POS = {1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}
@@ -149,13 +150,50 @@ nav.tabs label:hover{color:var(--ink); background:var(--accent-wash)}
 nav.tabs label b{font-weight:600; font-variant-numeric:tabular-nums; opacity:.55;
                  margin-left:5px; font-size:11.5px}
 .panel{display:none; flex-direction:column; gap:26px}
-#t1:checked~.panels .p1, #t2:checked~.panels .p2,
-#t3:checked~.panels .p3, #t4:checked~.panels .p4{display:flex}
+#t1:checked~.panels .p1, #t2:checked~.panels .p2, #t3:checked~.panels .p3,
+#t4:checked~.panels .p4, #t5:checked~.panels .p5{display:flex}
 #t1:checked~nav.tabs label[for=t1], #t2:checked~nav.tabs label[for=t2],
-#t3:checked~nav.tabs label[for=t3], #t4:checked~nav.tabs label[for=t4]{
+#t3:checked~nav.tabs label[for=t3], #t4:checked~nav.tabs label[for=t4],
+#t5:checked~nav.tabs label[for=t5]{
   color:var(--accent); border-bottom-color:var(--accent)}
 .tabin:focus-visible~nav.tabs label{outline:2px solid var(--accent); outline-offset:2px}
 @media (max-width:520px){ nav.tabs label{padding:8px 10px; font-size:12.5px} }
+/* Fixture difficulty: its own semantic scale, deliberately not the accent hue. */
+:root{--fdr1:#1a7f5a; --fdr2:#54a375; --fdr3:#9aa0a6; --fdr4:#d97757; --fdr5:#b3402f;
+      --chart:#7B2D8E; --chart-soft:#C9A6D6;}
+@media (prefers-color-scheme:dark){:root{
+  --fdr1:#2e9c72; --fdr2:#4e8f68; --fdr3:#6b7280; --fdr4:#c96a4a; --fdr5:#a33b2c;
+  --chart:#C77DDB; --chart-soft:#5B3468;}}
+:root[data-theme=dark]{--fdr1:#2e9c72; --fdr2:#4e8f68; --fdr3:#6b7280; --fdr4:#c96a4a;
+  --fdr5:#a33b2c; --chart:#C77DDB; --chart-soft:#5B3468;}
+:root[data-theme=light]{--fdr1:#1a7f5a; --fdr2:#54a375; --fdr3:#9aa0a6; --fdr4:#d97757;
+  --fdr5:#b3402f; --chart:#7B2D8E; --chart-soft:#C9A6D6;}
+
+.chartbox{background:var(--card); border:1px solid var(--line); border-radius:11px;
+  padding:14px; box-shadow:var(--shadow); overflow-x:auto}
+svg text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-variant-numeric:tabular-nums}
+svg .cx,svg .cy{font-size:10px; fill:var(--mut)}
+svg .cy{font-weight:650}
+svg .cf{font-size:9.5px; fill:#fff; font-weight:600}
+svg .cb{font-size:10px; fill:var(--mut)}
+svg .cq{font-size:9px; fill:var(--mut)}
+svg .pt{font-size:9.5px; fill:var(--mut)}
+svg .blank{fill:var(--line)}
+svg .grid{stroke:var(--line); stroke-width:1}
+svg .axis{stroke:var(--mut); stroke-width:1; opacity:.4}
+svg .barwin{fill:var(--data); opacity:.85}
+svg .barlose{fill:var(--mut); opacity:.30}
+svg .vline{stroke:var(--warn); stroke-width:2; stroke-dasharray:3 3}
+svg .vlab{font-size:10px; fill:var(--warn); font-weight:700}
+svg .mline{stroke:var(--chart); stroke-width:2}
+svg .mlab{font-size:10px; fill:var(--chart); font-weight:700}
+svg .dot{fill:var(--mut); opacity:.42}
+svg .dotown{fill:var(--chart)}
+svg .sparkline{stroke:var(--chart); stroke-width:1.5}
+.fdrkey{display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:var(--mut);
+        align-items:center; margin-top:2px}
+.fdrkey i{font-style:normal; display:inline-flex; align-items:center; gap:5px}
+.fdrkey b{width:14px; height:10px; border-radius:3px; display:inline-block}
 footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); padding-top:15px}
 """
 
@@ -312,7 +350,7 @@ def _league_section(view, my_squad, table) -> str:
 
 
 def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
-           gwplans=None, league_view=None) -> str:
+           gwplans=None, league_view=None, boot_ref=None, fixtures_ref=None) -> str:
     squad = plan.squad
     cap = next((p for p in squad.players if p.pid == squad.captain), None)
     total_chip = sum(m.chip_value for m in plan.months)
@@ -336,6 +374,52 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
         for p in squad.xi
     )
     bench = "".join(row(p) for p in squad.bench)
+
+    owned = {p.pid for p in squad.players}
+    month_key = plan.months[0].month.name if plan.months else None
+    now_table = plan.tables.get(month_key, {}) if month_key else {}
+
+    dist_svg = charts.score_distribution(plan.sim_scores, plan.sim_target,
+                                         float(plan.sim_scores.mean())
+                                         if plan.sim_scores is not None else 0.0)
+    dist_block = f'''<section>
+    <h2>How the month lands <span>&mdash; 6,000 simulated seasons of this squad</span></h2>
+    <div class="chartbox">{dist_svg}</div>
+    <div class="legend"><i>Green is where you finish ahead of the month&rsquo;s winner,
+      grey is where you do not. <b>P(win) {plan.sim_p_win*100:.1f}%</b> against a
+      {rivals}-rival field &mdash; chance alone would be {100/(rivals+1):.1f}%.</i></div>
+  </section>''' if dist_svg else ""
+
+    ticker_svg = charts.fixture_ticker(boot_ref, fixtures_ref, plan.next_gw, 10) \
+        if boot_ref and fixtures_ref else ""
+    ticker_block = f'''<section>
+    <h2>Fixture ticker <span>&mdash; next 10 gameweeks, easiest runs at the top</span></h2>
+    <div class="chartbox">{ticker_svg}</div>
+    <div class="fdrkey">
+      <i><b style="background:var(--fdr1)"></b>1</i><i><b style="background:var(--fdr2)"></b>2</i>
+      <i><b style="background:var(--fdr3)"></b>3</i><i><b style="background:var(--fdr4)"></b>4</i>
+      <i><b style="background:var(--fdr5)"></b>5</i>
+      <i>UPPERCASE = home, lowercase = away. Two blocks in a cell is a double gameweek.</i>
+    </div>
+  </section>''' if ticker_svg else ""
+
+    value_svg = charts.value_frontier(now_table, owned)
+    value_block = f'''<section>
+    <h2>Value frontier <span>&mdash; expected points against price</span></h2>
+    <div class="chartbox">{value_svg}</div>
+    <div class="legend"><i>Purple is your squad. The upper-left edge is the efficient
+      frontier &mdash; most points per pound. A ranked table shows who scores most;
+      this shows who is worth buying under a &pound;100m cap.</i></div>
+  </section>''' if value_svg else ""
+
+    team_svg = charts.team_scatter(plan.team_ratings)
+    team_block = f'''<section>
+    <h2>Team ratings <span>&mdash; why a fixture is easy</span></h2>
+    <div class="chartbox">{team_svg}</div>
+    <div class="legend"><i>Purple = scores more and concedes less than average. Facing a
+      weak attack helps your defenders; facing a weak defence helps your forwards. One
+      difficulty number cannot tell you which you are getting.</i></div>
+  </section>''' if team_svg else ""
 
     gw_section = _gameweek_section(gwplans)
     n_months = len(plan.months)
@@ -401,11 +485,13 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
   <input class="tabin" type="radio" name="tab" id="t2">
   <input class="tabin" type="radio" name="tab" id="t3">
   <input class="tabin" type="radio" name="tab" id="t4">
+  <input class="tabin" type="radio" name="tab" id="t5">
   <nav class="tabs">
     <label for="t1">Squad</label>
     <label for="t2">Season<b>{n_months}</b></label>
     <label for="t3">Gameweeks<b>{n_gws}</b></label>
     <label for="t4">League{league_badge}</label>
+    <label for="t5">Charts</label>
   </nav>
 
   <div class="panels">
@@ -446,6 +532,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     </div>
   </section>
 
+  {dist_block}
     </div>
 
     <div class="panel p3">
@@ -454,6 +541,14 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
 
     <div class="panel p4">
   {league_section}
+    </div>
+
+    <div class="panel p5">
+  {ticker_block}
+
+  {value_block}
+
+  {team_block}
     </div>
   </div>
 
@@ -486,7 +581,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
 
 
 def write(plan: SeasonPlan, path: str, rivals: int = 19,
-          title: str = "FPL monthly plan", gwplans=None, league_view=None) -> str:
+          title: str = "FPL monthly plan", gwplans=None, league_view=None,
+          boot_ref=None, fixtures_ref=None) -> str:
     # Create the parent directory. Writing beside an existing file works everywhere,
     # so this only bites when the output goes somewhere new — which is exactly what
     # CI does, publishing to site/index.html on a fresh checkout.
@@ -496,5 +592,6 @@ def write(plan: SeasonPlan, path: str, rivals: int = 19,
     os.makedirs(parent, exist_ok=True)
     with open(path, "w") as fh:
         fh.write(render(plan, rivals=rivals, title=title, gwplans=gwplans,
-                        league_view=league_view))
+                        league_view=league_view, boot_ref=boot_ref,
+                        fixtures_ref=fixtures_ref))
     return path

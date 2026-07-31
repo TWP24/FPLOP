@@ -336,7 +336,7 @@ def cmd_plan(args) -> None:
 
     out = args.out or "plan.html"
     dashboard.write(p, out, rivals=args.rivals, title=args.title, gwplans=gwplans,
-                    league_view=league_view)
+                    league_view=league_view, boot_ref=boot, fixtures_ref=fixtures)
     print(f"\n{BOLD}Season plan — next deadline GW{p.next_gw}{RESET}")
     print(_hr())
     for m in p.months:
