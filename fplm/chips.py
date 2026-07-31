@@ -47,8 +47,24 @@ CHIP_LABEL = {
 # Boost in February on a normal gameweek. Every one is re-derived from the real fixture
 # list the moment the postponements are actually published, at which point these
 # multipliers stop mattering.
-BLANK_WINDOW = range(32, 35)   # FA Cup semi-final weekend and neighbours
-DOUBLE_WINDOW = range(33, 38)  # rescheduled fixtures land in the run-in
+# Narrowed using Ben Crellin's published 2026/27 fixture calendar (a public Google
+# Sheet, produced with Fantasy Football Hub). Its date-to-gameweek mapping was checked
+# against the live fixture list and matches exactly: Apr 10 = GW31, Apr 17 = GW32,
+# Apr 24 = GW33, May 1 = GW34.
+#
+# What that calendar shows for this season in particular:
+#   * FA Cup 3rd, 4th and 5th rounds fall on Jan 9, Feb 13 and Mar 6 — all weekends
+#     with NO gameweek scheduled. FPL has deliberately routed around them, so the usual
+#     late-February and March blanks do not appear this season.
+#   * The semi-finals (Apr 20/27) collide with GW33, which is the one real blank.
+#   * Crellin marks GW32 "Fairly Likely DGW".
+#
+# One caution learned the hard way: that sheet also carries a note reading "GW18 Blank:
+# MCI vs BRE", which is stale — City and Brentford meet in GW14 and GW34 this season and
+# GW18 has its full ten fixtures. Published calendars carry over between seasons, so
+# check any specific claim against the live fixture list before encoding it.
+BLANK_WINDOW = range(33, 34)        # GW33 — FA Cup semi-final weekend
+DOUBLE_WINDOW = list(range(34, 38)) + [32]  # GW32 flagged likely; rescheduled games return GW34-37
 
 # A bench boost in a double gameweek pays four bench players across two fixtures rather
 # than one, so it roughly doubles. A triple captain likewise. A free hit is worth most
