@@ -207,8 +207,80 @@ def _gameweek_section(gwplans) -> str:
   </section>"""
 
 
+def _league_section(view, my_squad, table) -> str:
+    """Your mini-league: rivals priced through the same model, and real ownership."""
+    if view is None:
+        return ""
+    from . import rivals as rv
+
+    if not view.available:
+        return f"""<section>
+    <h2>Your league <span>&mdash; {_esc(view.league_name)}</span></h2>
+    <div class="note"><h3>Not available yet</h3>
+      <p style="margin:0">{_esc(view.note)}. This fills in automatically once the
+      first deadline passes, and every rival&rsquo;s squad then gets priced through the
+      same model as yours.</p></div>
+  </section>"""
+
+    rows = ""
+    for i, r in enumerate(view.with_picks, 1):
+        cap = table.get(r.captain)
+        chip = f'<span class="chip">{_esc(r.chip)}</span>' if r.chip else ""
+        rows += (
+            f'<tr><td class="mono dim">{i}</td>'
+            f'<td class="nm">{_esc(r.team_name)}</td>'
+            f'<td class="dim">{_esc(r.manager)}</td>'
+            f'<td class="r mono" style="font-weight:650">{r.xp:.1f}</td>'
+            f'<td>{_esc(cap.name) if cap else "&mdash;"}</td>'
+            f'<td class="r mono dim">{r.total_points}</td>'
+            f'<td>{chip}</td></tr>'
+        )
+
+    diffs, template = rv.differentials(view, my_squad, table)
+    thr = rv.threats(view, my_squad, table)
+
+    def own_rows(items, label):
+        out = ""
+        for p, own in items[:8]:
+            bar = f'<div class="meter"><span class="fill" style="width:{own*100:.0f}%"></span>' \
+                  f'<span class="val mono">{own*100:.0f}%</span></div>'
+            out += (f'<tr><td class="nm">{_esc(p.name)}</td>'
+                    f'<td class="dim mono">{_esc(p.team_name)}</td>'
+                    f'<td class="r mono">{p.xp:.1f}</td><td>{bar}</td></tr>')
+        return out or f'<tr><td colspan="4" class="dim">no {label}</td></tr>'
+
+    return f"""<section>
+    <h2>Your league <span>&mdash; {_esc(view.league_name)}, GW{view.gameweek}</span></h2>
+    <div class="scroll"><table>
+      <thead><tr><th>#</th><th>Team</th><th>Manager</th><th class="r">Projected</th>
+        <th>Captain</th><th class="r">Total</th><th>Chip</th></tr></thead>
+      <tbody>{rows}</tbody>
+    </table></div>
+    <div class="legend"><i>Every rival&rsquo;s actual squad, priced through the same
+      model as yours. Projected is this month&rsquo;s expected points for their XI plus
+      captain.</i></div>
+  </section>
+
+  <section>
+    <h2>Where you differ <span>&mdash; ownership measured in your league, not globally</span></h2>
+    <div class="scroll"><table>
+      <thead><tr><th colspan="4">Your differentials &mdash; the league mostly does not own these</th></tr>
+        <tr><th>Player</th><th>Team</th><th class="r">xP</th><th>League ownership</th></tr></thead>
+      <tbody>{own_rows(diffs, "differentials")}</tbody>
+    </table></div>
+    <div class="scroll"><table>
+      <thead><tr><th colspan="4">Threats &mdash; rivals own these, you do not</th></tr>
+        <tr><th>Player</th><th>Team</th><th class="r">xP</th><th>League ownership</th></tr></thead>
+      <tbody>{own_rows(thr, "threats")}</tbody>
+    </table></div>
+    <div class="legend"><i>A player most of your league owns cannot win you the month
+      &mdash; his haul lifts everyone. Only the gap between your squad and theirs moves
+      you up the table.</i></div>
+  </section>"""
+
+
 def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
-           gwplans=None) -> str:
+           gwplans=None, league_view=None) -> str:
     squad = plan.squad
     cap = next((p for p in squad.players if p.pid == squad.captain), None)
     total_chip = sum(m.chip_value for m in plan.months)
@@ -234,6 +306,11 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     bench = "".join(row(p) for p in squad.bench)
 
     gw_section = _gameweek_section(gwplans)
+    month_now = plan.months[0].month.name if plan.months else None
+    league_section = _league_section(
+        league_view, [p.pid for p in squad.players],
+        plan.tables.get(month_now, {}) if month_now else {},
+    )
     scale = max([m.field_target for m in plan.months] + [1])
     months = ""
     for m in plan.months:
@@ -319,6 +396,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
 
   {gw_section}
 
+  {league_section}
+
   <div class="note">
     <h3>How to read this</h3>
     <ul>
@@ -348,7 +427,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
 
 
 def write(plan: SeasonPlan, path: str, rivals: int = 19,
-          title: str = "FPL monthly plan", gwplans=None) -> str:
+          title: str = "FPL monthly plan", gwplans=None, league_view=None) -> str:
     with open(path, "w") as fh:
-        fh.write(render(plan, rivals=rivals, title=title, gwplans=gwplans))
+        fh.write(render(plan, rivals=rivals, title=title, gwplans=gwplans,
+                        league_view=league_view))
     return path
