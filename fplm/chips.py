@@ -74,8 +74,22 @@ DGW_UPLIFT = {"bboost": 1.75, "3xc": 1.70, "wildcard": 1.15}
 BGW_UPLIFT = {"freehit": 2.60, "wildcard": 1.20}
 
 
-def window_uplift(chip: str, gw: int) -> float:
-    """Prior multiplier on a chip's value for landing in a likely blank or double."""
+def window_uplift(chip: str, gw: int, real_counts: dict[int, int] | None = None) -> float:
+    """Prior multiplier on a chip's value for landing in a likely blank or double.
+
+    Self-cancelling by design. `real_counts` maps gameweek to the number of fixtures
+    actually scheduled that week; once a genuine blank or double appears there, the
+    prior for that gameweek switches off. Without this the two would compound: a real
+    double already raises the chip's computed value because the bench plays twice, and
+    multiplying that by the prior as well would count the same fixture twice over.
+    """
+    if real_counts is not None:
+        n = real_counts.get(gw)
+        # 20 fixtures in a gameweek means every club plays once. Anything else means
+        # the schedule already knows about the blank or double, so the prior retires.
+        if n is not None and n != 20:
+            return 1.0
+
     factor = 1.0
     if gw in DOUBLE_WINDOW:
         factor = max(factor, DGW_UPLIFT.get(chip, 1.0))
@@ -240,6 +254,7 @@ def allocate(
     chip_windows: list[ChipWindow],
     months: list[Month],
     max_per_month: int = 2,
+    real_counts: dict[int, int] | None = None,
 ) -> list[ChipValue]:
     """Assign each available chip to the month where it is worth most.
 
@@ -269,7 +284,7 @@ def allocate(
     # held back for the window where it is worth most.
     candidates = [
         (w, ChipValue(v.chip, v.month, v.gw,
-                      v.value * window_uplift(v.chip, v.gw), v.note))
+                      v.value * window_uplift(v.chip, v.gw, real_counts), v.note))
         for w, v in candidates
     ]
     candidates.sort(key=lambda wv: -wv[1].value)

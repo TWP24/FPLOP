@@ -124,7 +124,13 @@ def build(
         values.append(chipmod.wildcard_value(squad, tbl, m, cons))
 
     live_windows = [w for w in chipmod.windows(boot) if w.stop_event >= next_gw]
-    allocation = chipmod.allocate(values, live_windows, months)
+    # Real fixture counts per gameweek, so the blank/double prior retires itself as
+    # soon as the schedule actually shows one.
+    real_counts: dict[int, int] = {}
+    for f in fixtures:
+        if f["event"]:
+            real_counts[f["event"]] = real_counts.get(f["event"], 0) + 2
+    allocation = chipmod.allocate(values, live_windows, months, real_counts=real_counts)
 
     # --- Assemble the month-by-month view ----------------------------------
     counts_by_month = {m.name: mo.fixture_counts(fixtures, m) for m in months}
