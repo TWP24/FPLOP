@@ -80,6 +80,15 @@ def build(
     season_plan,
     horizon_weight: float = 0.8,
     hold_gws: int = 0,
+    # Zero, and measured. Allowing hits scores +45 a season on average across four
+    # seasons, but the average is one season: +19, -42, +214, -11. Two of four go
+    # backwards, and dropping 2024-25 leaves -11.
+    #
+    # The control is what settles it. With perfect foresight, allowing hits is worth
+    # +259 a season; with this model it is worth +30. Hits pay handsomely when your
+    # predictions are good enough to justify a -4, and this model ranks players no
+    # better than points-per-game. Revisit if the Actual-vs-predicted tracker ever
+    # shows the model beating its own forecast over 8-10 gameweeks.
     max_hits: int = 0,
     min_minutes: float = 25.0,
     budget: float = 100.0,
