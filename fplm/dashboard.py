@@ -35,187 +35,234 @@ CHIP_LABEL = {
 
 CSS = """
 :root{
-  --paper:#FCFBFD; --ink:#1B0A20; --mut:#6F6377; --line:#E7E2EB;
-  --card:#FFFFFF; --accent:#7B2D8E; --accent-wash:#F4EAF7;
-  --data:#00875A; --data-wash:#E6F2ED; --warn:#C2410C;
-  --shadow:0 1px 2px rgba(27,10,32,.05), 0 6px 20px rgba(27,10,32,.05);
+  --bg:#F7F6F9; --surface:#FFFFFF; --surface-2:#FBFAFC;
+  --ink:#17101C; --ink-2:#4A4152; --mut:#7C7288; --line:#E6E2EC;
+  --accent:#6D28A8; --accent-ink:#FFFFFF; --accent-wash:#F3EDF9; --accent-line:#DCCBEC;
+  --ok:#0F7A52; --ok-wash:#E7F4EE; --warn:#B4530E; --warn-wash:#FDF0E4;
+  --data:#00875A;
+  --fdr1:#1a7f5a; --fdr2:#54a375; --fdr3:#9aa0a6; --fdr4:#d97757; --fdr5:#b3402f;
+  --chart:#6D28A8; --shadow:0 1px 2px rgba(23,16,28,.04),0 1px 3px rgba(23,16,28,.06);
+  --shadow-lg:0 4px 6px -1px rgba(23,16,28,.05),0 10px 24px -6px rgba(23,16,28,.10);
+  --r:10px; --rail:224px;
 }
-@media (prefers-color-scheme:dark){
-  :root{
-    --paper:#120D15; --ink:#EDE8F0; --mut:#9A8FA3; --line:#2A2130;
-    --card:#191220; --accent:#C77DDB; --accent-wash:#231331;
-    --data:#3FD69B; --data-wash:#12271F; --warn:#F0A868;
-    --shadow:none;
-  }
-}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0D0A10; --surface:#161120; --surface-2:#1B1526;
+  --ink:#EFEBF3; --ink-2:#BDB4C8; --mut:#8F859C; --line:#2A2235;
+  --accent:#B98BD9; --accent-ink:#1A1020; --accent-wash:#241733; --accent-line:#3B2A4E;
+  --ok:#4ED9A0; --ok-wash:#12291F; --warn:#E9A45F; --warn-wash:#2C1E11;
+  --data:#3FD69B;
+  --fdr1:#2e9c72; --fdr2:#4e8f68; --fdr3:#6b7280; --fdr4:#c96a4a; --fdr5:#a33b2c;
+  --chart:#B98BD9; --shadow:none; --shadow-lg:none;
+}}
 :root[data-theme=dark]{
-  --paper:#120D15; --ink:#EDE8F0; --mut:#9A8FA3; --line:#2A2130;
-  --card:#191220; --accent:#C77DDB; --accent-wash:#231331;
-  --data:#3FD69B; --data-wash:#12271F; --warn:#F0A868;
-  --shadow:none;
+  --bg:#0D0A10; --surface:#161120; --surface-2:#1B1526;
+  --ink:#EFEBF3; --ink-2:#BDB4C8; --mut:#8F859C; --line:#2A2235;
+  --accent:#B98BD9; --accent-ink:#1A1020; --accent-wash:#241733; --accent-line:#3B2A4E;
+  --ok:#4ED9A0; --ok-wash:#12291F; --warn:#E9A45F; --warn-wash:#2C1E11;
+  --data:#3FD69B; --fdr1:#2e9c72; --fdr2:#4e8f68; --fdr3:#6b7280;
+  --fdr4:#c96a4a; --fdr5:#a33b2c; --chart:#B98BD9; --shadow:none; --shadow-lg:none;
 }
 :root[data-theme=light]{
-  --paper:#FCFBFD; --ink:#1B0A20; --mut:#6F6377; --line:#E7E2EB;
-  --card:#FFFFFF; --accent:#7B2D8E; --accent-wash:#F4EAF7;
-  --data:#00875A; --data-wash:#E6F2ED; --warn:#C2410C;
-  --shadow:0 1px 2px rgba(27,10,32,.05), 0 6px 20px rgba(27,10,32,.05);
+  --bg:#F7F6F9; --surface:#FFFFFF; --surface-2:#FBFAFC;
+  --ink:#17101C; --ink-2:#4A4152; --mut:#7C7288; --line:#E6E2EC;
+  --accent:#6D28A8; --accent-ink:#FFFFFF; --accent-wash:#F3EDF9; --accent-line:#DCCBEC;
+  --ok:#0F7A52; --ok-wash:#E7F4EE; --warn:#B4530E; --warn-wash:#FDF0E4;
+  --data:#00875A; --fdr1:#1a7f5a; --fdr2:#54a375; --fdr3:#9aa0a6;
+  --fdr4:#d97757; --fdr5:#b3402f; --chart:#6D28A8;
+  --shadow:0 1px 2px rgba(23,16,28,.04),0 1px 3px rgba(23,16,28,.06);
+  --shadow-lg:0 4px 6px -1px rgba(23,16,28,.05),0 10px 24px -6px rgba(23,16,28,.10);
 }
 
 *{box-sizing:border-box}
-body{
-  margin:0; padding:28px 18px 72px; background:var(--paper); color:var(--ink);
-  font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  -webkit-text-size-adjust:100%;
-}
-.wrap{max-width:960px; margin:0 auto; display:flex; flex-direction:column; gap:34px}
+body{margin:0; background:var(--bg); color:var(--ink);
+  font:14.5px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-text-size-adjust:100%; -webkit-font-smoothing:antialiased}
 .mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
-      font-variant-numeric:tabular-nums}
+  font-variant-numeric:tabular-nums; font-feature-settings:"tnum"}
 
-header{display:flex; flex-direction:column; gap:5px}
-h1{font-size:23px; font-weight:680; letter-spacing:-.02em; margin:0; text-wrap:balance}
-.stamp{font-size:12px; color:var(--mut); letter-spacing:.02em}
-.eyebrow{font-size:11px; text-transform:uppercase; letter-spacing:.10em;
-         color:var(--accent); font-weight:700}
+/* ---- app shell: fixed rail on desktop, horizontal nav on mobile ---- */
+.app{display:flex; min-height:100vh}
+.tabin{position:absolute; opacity:0; pointer-events:none}
 
-section{display:flex; flex-direction:column; gap:11px}
-h2{font-size:12px; text-transform:uppercase; letter-spacing:.09em; color:var(--mut);
-   margin:0; font-weight:700}
-h2 span{text-transform:none; letter-spacing:0; font-weight:500; opacity:.8}
+.rail{width:var(--rail); flex:0 0 var(--rail); background:var(--surface);
+  border-right:1px solid var(--line); padding:20px 14px; position:sticky; top:0;
+  height:100vh; display:flex; flex-direction:column; gap:22px}
+.brand{display:flex; align-items:center; gap:10px; padding:0 6px}
+.brand .mark{width:30px; height:30px; border-radius:8px; background:var(--accent);
+  color:var(--accent-ink); display:grid; place-items:center; font-weight:750;
+  font-size:13px; letter-spacing:-.03em; flex:0 0 30px}
+.brand b{font-size:14.5px; font-weight:680; letter-spacing:-.01em; display:block}
+.brand span{font-size:11px; color:var(--mut); display:block; margin-top:-1px}
+nav.tabs{display:flex; flex-direction:column; gap:2px}
+nav.tabs .grp{font-size:10px; text-transform:uppercase; letter-spacing:.09em;
+  color:var(--mut); font-weight:700; padding:6px 8px 4px}
+nav.tabs label{display:flex; align-items:center; gap:9px; padding:8px 10px;
+  border-radius:8px; font-size:13.5px; font-weight:550; color:var(--ink-2);
+  cursor:pointer; transition:background .12s,color .12s; white-space:nowrap}
+nav.tabs label:hover{background:var(--surface-2); color:var(--ink)}
+nav.tabs label i{font-style:normal; width:16px; text-align:center; opacity:.75; font-size:14px}
+nav.tabs label b{margin-left:auto; font-size:11px; font-weight:600; color:var(--mut);
+  background:var(--surface-2); border:1px solid var(--line); border-radius:20px;
+  padding:0 6px; font-variant-numeric:tabular-nums}
+.railfoot{margin-top:auto; font-size:11px; color:var(--mut); padding:0 8px; line-height:1.5}
 
-.strip{display:grid; grid-template-columns:repeat(auto-fit,minmax(138px,1fr)); gap:10px}
-.tile{background:var(--card); border:1px solid var(--line); border-radius:11px;
-      padding:12px 14px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:3px}
-.tile .k{font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--mut);
-         font-weight:650}
-.tile .v{font-size:21px; font-weight:670; letter-spacing:-.02em; line-height:1.15}
-.tile .v u{text-decoration:none; font-size:12px; font-weight:500; color:var(--mut)}
+main{flex:1; min-width:0; display:flex; flex-direction:column}
+.topbar{position:sticky; top:0; z-index:5; background:var(--surface);
+  border-bottom:1px solid var(--line); padding:12px 24px; display:flex;
+  align-items:center; gap:12px; flex-wrap:wrap}
+.topbar h1{font-size:15.5px; font-weight:650; margin:0; letter-spacing:-.01em}
+.spacer{flex:1}
+.content{padding:22px 24px 60px; display:flex; flex-direction:column; gap:22px;
+  max-width:1180px; width:100%}
 
-.scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;
-        border:1px solid var(--line); border-radius:11px; background:var(--card);
-        box-shadow:var(--shadow)}
-table{width:100%; border-collapse:collapse; font-size:14px; min-width:540px}
-th{text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.07em;
-   color:var(--mut); font-weight:650; padding:9px 10px; border-bottom:1px solid var(--line);
-   white-space:nowrap}
-td{padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:middle}
+/* ---- primitives ---- */
+.pill{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600;
+  padding:3px 9px; border-radius:20px; border:1px solid var(--line);
+  background:var(--surface-2); color:var(--ink-2); white-space:nowrap}
+.pill.accent{background:var(--accent-wash); border-color:var(--accent-line); color:var(--accent)}
+.pill.ok{background:var(--ok-wash); border-color:transparent; color:var(--ok)}
+.pill.warn{background:var(--warn-wash); border-color:transparent; color:var(--warn)}
+.dot{width:6px; height:6px; border-radius:50%; background:currentColor; flex:0 0 6px}
+
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+  box-shadow:var(--shadow); overflow:hidden}
+.card > .hd{padding:13px 16px; border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.card > .hd h2{font-size:13.5px; font-weight:640; margin:0; letter-spacing:-.005em;
+  text-transform:none; color:var(--ink)}
+.card > .hd .sub{font-size:12px; color:var(--mut)}
+.card > .bd{padding:14px 16px}
+.card > .bd.flush{padding:0}
+.card > .ft{padding:10px 16px; border-top:1px solid var(--line); background:var(--surface-2);
+  font-size:12px; color:var(--mut); line-height:1.5}
+
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px}
+.kpi{background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+  padding:13px 15px; box-shadow:var(--shadow)}
+.kpi .k{font-size:10.5px; text-transform:uppercase; letter-spacing:.07em;
+  color:var(--mut); font-weight:650}
+.kpi .v{font-size:22px; font-weight:660; letter-spacing:-.025em; line-height:1.2; margin-top:3px}
+.kpi .v u{text-decoration:none; font-size:12px; font-weight:500; color:var(--mut)}
+
+.scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
+table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:520px}
+thead th{text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--mut); font-weight:650; padding:9px 14px; background:var(--surface-2);
+  border-bottom:1px solid var(--line); white-space:nowrap; position:sticky; top:0}
+td{padding:9px 14px; border-bottom:1px solid var(--line); vertical-align:middle}
 tbody tr:last-child td{border-bottom:none}
-.r{text-align:right}
-.nm{font-weight:570}
-.dim{color:var(--mut)}
-.badge{width:26px; color:var(--accent); font-weight:750; font-size:11px}
-.bench td{opacity:.60}
+tbody tr:hover{background:var(--surface-2)}
+.r{text-align:right} .nm{font-weight:570} .dim{color:var(--mut)}
+.badge{width:24px; color:var(--accent); font-weight:750; font-size:11px}
+.bench td{opacity:.62}
 .q{color:var(--warn); font-weight:750; cursor:help}
-
-tr.target td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 tr.target{background:var(--accent-wash)}
-.tag{display:inline-block; background:var(--accent); color:var(--paper); font-size:9.5px;
-     font-weight:750; letter-spacing:.06em; padding:2px 6px; border-radius:20px;
-     vertical-align:1.5px; margin-left:6px}
+tr.target td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.tag{display:inline-block; background:var(--accent); color:var(--accent-ink); font-size:9.5px;
+  font-weight:750; letter-spacing:.05em; padding:2px 6px; border-radius:20px;
+  vertical-align:1.5px; margin-left:6px}
+tr.mrule td{background:var(--accent-wash); font-size:10px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.08em; color:var(--accent); padding:5px 14px}
 
-.chip{display:inline-block; border:1px solid var(--accent); color:var(--accent);
-      border-radius:6px; padding:1.5px 6px; font-size:11px; font-weight:650;
-      margin:2px 5px 2px 0; white-space:nowrap}
-.chip u{text-decoration:none; font-weight:500; opacity:.72}
+.chip{display:inline-block; border:1px solid var(--accent-line); background:var(--accent-wash);
+  color:var(--accent); border-radius:6px; padding:2px 7px; font-size:11px; font-weight:640;
+  margin:2px 5px 2px 0; white-space:nowrap}
+.chip u{text-decoration:none; font-weight:500; opacity:.75}
 .fx{display:inline-block; font-size:10.5px; color:var(--mut); margin:2px 9px 0 0}
-
-.meter{position:relative; min-width:168px; height:22px}
-.meter .fill{position:absolute; left:0; top:7px; height:8px; border-radius:5px;
-             background:var(--data); opacity:.85}
-.meter .tick{position:absolute; top:2px; width:2px; height:18px; background:var(--accent);
-             border-radius:2px}
-.meter .val{position:absolute; right:0; top:3px; font-size:11.5px; color:var(--mut)}
-
-.legend{display:flex; flex-wrap:wrap; gap:16px; font-size:12px; color:var(--mut);
-        align-items:center}
-.legend i{font-style:normal; display:inline-flex; align-items:center; gap:6px}
-.swatch{width:16px; height:8px; border-radius:4px; background:var(--data); opacity:.85}
-.needle{width:2px; height:14px; background:var(--accent); border-radius:2px}
-
-.note{background:var(--card); border:1px solid var(--line);
-      border-left:3px solid var(--accent); border-radius:10px; padding:14px 16px;
-      font-size:13.5px}
-.note h3{margin:0 0 7px; font-size:12px; text-transform:uppercase; letter-spacing:.07em;
-         color:var(--mut); font-weight:700}
-.note ul{margin:0; padding-left:17px; display:flex; flex-direction:column; gap:5px}
-tr.mrule td{background:var(--accent-wash); font-size:10.5px; font-weight:700;
-            text-transform:uppercase; letter-spacing:.08em; color:var(--accent);
-            padding:5px 10px}
 .move{display:inline-block; font-size:12px; margin-right:10px; white-space:nowrap}
 .move s{color:var(--mut); text-decoration:line-through}
 .move b{font-weight:620}
-.moves{min-width:230px}
+.moves{min-width:220px}
 .hit{display:inline-block; color:var(--warn); font-weight:700; font-size:11px;
-     border:1px solid var(--warn); border-radius:5px; padding:0 5px; margin-left:4px}
-/* Tabs, driven entirely by hidden radios so the page needs no JavaScript. */
-.tabin{position:absolute; opacity:0; pointer-events:none}
-nav.tabs{display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--line);
-         margin-bottom:6px}
-nav.tabs label{padding:9px 14px; font-size:13px; font-weight:600; color:var(--mut);
-  cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
-  white-space:nowrap; border-radius:7px 7px 0 0; transition:color .12s, background .12s}
-nav.tabs label:hover{color:var(--ink); background:var(--accent-wash)}
-nav.tabs label b{font-weight:600; font-variant-numeric:tabular-nums; opacity:.55;
-                 margin-left:5px; font-size:11.5px}
-.panel{display:none; flex-direction:column; gap:26px}
-#t1:checked~.panels .p1, #t2:checked~.panels .p2, #t3:checked~.panels .p3,
-#t4:checked~.panels .p4, #t5:checked~.panels .p5{display:flex}
-#t1:checked~nav.tabs label[for=t1], #t2:checked~nav.tabs label[for=t2],
-#t3:checked~nav.tabs label[for=t3], #t4:checked~nav.tabs label[for=t4],
-#t5:checked~nav.tabs label[for=t5]{
-  color:var(--accent); border-bottom-color:var(--accent)}
-.tabin:focus-visible~nav.tabs label{outline:2px solid var(--accent); outline-offset:2px}
-@media (max-width:520px){ nav.tabs label{padding:8px 10px; font-size:12.5px} }
-/* Fixture difficulty: its own semantic scale, deliberately not the accent hue. */
-:root{--fdr1:#1a7f5a; --fdr2:#54a375; --fdr3:#9aa0a6; --fdr4:#d97757; --fdr5:#b3402f;
-      --chart:#7B2D8E; --chart-soft:#C9A6D6;}
-@media (prefers-color-scheme:dark){:root{
-  --fdr1:#2e9c72; --fdr2:#4e8f68; --fdr3:#6b7280; --fdr4:#c96a4a; --fdr5:#a33b2c;
-  --chart:#C77DDB; --chart-soft:#5B3468;}}
-:root[data-theme=dark]{--fdr1:#2e9c72; --fdr2:#4e8f68; --fdr3:#6b7280; --fdr4:#c96a4a;
-  --fdr5:#a33b2c; --chart:#C77DDB; --chart-soft:#5B3468;}
-:root[data-theme=light]{--fdr1:#1a7f5a; --fdr2:#54a375; --fdr3:#9aa0a6; --fdr4:#d97757;
-  --fdr5:#b3402f; --chart:#7B2D8E; --chart-soft:#C9A6D6;}
+  border:1px solid var(--warn); border-radius:5px; padding:0 5px; margin-left:4px}
+.warncell{color:var(--warn); font-size:12.5px}
+.okline{font-size:13px; color:var(--mut); display:flex; align-items:center; gap:8px}
 
-.chartbox{background:var(--card); border:1px solid var(--line); border-radius:11px;
-  padding:14px; box-shadow:var(--shadow); overflow-x:auto}
+.meter{position:relative; min-width:160px; height:20px}
+.meter .fill{position:absolute; left:0; top:6px; height:8px; border-radius:5px;
+  background:var(--data); opacity:.85}
+.meter .tick{position:absolute; top:1px; width:2px; height:18px; background:var(--accent);
+  border-radius:2px}
+.meter .val{position:absolute; right:0; top:2px; font-size:11.5px; color:var(--mut)}
+
+.legend{display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:var(--mut); align-items:center}
+.legend i{font-style:normal; display:inline-flex; align-items:center; gap:6px}
+.swatch{width:15px; height:8px; border-radius:4px; background:var(--data); opacity:.85}
+.needle{width:2px; height:13px; background:var(--accent); border-radius:2px}
+.fdrkey{display:flex; gap:11px; flex-wrap:wrap; font-size:11px; color:var(--mut); align-items:center}
+.fdrkey i{font-style:normal; display:inline-flex; align-items:center; gap:5px}
+.fdrkey b{width:14px; height:10px; border-radius:3px; display:inline-block}
+
+.empty{padding:26px 18px; text-align:center; color:var(--mut); font-size:13.5px;
+  line-height:1.6; max-width:620px; margin:0 auto}
+.empty h3{font-size:14px; font-weight:640; color:var(--ink); margin:0 0 6px}
+.empty code{background:var(--surface-2); border:1px solid var(--line); border-radius:5px;
+  padding:1px 5px; font-size:12px}
+
 svg text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-variant-numeric:tabular-nums}
 svg .cx,svg .cy{font-size:10px; fill:var(--mut)}
 svg .cy{font-weight:650}
 svg .cf{font-size:9.5px; fill:#fff; font-weight:600}
-svg .cb{font-size:10px; fill:var(--mut)}
-svg .cq{font-size:9px; fill:var(--mut)}
+svg .cb,svg .cq{font-size:10px; fill:var(--mut)}
 svg .cd{font-size:9px; fill:var(--mut); font-weight:650}
-svg .barpred{fill:var(--mut); opacity:.35}
-svg .predline{stroke:var(--chart); stroke-width:2.5; stroke-linejoin:round}
-svg .preddot{fill:var(--chart)}
 svg .pt{font-size:9.5px; fill:var(--mut)}
 svg .blank{fill:var(--line)}
 svg .grid{stroke:var(--line); stroke-width:1}
 svg .axis{stroke:var(--mut); stroke-width:1; opacity:.4}
 svg .barwin{fill:var(--data); opacity:.85}
 svg .barlose{fill:var(--mut); opacity:.30}
+svg .barpred{fill:var(--mut); opacity:.35}
 svg .vline{stroke:var(--warn); stroke-width:2; stroke-dasharray:3 3}
 svg .vlab{font-size:10px; fill:var(--warn); font-weight:700}
-svg .mline{stroke:var(--chart); stroke-width:2}
+svg .mline,svg .predline{stroke:var(--chart); stroke-width:2}
+svg .predline{stroke-width:2.5; stroke-linejoin:round}
 svg .mlab{font-size:10px; fill:var(--chart); font-weight:700}
 svg .dot{fill:var(--mut); opacity:.42}
-svg .dotown{fill:var(--chart)}
-svg .sparkline{stroke:var(--chart); stroke-width:1.5}
-.fdrkey{display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:var(--mut);
-        align-items:center; margin-top:2px}
-.fdrkey i{font-style:normal; display:inline-flex; align-items:center; gap:5px}
-.fdrkey b{width:14px; height:10px; border-radius:3px; display:inline-block}
-section.action{background:var(--accent-wash); border:1px solid var(--accent);
-  border-radius:12px; padding:15px 16px}
-section.action h2{color:var(--accent)}
-.warncell{color:var(--warn); font-size:12.5px}
-.okline{font-size:13.5px; color:var(--mut); padding:2px}
-footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); padding-top:15px}
+svg .dotown,svg .preddot{fill:var(--chart)}
+
+.panel{display:none; flex-direction:column; gap:22px}
+#t1:checked~main .p1, #t2:checked~main .p2, #t3:checked~main .p3,
+#t4:checked~main .p4, #t5:checked~main .p5{display:flex}
+#t1:checked~.rail label[for=t1], #t2:checked~.rail label[for=t2],
+#t3:checked~.rail label[for=t3], #t4:checked~.rail label[for=t4],
+#t5:checked~.rail label[for=t5]{background:var(--accent-wash); color:var(--accent)}
+#t1:checked~.rail label[for=t1] b, #t2:checked~.rail label[for=t2] b,
+#t3:checked~.rail label[for=t3] b, #t4:checked~.rail label[for=t4] b,
+#t5:checked~.rail label[for=t5] b{border-color:var(--accent-line); color:var(--accent)}
+.tabin:focus-visible~.rail label{outline:2px solid var(--accent); outline-offset:-2px}
+
+@media (max-width:860px){
+  .app{flex-direction:column}
+  .rail{width:auto; flex:none; height:auto; position:static; border-right:none;
+    border-bottom:1px solid var(--line); padding:12px 14px; gap:12px}
+  .rail .railfoot, nav.tabs .grp{display:none}
+  nav.tabs{flex-direction:row; gap:4px; overflow-x:auto; padding-bottom:2px}
+  nav.tabs label{padding:7px 11px; font-size:13px}
+  nav.tabs label i{display:none}
+  .topbar{padding:11px 15px} .content{padding:16px 15px 56px}
+}
 """
 
 
 def _esc(s) -> str:
     return html.escape(str(s))
+
+
+def _countdown(deadline: str) -> str:
+    """Time to the next deadline, as a chip the top bar can wear."""
+    import datetime as _dt
+
+    if not deadline:
+        return ""
+    try:
+        d = _dt.datetime.fromisoformat(deadline.replace("Z", "+00:00"))
+    except ValueError:
+        return ""
+    delta = d - _dt.datetime.now(_dt.timezone.utc)
+    if delta.total_seconds() < 0:
+        return "deadline passed"
+    days, hrs = delta.days, delta.seconds // 3600
+    return f"{days}d {hrs}h to deadline" if days else f"{hrs}h to deadline"
 
 
 def _action_panel(plan, squad, rates, gwplans, deadline: str) -> str:
@@ -276,19 +323,20 @@ def _action_panel(plan, squad, rates, gwplans, deadline: str) -> str:
     cap = next((p for p in squad.players if p.pid == squad.captain), None)
     vice = next((p for p in squad.players if p.pid == squad.vice), None)
 
-    return f'''<section class="action">
-    <h2>Before the deadline <span>&mdash; GW{plan.next_gw}, {when} away</span></h2>
-    <div class="strip">
-      <div class="tile"><div class="k">Captain</div>
+    return f'''<section class="card action">
+    <div class="hd"><h2>Before the deadline</h2>
+      <span class="sub">GW{plan.next_gw}, {when} away</span></div>
+    <div class="bd"><div class="kpis">
+      <div class="kpi"><div class="k">Captain</div>
         <div class="v" style="font-size:16px">{_esc(cap.name if cap else "—")}</div></div>
-      <div class="tile"><div class="k">Vice</div>
+      <div class="kpi"><div class="k">Vice</div>
         <div class="v" style="font-size:16px">{_esc(vice.name if vice else "—")}</div></div>
-      <div class="tile"><div class="k">Transfer</div>
+      <div class="kpi"><div class="k">Transfer</div>
         <div class="v" style="font-size:14px">{moves or "&mdash;"}</div></div>
-      <div class="tile"><div class="k">Flags</div>
+      <div class="kpi"><div class="k">Flags</div>
         <div class="v mono">{len(alerts)}<u> in squad</u></div></div>
     </div>
-    {alert_block}
+    {alert_block}</div>
   </section>'''
 
 
@@ -331,25 +379,23 @@ def _gameweek_section(gwplans) -> str:
             f'<td class="moves">{moves}</td></tr>'
         )
 
-    return f"""<section>
-    <h2>Gameweek plan <span>— projected to the end of the season</span></h2>
-    <div class="strip">
-      <div class="tile"><div class="k">Projected total</div>
+    return f"""<section class="card">
+    <div class="hd"><h2>Gameweek plan</h2><span class="sub">projected to the end of the season</span></div>
+    <div class="bd"><div class="kpis">
+      <div class="kpi"><div class="k">Projected total</div>
         <div class="v mono">{total_pts:.0f}<u> pts</u></div></div>
-      <div class="tile"><div class="k">Transfers</div>
+      <div class="kpi"><div class="k">Transfers</div>
         <div class="v mono">{total_moves}</div></div>
-      <div class="tile"><div class="k">Hits taken</div>
+      <div class="kpi"><div class="k">Hits taken</div>
         <div class="v mono">{total_hits}<u> ({4 * total_hits} pts)</u></div></div>
     </div>
     <div class="scroll"><table>
       <thead><tr><th>GW</th><th>Captain</th><th>Form</th><th>Projected</th>
         <th>Chip</th><th>Transfers</th></tr></thead>
       <tbody>{rows}</tbody>
-    </table></div>
-    <div class="legend">
-      <i>Weeks further out say "a good squad for these fixtures" more than
-         "these exact players" — the near weeks are the actionable ones.</i>
-    </div>
+    </table></div></div>
+    <div class="ft">Weeks further out say a good squad for these fixtures more than
+      these exact players &mdash; the near weeks are the actionable ones.</div>
   </section>"""
 
 
@@ -364,8 +410,8 @@ def _league_section(views, my_squad, table) -> str:
     from . import rivals as rv
 
     if not views:
-        return """<section>
-    <h2>Your league</h2>
+        return """<section class="card">
+    <div class="hd"><h2>Your league</h2></div>
     <div class="note"><h3>No league connected</h3>
       <p style="margin:0 0 8px">Pass your mini-league id and this fills with every
       rival&rsquo;s actual squad, priced through the same model as yours &mdash; their
@@ -387,8 +433,8 @@ def _one_league(view, my_squad, table) -> str:
     from . import rivals as rv
 
     if not view.available:
-        return f"""<section>
-    <h2>{_esc(view.league_name)} <span>&mdash; league {view.league_id}</span></h2>
+        return f"""<section class="card">
+    <div class="hd"><h2>{_esc(view.league_name)} </h2><span class="sub">league {view.league_id}</span></div>
     <div class="note"><h3>Not available yet</h3>
       <p style="margin:0">{_esc(view.note)}. This fills in automatically once the
       first deadline passes, and every rival&rsquo;s squad then gets priced through the
@@ -422,8 +468,8 @@ def _one_league(view, my_squad, table) -> str:
                     f'<td class="r mono">{p.xp:.1f}</td><td>{bar}</td></tr>')
         return out or f'<tr><td colspan="4" class="dim">no {label}</td></tr>'
 
-    return f"""<section>
-    <h2>{_esc(view.league_name)} <span>&mdash; {len(view.with_picks)} rivals, GW{view.gameweek}</span></h2>
+    return f"""<section class="card">
+    <div class="hd"><h2>{_esc(view.league_name)} </h2><span class="sub">{len(view.with_picks)} rivals, GW{view.gameweek}</span></div>
     <div class="scroll"><table>
       <thead><tr><th>#</th><th>Team</th><th>Manager</th><th class="r">Projected</th>
         <th>Captain</th><th class="r">Total</th><th>Chip</th></tr></thead>
@@ -434,9 +480,9 @@ def _one_league(view, my_squad, table) -> str:
       captain.</i></div>
   </section>
 
-  <section>
-    <h2>Where you differ in {_esc(view.league_name)} <span>&mdash; ownership measured in
-      this league, not globally</span></h2>
+  <section class="card">
+    <div class="hd"><h2>Where you differ in {_esc(view.league_name)} </h2><span class="sub">ownership measured in
+      this league, not globally</span></div>
     <div class="scroll"><table>
       <thead><tr><th colspan="4">Your differentials &mdash; the league mostly does not own these</th></tr>
         <tr><th>Player</th><th>Team</th><th class="r">xP</th><th>League ownership</th></tr></thead>
@@ -487,8 +533,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     dist_svg = charts.score_distribution(plan.sim_scores, plan.sim_target,
                                          float(plan.sim_scores.mean())
                                          if plan.sim_scores is not None else 0.0)
-    dist_block = f'''<section>
-    <h2>How the month lands <span>&mdash; 6,000 simulated seasons of this squad</span></h2>
+    dist_block = f'''<section class="card">
+    <div class="hd"><h2>How the month lands </h2><span class="sub">6,000 simulated seasons of this squad</span></div>
     <div class="chartbox">{dist_svg}</div>
     <div class="legend"><i>Green is where you finish ahead of the month&rsquo;s winner,
       grey is where you do not. <b>P(win) {plan.sim_p_win*100:.1f}%</b> against a
@@ -499,8 +545,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     ticker_svg = charts.fixture_ticker(boot_ref, fixtures_ref, plan.next_gw, 8,
                                        only_teams=my_clubs) \
         if boot_ref and fixtures_ref else ""
-    ticker_block = f'''<section>
-    <h2>Your fixtures <span>&mdash; the {len(my_clubs)} clubs you own, next 8 gameweeks</span></h2>
+    ticker_block = f'''<section class="card">
+    <div class="hd"><h2>Your fixtures </h2><span class="sub">the {len(my_clubs)} clubs you own, next 8 gameweeks</span></div>
     <div class="chartbox">{ticker_svg}</div>
     <div class="fdrkey">
       <i><b style="background:var(--fdr1)"></b>1</i><i><b style="background:var(--fdr2)"></b>2</i>
@@ -512,8 +558,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
   </section>''' if ticker_svg else ""
 
     value_svg = charts.value_frontier(now_table, owned)
-    value_block = f'''<section>
-    <h2>Value frontier <span>&mdash; expected points against price</span></h2>
+    value_block = f'''<section class="card">
+    <div class="hd"><h2>Value frontier </h2><span class="sub">expected points against price</span></div>
     <div class="chartbox">{value_svg}</div>
     <div class="legend"><i>Purple is your squad. The upper-left edge is the efficient
       frontier &mdash; most points per pound. A ranked table shows who scores most;
@@ -521,8 +567,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
   </section>''' if value_svg else ""
 
     team_svg = charts.team_scatter(plan.team_ratings)
-    team_block = f'''<section>
-    <h2>Team ratings <span>&mdash; why a fixture is easy</span></h2>
+    team_block = f'''<section class="card">
+    <div class="hd"><h2>Team ratings </h2><span class="sub">why a fixture is easy</span></div>
     <div class="chartbox">{team_svg}</div>
     <div class="legend"><i>Purple = scores more and concedes less than average. Facing a
       weak attack helps your defenders; facing a weak defence helps your forwards. One
@@ -538,18 +584,18 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
                    if r["ratio"] > 1.04 else
                    "running cold — the model is over-predicting"
                    if r["ratio"] < 0.96 else "well calibrated")
-        avx_block = f'''<section>
-    <h2>Actual vs predicted <span>&mdash; {r["n"]} gameweeks played</span></h2>
-    <div class="strip">
-      <div class="tile"><div class="k">Predicted</div>
+        avx_block = f'''<section class="card">
+    <div class="hd"><h2>Actual vs predicted </h2><span class="sub">{r["n"]} gameweeks played</span></div>
+    <div class="kpis">
+      <div class="kpi"><div class="k">Predicted</div>
         <div class="v mono">{r["predicted"]:.0f}</div></div>
-      <div class="tile"><div class="k">Actual</div>
+      <div class="kpi"><div class="k">Actual</div>
         <div class="v mono">{r["actual"]:.0f}</div></div>
-      <div class="tile"><div class="k">Ratio</div>
+      <div class="kpi"><div class="k">Ratio</div>
         <div class="v mono">{r["ratio"]:.2f}<u> {verdict.split(" —")[0]}</u></div></div>
-      <div class="tile"><div class="k">Avg miss</div>
+      <div class="kpi"><div class="k">Avg miss</div>
         <div class="v mono">{r["mae"]:.1f}<u> pts/GW</u></div></div>
-      <div class="tile"><div class="k">Beat forecast</div>
+      <div class="kpi"><div class="k">Beat forecast</div>
         <div class="v mono">{r["beat"]}<u> of {r["n"]}</u></div></div>
     </div>
     <div class="chartbox">{avx_svg}</div>
@@ -559,8 +605,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
       <b>{verdict}</b>.</i></div>
   </section>'''
     else:
-        avx_block = '''<section>
-    <h2>Actual vs predicted</h2>
+        avx_block = '''<section class="card">
+    <div class="hd"><h2>Actual vs predicted</h2></div>
     <div class="note"><h3>Starts at GW1</h3>
       <p style="margin:0 0 8px">Each gameweek&rsquo;s prediction is written down before
       the deadline and scored against what actually happened afterwards. Nothing else
@@ -572,8 +618,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
   </section>'''
 
     # How the model performed on four backtested seasons, as context for the above.
-    calib_block = f'''<section>
-    <h2>Model accuracy <span>&mdash; 8,392 player-months across four seasons</span></h2>
+    calib_block = f'''<section class="card">
+    <div class="hd"><h2>Model accuracy </h2><span class="sub">8,392 player-months across four seasons</span></div>
     <div class="chartbox">{charts.calibration_bars(CALIBRATION_DECILES)}</div>
     <div class="legend"><i>Grey is predicted, green is what actually happened, in tenths
       from weakest prediction to strongest. Equal heights would be perfect. The model
@@ -582,6 +628,10 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
   </section>'''
 
     action_panel = _action_panel(plan, squad, rates_ref or {}, gwplans, deadline_ref)
+    deadline_chip = _countdown(deadline_ref) or f"GW{plan.next_gw}"
+    model_chip = (f'<span class="pill warn">{_esc(plan.provider_note[:46])}</span>'
+                  if plan.provider_note else '<span class="pill ok">'
+                  '<span class="dot"></span>model ok</span>')
     gw_section = _gameweek_section(gwplans)
     n_months = len(plan.months)
     n_gws = len(gwplans) if gwplans else 0
@@ -624,79 +674,82 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
 
     return f"""<title>{_esc(title)}</title>
 <style>{CSS}</style>
-<div class="wrap">
-  <header>
-    <div class="eyebrow">Season 2026/27 · monthly prize league</div>
-    <h1>{_esc(title)}</h1>
-    <div class="stamp mono">Refreshed {_esc(plan.generated)} &nbsp;·&nbsp;
-        next deadline GW{plan.next_gw} &nbsp;·&nbsp; {rivals + 1} managers
-        {f'&nbsp;·&nbsp; {_esc(plan.provider_note)}' if plan.provider_note else ''}</div>
-  </header>
-
-  <div class="strip">
-    <div class="tile"><div class="k">Squad cost</div>
-      <div class="v mono">£{squad.cost:.1f}<u>m</u></div></div>
-    <div class="tile"><div class="k">Formation</div>
-      <div class="v mono">{_esc(squad.formation)}</div></div>
-    <div class="tile"><div class="k">Captain</div>
-      <div class="v" style="font-size:16px">{_esc(cap.name if cap else '—')}</div></div>
-    <div class="tile"><div class="k">Months targeted</div>
-      <div class="v mono">{len(contested)}<u> of {len(plan.months)}</u></div></div>
-    <div class="tile"><div class="k">Chip value</div>
-      <div class="v mono">+{total_chip:.0f}<u> pts</u></div></div>
-  </div>
-
-  {action_panel}
-
+<div class="app">
   <input class="tabin" type="radio" name="tab" id="t1" checked>
   <input class="tabin" type="radio" name="tab" id="t2">
   <input class="tabin" type="radio" name="tab" id="t3">
   <input class="tabin" type="radio" name="tab" id="t4">
   <input class="tabin" type="radio" name="tab" id="t5">
-  <nav class="tabs">
-    <label for="t1">Squad</label>
-    <label for="t2">Season<b>{n_months}</b></label>
-    <label for="t3">Gameweeks<b>{n_gws}</b></label>
-    <label for="t4">League{league_badge}</label>
-    <label for="t5">Charts</label>
-  </nav>
 
-  <div class="panels">
+  <aside class="rail">
+    <div class="brand">
+      <div class="mark">FP</div>
+      <div><b>{_esc(title)}</b><span>2026/27 &middot; monthly prizes</span></div>
+    </div>
+    <nav class="tabs">
+      <div class="grp">Plan</div>
+      <label for="t1"><i>&#9679;</i>Squad</label>
+      <label for="t2"><i>&#9632;</i>Season<b>{n_months}</b></label>
+      <label for="t3"><i>&#9642;</i>Gameweeks<b>{n_gws}</b></label>
+      <div class="grp">Analysis</div>
+      <label for="t4"><i>&#9650;</i>League{league_badge}</label>
+      <label for="t5"><i>&#9644;</i>Charts</label>
+    </nav>
+    <div class="railfoot">
+      Rebuilt daily from the live FPL API.<br>{_esc(plan.generated)}
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <h1>Gameweek {plan.next_gw}</h1>
+      <span class="pill accent"><span class="dot"></span>{_esc(deadline_chip)}</span>
+      <span class="pill">{rivals + 1} managers</span>
+      {model_chip}
+      <span class="spacer"></span>
+      <span class="pill mono">&pound;{squad.cost:.1f}m</span>
+      <span class="pill">C: {_esc(cap.name if cap else "&mdash;")}</span>
+    </div>
+
+    <div class="content">
+      {action_panel}
+
     <div class="panel p1">
-  <section>
-    <h2>Starting XI</h2>
-    <div class="scroll"><table>
+  <section class="card">
+    <div class="hd"><h2>Starting XI</h2><span class="pill accent">{squad.formation}</span>
+      <span class="spacer"></span><span class="sub">&pound;{squad.cost:.1f}m</span></div>
+    <div class="bd flush"><div class="scroll"><table>
       <thead><tr><th></th><th>Player</th><th>Team</th><th>Pos</th><th class="r">£m</th>
         <th class="r">xP</th><th class="r" title="xP corrected for the model's measured bias — still a forecast, not an outcome">xP adj</th>
         <th>Fixtures</th></tr></thead>
       <tbody>{xi}</tbody>
-    </table></div>
+    </table></div></div>
   </section>
 
-  <section>
-    <h2>Bench <span>— in substitution order</span></h2>
-    <div class="scroll"><table class="bench">
+  <section class="card">
+    <div class="hd"><h2>Bench</h2><span class="sub">in substitution order</span></div>
+    <div class="bd flush"><div class="scroll"><table class="bench">
       <thead><tr><th></th><th>Player</th><th>Team</th><th>Pos</th><th class="r">£m</th>
         <th class="r">xP</th><th class="r">xP adj</th><th>Fixtures</th></tr></thead>
       <tbody>{bench}</tbody>
-    </table></div>
+    </table></div></div>
   </section>
 
     </div>
 
     <div class="panel p2">
-  <section>
-    <h2>Season plan <span>— which months to contest</span></h2>
-    <div class="scroll"><table>
+  <section class="card">
+    <div class="hd"><h2>Season plan</h2><span class="sub">which months to contest</span></div>
+    <div class="bd flush"><div class="scroll"><table>
       <thead><tr><th>Month</th><th>GWs</th><th class="r">#</th>
         <th>Projected vs winning score</th><th>Chips &amp; fixtures</th></tr></thead>
       <tbody>{months}</tbody>
-    </table></div>
-    <div class="legend">
+    </table></div></div>
+    <div class="ft"><div class="legend">
       <i><span class="swatch"></span> your projected points</i>
       <i><span class="needle"></span> what the month's winner scores</i>
       <i>the gap between them is what a chip has to close</i>
-    </div>
+    </div></div>
   </section>
 
   {dist_block}
@@ -721,10 +774,10 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
 
   {team_block}
     </div>
-  </div>
 
-  <div class="note">
-    <h3>How to read this</h3>
+  <section class="card">
+    <div class="hd"><h2>How to read this</h2></div>
+    <div class="bd">
     <ul>
       <li><b>Both columns are forecasts — neither is actual points.</b> <b>xP</b> is the
           model's raw output, which is what the optimiser ranks on. <b>xP adj</b> is the
@@ -742,15 +795,18 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
           Free Hit get much more valuable when they do. This page re-prices daily.</li>
       <li>A two-gameweek month is close to a coin toss whatever your squad looks like.
           Spend chips where there are more gameweeks to work with.</li>
-    </ul>
-  </div>
+    </ul></div>
+  </section>
 
-  <footer>
-    Built from the live FPL API. Validated by walk-forward backtest across three
+  <footer style="color:var(--mut);font-size:12px;border-top:1px solid var(--line);padding-top:14px">
+    Built from the live FPL API. Validated by walk-forward backtest across four
     completed seasons under real transfer rules. Expected points are estimates, not
     predictions.
   </footer>
-</div>"""
+    </div>
+  </main>
+</div>
+"""
 
 
 def write(plan: SeasonPlan, path: str, rivals: int = 19,

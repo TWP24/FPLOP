@@ -1,273 +1,307 @@
 <title>FPL monthly plan</title>
 <style>
 :root{
-  --paper:#FCFBFD; --ink:#1B0A20; --mut:#6F6377; --line:#E7E2EB;
-  --card:#FFFFFF; --accent:#7B2D8E; --accent-wash:#F4EAF7;
-  --data:#00875A; --data-wash:#E6F2ED; --warn:#C2410C;
-  --shadow:0 1px 2px rgba(27,10,32,.05), 0 6px 20px rgba(27,10,32,.05);
+  --bg:#F7F6F9; --surface:#FFFFFF; --surface-2:#FBFAFC;
+  --ink:#17101C; --ink-2:#4A4152; --mut:#7C7288; --line:#E6E2EC;
+  --accent:#6D28A8; --accent-ink:#FFFFFF; --accent-wash:#F3EDF9; --accent-line:#DCCBEC;
+  --ok:#0F7A52; --ok-wash:#E7F4EE; --warn:#B4530E; --warn-wash:#FDF0E4;
+  --data:#00875A;
+  --fdr1:#1a7f5a; --fdr2:#54a375; --fdr3:#9aa0a6; --fdr4:#d97757; --fdr5:#b3402f;
+  --chart:#6D28A8; --shadow:0 1px 2px rgba(23,16,28,.04),0 1px 3px rgba(23,16,28,.06);
+  --shadow-lg:0 4px 6px -1px rgba(23,16,28,.05),0 10px 24px -6px rgba(23,16,28,.10);
+  --r:10px; --rail:224px;
 }
-@media (prefers-color-scheme:dark){
-  :root{
-    --paper:#120D15; --ink:#EDE8F0; --mut:#9A8FA3; --line:#2A2130;
-    --card:#191220; --accent:#C77DDB; --accent-wash:#231331;
-    --data:#3FD69B; --data-wash:#12271F; --warn:#F0A868;
-    --shadow:none;
-  }
-}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0D0A10; --surface:#161120; --surface-2:#1B1526;
+  --ink:#EFEBF3; --ink-2:#BDB4C8; --mut:#8F859C; --line:#2A2235;
+  --accent:#B98BD9; --accent-ink:#1A1020; --accent-wash:#241733; --accent-line:#3B2A4E;
+  --ok:#4ED9A0; --ok-wash:#12291F; --warn:#E9A45F; --warn-wash:#2C1E11;
+  --data:#3FD69B;
+  --fdr1:#2e9c72; --fdr2:#4e8f68; --fdr3:#6b7280; --fdr4:#c96a4a; --fdr5:#a33b2c;
+  --chart:#B98BD9; --shadow:none; --shadow-lg:none;
+}}
 :root[data-theme=dark]{
-  --paper:#120D15; --ink:#EDE8F0; --mut:#9A8FA3; --line:#2A2130;
-  --card:#191220; --accent:#C77DDB; --accent-wash:#231331;
-  --data:#3FD69B; --data-wash:#12271F; --warn:#F0A868;
-  --shadow:none;
+  --bg:#0D0A10; --surface:#161120; --surface-2:#1B1526;
+  --ink:#EFEBF3; --ink-2:#BDB4C8; --mut:#8F859C; --line:#2A2235;
+  --accent:#B98BD9; --accent-ink:#1A1020; --accent-wash:#241733; --accent-line:#3B2A4E;
+  --ok:#4ED9A0; --ok-wash:#12291F; --warn:#E9A45F; --warn-wash:#2C1E11;
+  --data:#3FD69B; --fdr1:#2e9c72; --fdr2:#4e8f68; --fdr3:#6b7280;
+  --fdr4:#c96a4a; --fdr5:#a33b2c; --chart:#B98BD9; --shadow:none; --shadow-lg:none;
 }
 :root[data-theme=light]{
-  --paper:#FCFBFD; --ink:#1B0A20; --mut:#6F6377; --line:#E7E2EB;
-  --card:#FFFFFF; --accent:#7B2D8E; --accent-wash:#F4EAF7;
-  --data:#00875A; --data-wash:#E6F2ED; --warn:#C2410C;
-  --shadow:0 1px 2px rgba(27,10,32,.05), 0 6px 20px rgba(27,10,32,.05);
+  --bg:#F7F6F9; --surface:#FFFFFF; --surface-2:#FBFAFC;
+  --ink:#17101C; --ink-2:#4A4152; --mut:#7C7288; --line:#E6E2EC;
+  --accent:#6D28A8; --accent-ink:#FFFFFF; --accent-wash:#F3EDF9; --accent-line:#DCCBEC;
+  --ok:#0F7A52; --ok-wash:#E7F4EE; --warn:#B4530E; --warn-wash:#FDF0E4;
+  --data:#00875A; --fdr1:#1a7f5a; --fdr2:#54a375; --fdr3:#9aa0a6;
+  --fdr4:#d97757; --fdr5:#b3402f; --chart:#6D28A8;
+  --shadow:0 1px 2px rgba(23,16,28,.04),0 1px 3px rgba(23,16,28,.06);
+  --shadow-lg:0 4px 6px -1px rgba(23,16,28,.05),0 10px 24px -6px rgba(23,16,28,.10);
 }
 
 *{box-sizing:border-box}
-body{
-  margin:0; padding:28px 18px 72px; background:var(--paper); color:var(--ink);
-  font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  -webkit-text-size-adjust:100%;
-}
-.wrap{max-width:960px; margin:0 auto; display:flex; flex-direction:column; gap:34px}
+body{margin:0; background:var(--bg); color:var(--ink);
+  font:14.5px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-text-size-adjust:100%; -webkit-font-smoothing:antialiased}
 .mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
-      font-variant-numeric:tabular-nums}
+  font-variant-numeric:tabular-nums; font-feature-settings:"tnum"}
 
-header{display:flex; flex-direction:column; gap:5px}
-h1{font-size:23px; font-weight:680; letter-spacing:-.02em; margin:0; text-wrap:balance}
-.stamp{font-size:12px; color:var(--mut); letter-spacing:.02em}
-.eyebrow{font-size:11px; text-transform:uppercase; letter-spacing:.10em;
-         color:var(--accent); font-weight:700}
+/* ---- app shell: fixed rail on desktop, horizontal nav on mobile ---- */
+.app{display:flex; min-height:100vh}
+.tabin{position:absolute; opacity:0; pointer-events:none}
 
-section{display:flex; flex-direction:column; gap:11px}
-h2{font-size:12px; text-transform:uppercase; letter-spacing:.09em; color:var(--mut);
-   margin:0; font-weight:700}
-h2 span{text-transform:none; letter-spacing:0; font-weight:500; opacity:.8}
+.rail{width:var(--rail); flex:0 0 var(--rail); background:var(--surface);
+  border-right:1px solid var(--line); padding:20px 14px; position:sticky; top:0;
+  height:100vh; display:flex; flex-direction:column; gap:22px}
+.brand{display:flex; align-items:center; gap:10px; padding:0 6px}
+.brand .mark{width:30px; height:30px; border-radius:8px; background:var(--accent);
+  color:var(--accent-ink); display:grid; place-items:center; font-weight:750;
+  font-size:13px; letter-spacing:-.03em; flex:0 0 30px}
+.brand b{font-size:14.5px; font-weight:680; letter-spacing:-.01em; display:block}
+.brand span{font-size:11px; color:var(--mut); display:block; margin-top:-1px}
+nav.tabs{display:flex; flex-direction:column; gap:2px}
+nav.tabs .grp{font-size:10px; text-transform:uppercase; letter-spacing:.09em;
+  color:var(--mut); font-weight:700; padding:6px 8px 4px}
+nav.tabs label{display:flex; align-items:center; gap:9px; padding:8px 10px;
+  border-radius:8px; font-size:13.5px; font-weight:550; color:var(--ink-2);
+  cursor:pointer; transition:background .12s,color .12s; white-space:nowrap}
+nav.tabs label:hover{background:var(--surface-2); color:var(--ink)}
+nav.tabs label i{font-style:normal; width:16px; text-align:center; opacity:.75; font-size:14px}
+nav.tabs label b{margin-left:auto; font-size:11px; font-weight:600; color:var(--mut);
+  background:var(--surface-2); border:1px solid var(--line); border-radius:20px;
+  padding:0 6px; font-variant-numeric:tabular-nums}
+.railfoot{margin-top:auto; font-size:11px; color:var(--mut); padding:0 8px; line-height:1.5}
 
-.strip{display:grid; grid-template-columns:repeat(auto-fit,minmax(138px,1fr)); gap:10px}
-.tile{background:var(--card); border:1px solid var(--line); border-radius:11px;
-      padding:12px 14px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:3px}
-.tile .k{font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--mut);
-         font-weight:650}
-.tile .v{font-size:21px; font-weight:670; letter-spacing:-.02em; line-height:1.15}
-.tile .v u{text-decoration:none; font-size:12px; font-weight:500; color:var(--mut)}
+main{flex:1; min-width:0; display:flex; flex-direction:column}
+.topbar{position:sticky; top:0; z-index:5; background:var(--surface);
+  border-bottom:1px solid var(--line); padding:12px 24px; display:flex;
+  align-items:center; gap:12px; flex-wrap:wrap}
+.topbar h1{font-size:15.5px; font-weight:650; margin:0; letter-spacing:-.01em}
+.spacer{flex:1}
+.content{padding:22px 24px 60px; display:flex; flex-direction:column; gap:22px;
+  max-width:1180px; width:100%}
 
-.scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;
-        border:1px solid var(--line); border-radius:11px; background:var(--card);
-        box-shadow:var(--shadow)}
-table{width:100%; border-collapse:collapse; font-size:14px; min-width:540px}
-th{text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.07em;
-   color:var(--mut); font-weight:650; padding:9px 10px; border-bottom:1px solid var(--line);
-   white-space:nowrap}
-td{padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:middle}
+/* ---- primitives ---- */
+.pill{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600;
+  padding:3px 9px; border-radius:20px; border:1px solid var(--line);
+  background:var(--surface-2); color:var(--ink-2); white-space:nowrap}
+.pill.accent{background:var(--accent-wash); border-color:var(--accent-line); color:var(--accent)}
+.pill.ok{background:var(--ok-wash); border-color:transparent; color:var(--ok)}
+.pill.warn{background:var(--warn-wash); border-color:transparent; color:var(--warn)}
+.dot{width:6px; height:6px; border-radius:50%; background:currentColor; flex:0 0 6px}
+
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+  box-shadow:var(--shadow); overflow:hidden}
+.card > .hd{padding:13px 16px; border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.card > .hd h2{font-size:13.5px; font-weight:640; margin:0; letter-spacing:-.005em;
+  text-transform:none; color:var(--ink)}
+.card > .hd .sub{font-size:12px; color:var(--mut)}
+.card > .bd{padding:14px 16px}
+.card > .bd.flush{padding:0}
+.card > .ft{padding:10px 16px; border-top:1px solid var(--line); background:var(--surface-2);
+  font-size:12px; color:var(--mut); line-height:1.5}
+
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px}
+.kpi{background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+  padding:13px 15px; box-shadow:var(--shadow)}
+.kpi .k{font-size:10.5px; text-transform:uppercase; letter-spacing:.07em;
+  color:var(--mut); font-weight:650}
+.kpi .v{font-size:22px; font-weight:660; letter-spacing:-.025em; line-height:1.2; margin-top:3px}
+.kpi .v u{text-decoration:none; font-size:12px; font-weight:500; color:var(--mut)}
+
+.scroll{overflow-x:auto; -webkit-overflow-scrolling:touch}
+table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:520px}
+thead th{text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--mut); font-weight:650; padding:9px 14px; background:var(--surface-2);
+  border-bottom:1px solid var(--line); white-space:nowrap; position:sticky; top:0}
+td{padding:9px 14px; border-bottom:1px solid var(--line); vertical-align:middle}
 tbody tr:last-child td{border-bottom:none}
-.r{text-align:right}
-.nm{font-weight:570}
-.dim{color:var(--mut)}
-.badge{width:26px; color:var(--accent); font-weight:750; font-size:11px}
-.bench td{opacity:.60}
+tbody tr:hover{background:var(--surface-2)}
+.r{text-align:right} .nm{font-weight:570} .dim{color:var(--mut)}
+.badge{width:24px; color:var(--accent); font-weight:750; font-size:11px}
+.bench td{opacity:.62}
 .q{color:var(--warn); font-weight:750; cursor:help}
-
-tr.target td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 tr.target{background:var(--accent-wash)}
-.tag{display:inline-block; background:var(--accent); color:var(--paper); font-size:9.5px;
-     font-weight:750; letter-spacing:.06em; padding:2px 6px; border-radius:20px;
-     vertical-align:1.5px; margin-left:6px}
+tr.target td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.tag{display:inline-block; background:var(--accent); color:var(--accent-ink); font-size:9.5px;
+  font-weight:750; letter-spacing:.05em; padding:2px 6px; border-radius:20px;
+  vertical-align:1.5px; margin-left:6px}
+tr.mrule td{background:var(--accent-wash); font-size:10px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.08em; color:var(--accent); padding:5px 14px}
 
-.chip{display:inline-block; border:1px solid var(--accent); color:var(--accent);
-      border-radius:6px; padding:1.5px 6px; font-size:11px; font-weight:650;
-      margin:2px 5px 2px 0; white-space:nowrap}
-.chip u{text-decoration:none; font-weight:500; opacity:.72}
+.chip{display:inline-block; border:1px solid var(--accent-line); background:var(--accent-wash);
+  color:var(--accent); border-radius:6px; padding:2px 7px; font-size:11px; font-weight:640;
+  margin:2px 5px 2px 0; white-space:nowrap}
+.chip u{text-decoration:none; font-weight:500; opacity:.75}
 .fx{display:inline-block; font-size:10.5px; color:var(--mut); margin:2px 9px 0 0}
-
-.meter{position:relative; min-width:168px; height:22px}
-.meter .fill{position:absolute; left:0; top:7px; height:8px; border-radius:5px;
-             background:var(--data); opacity:.85}
-.meter .tick{position:absolute; top:2px; width:2px; height:18px; background:var(--accent);
-             border-radius:2px}
-.meter .val{position:absolute; right:0; top:3px; font-size:11.5px; color:var(--mut)}
-
-.legend{display:flex; flex-wrap:wrap; gap:16px; font-size:12px; color:var(--mut);
-        align-items:center}
-.legend i{font-style:normal; display:inline-flex; align-items:center; gap:6px}
-.swatch{width:16px; height:8px; border-radius:4px; background:var(--data); opacity:.85}
-.needle{width:2px; height:14px; background:var(--accent); border-radius:2px}
-
-.note{background:var(--card); border:1px solid var(--line);
-      border-left:3px solid var(--accent); border-radius:10px; padding:14px 16px;
-      font-size:13.5px}
-.note h3{margin:0 0 7px; font-size:12px; text-transform:uppercase; letter-spacing:.07em;
-         color:var(--mut); font-weight:700}
-.note ul{margin:0; padding-left:17px; display:flex; flex-direction:column; gap:5px}
-tr.mrule td{background:var(--accent-wash); font-size:10.5px; font-weight:700;
-            text-transform:uppercase; letter-spacing:.08em; color:var(--accent);
-            padding:5px 10px}
 .move{display:inline-block; font-size:12px; margin-right:10px; white-space:nowrap}
 .move s{color:var(--mut); text-decoration:line-through}
 .move b{font-weight:620}
-.moves{min-width:230px}
+.moves{min-width:220px}
 .hit{display:inline-block; color:var(--warn); font-weight:700; font-size:11px;
-     border:1px solid var(--warn); border-radius:5px; padding:0 5px; margin-left:4px}
-/* Tabs, driven entirely by hidden radios so the page needs no JavaScript. */
-.tabin{position:absolute; opacity:0; pointer-events:none}
-nav.tabs{display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--line);
-         margin-bottom:6px}
-nav.tabs label{padding:9px 14px; font-size:13px; font-weight:600; color:var(--mut);
-  cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
-  white-space:nowrap; border-radius:7px 7px 0 0; transition:color .12s, background .12s}
-nav.tabs label:hover{color:var(--ink); background:var(--accent-wash)}
-nav.tabs label b{font-weight:600; font-variant-numeric:tabular-nums; opacity:.55;
-                 margin-left:5px; font-size:11.5px}
-.panel{display:none; flex-direction:column; gap:26px}
-#t1:checked~.panels .p1, #t2:checked~.panels .p2, #t3:checked~.panels .p3,
-#t4:checked~.panels .p4, #t5:checked~.panels .p5{display:flex}
-#t1:checked~nav.tabs label[for=t1], #t2:checked~nav.tabs label[for=t2],
-#t3:checked~nav.tabs label[for=t3], #t4:checked~nav.tabs label[for=t4],
-#t5:checked~nav.tabs label[for=t5]{
-  color:var(--accent); border-bottom-color:var(--accent)}
-.tabin:focus-visible~nav.tabs label{outline:2px solid var(--accent); outline-offset:2px}
-@media (max-width:520px){ nav.tabs label{padding:8px 10px; font-size:12.5px} }
-/* Fixture difficulty: its own semantic scale, deliberately not the accent hue. */
-:root{--fdr1:#1a7f5a; --fdr2:#54a375; --fdr3:#9aa0a6; --fdr4:#d97757; --fdr5:#b3402f;
-      --chart:#7B2D8E; --chart-soft:#C9A6D6;}
-@media (prefers-color-scheme:dark){:root{
-  --fdr1:#2e9c72; --fdr2:#4e8f68; --fdr3:#6b7280; --fdr4:#c96a4a; --fdr5:#a33b2c;
-  --chart:#C77DDB; --chart-soft:#5B3468;}}
-:root[data-theme=dark]{--fdr1:#2e9c72; --fdr2:#4e8f68; --fdr3:#6b7280; --fdr4:#c96a4a;
-  --fdr5:#a33b2c; --chart:#C77DDB; --chart-soft:#5B3468;}
-:root[data-theme=light]{--fdr1:#1a7f5a; --fdr2:#54a375; --fdr3:#9aa0a6; --fdr4:#d97757;
-  --fdr5:#b3402f; --chart:#7B2D8E; --chart-soft:#C9A6D6;}
+  border:1px solid var(--warn); border-radius:5px; padding:0 5px; margin-left:4px}
+.warncell{color:var(--warn); font-size:12.5px}
+.okline{font-size:13px; color:var(--mut); display:flex; align-items:center; gap:8px}
 
-.chartbox{background:var(--card); border:1px solid var(--line); border-radius:11px;
-  padding:14px; box-shadow:var(--shadow); overflow-x:auto}
+.meter{position:relative; min-width:160px; height:20px}
+.meter .fill{position:absolute; left:0; top:6px; height:8px; border-radius:5px;
+  background:var(--data); opacity:.85}
+.meter .tick{position:absolute; top:1px; width:2px; height:18px; background:var(--accent);
+  border-radius:2px}
+.meter .val{position:absolute; right:0; top:2px; font-size:11.5px; color:var(--mut)}
+
+.legend{display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:var(--mut); align-items:center}
+.legend i{font-style:normal; display:inline-flex; align-items:center; gap:6px}
+.swatch{width:15px; height:8px; border-radius:4px; background:var(--data); opacity:.85}
+.needle{width:2px; height:13px; background:var(--accent); border-radius:2px}
+.fdrkey{display:flex; gap:11px; flex-wrap:wrap; font-size:11px; color:var(--mut); align-items:center}
+.fdrkey i{font-style:normal; display:inline-flex; align-items:center; gap:5px}
+.fdrkey b{width:14px; height:10px; border-radius:3px; display:inline-block}
+
+.empty{padding:26px 18px; text-align:center; color:var(--mut); font-size:13.5px;
+  line-height:1.6; max-width:620px; margin:0 auto}
+.empty h3{font-size:14px; font-weight:640; color:var(--ink); margin:0 0 6px}
+.empty code{background:var(--surface-2); border:1px solid var(--line); border-radius:5px;
+  padding:1px 5px; font-size:12px}
+
 svg text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-variant-numeric:tabular-nums}
 svg .cx,svg .cy{font-size:10px; fill:var(--mut)}
 svg .cy{font-weight:650}
 svg .cf{font-size:9.5px; fill:#fff; font-weight:600}
-svg .cb{font-size:10px; fill:var(--mut)}
-svg .cq{font-size:9px; fill:var(--mut)}
+svg .cb,svg .cq{font-size:10px; fill:var(--mut)}
 svg .cd{font-size:9px; fill:var(--mut); font-weight:650}
-svg .barpred{fill:var(--mut); opacity:.35}
-svg .predline{stroke:var(--chart); stroke-width:2.5; stroke-linejoin:round}
-svg .preddot{fill:var(--chart)}
 svg .pt{font-size:9.5px; fill:var(--mut)}
 svg .blank{fill:var(--line)}
 svg .grid{stroke:var(--line); stroke-width:1}
 svg .axis{stroke:var(--mut); stroke-width:1; opacity:.4}
 svg .barwin{fill:var(--data); opacity:.85}
 svg .barlose{fill:var(--mut); opacity:.30}
+svg .barpred{fill:var(--mut); opacity:.35}
 svg .vline{stroke:var(--warn); stroke-width:2; stroke-dasharray:3 3}
 svg .vlab{font-size:10px; fill:var(--warn); font-weight:700}
-svg .mline{stroke:var(--chart); stroke-width:2}
+svg .mline,svg .predline{stroke:var(--chart); stroke-width:2}
+svg .predline{stroke-width:2.5; stroke-linejoin:round}
 svg .mlab{font-size:10px; fill:var(--chart); font-weight:700}
 svg .dot{fill:var(--mut); opacity:.42}
-svg .dotown{fill:var(--chart)}
-svg .sparkline{stroke:var(--chart); stroke-width:1.5}
-.fdrkey{display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:var(--mut);
-        align-items:center; margin-top:2px}
-.fdrkey i{font-style:normal; display:inline-flex; align-items:center; gap:5px}
-.fdrkey b{width:14px; height:10px; border-radius:3px; display:inline-block}
-section.action{background:var(--accent-wash); border:1px solid var(--accent);
-  border-radius:12px; padding:15px 16px}
-section.action h2{color:var(--accent)}
-.warncell{color:var(--warn); font-size:12.5px}
-.okline{font-size:13.5px; color:var(--mut); padding:2px}
-footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); padding-top:15px}
+svg .dotown,svg .preddot{fill:var(--chart)}
+
+.panel{display:none; flex-direction:column; gap:22px}
+#t1:checked~main .p1, #t2:checked~main .p2, #t3:checked~main .p3,
+#t4:checked~main .p4, #t5:checked~main .p5{display:flex}
+#t1:checked~.rail label[for=t1], #t2:checked~.rail label[for=t2],
+#t3:checked~.rail label[for=t3], #t4:checked~.rail label[for=t4],
+#t5:checked~.rail label[for=t5]{background:var(--accent-wash); color:var(--accent)}
+#t1:checked~.rail label[for=t1] b, #t2:checked~.rail label[for=t2] b,
+#t3:checked~.rail label[for=t3] b, #t4:checked~.rail label[for=t4] b,
+#t5:checked~.rail label[for=t5] b{border-color:var(--accent-line); color:var(--accent)}
+.tabin:focus-visible~.rail label{outline:2px solid var(--accent); outline-offset:-2px}
+
+@media (max-width:860px){
+  .app{flex-direction:column}
+  .rail{width:auto; flex:none; height:auto; position:static; border-right:none;
+    border-bottom:1px solid var(--line); padding:12px 14px; gap:12px}
+  .rail .railfoot, nav.tabs .grp{display:none}
+  nav.tabs{flex-direction:row; gap:4px; overflow-x:auto; padding-bottom:2px}
+  nav.tabs label{padding:7px 11px; font-size:13px}
+  nav.tabs label i{display:none}
+  .topbar{padding:11px 15px} .content{padding:16px 15px 56px}
+}
 </style>
-<div class="wrap">
-  <header>
-    <div class="eyebrow">Season 2026/27 · monthly prize league</div>
-    <h1>FPL monthly plan</h1>
-    <div class="stamp mono">Refreshed 2026-08-09 08:08 UTC &nbsp;·&nbsp;
-        next deadline GW1 &nbsp;·&nbsp; 20 managers
-        &nbsp;·&nbsp; dastan unavailable (feature frame ends at 2025-26; it has no rows for 2026-27, so it cannot predict this season yet); using fplm</div>
-  </header>
-
-  <div class="strip">
-    <div class="tile"><div class="k">Squad cost</div>
-      <div class="v mono">£100.0<u>m</u></div></div>
-    <div class="tile"><div class="k">Formation</div>
-      <div class="v mono">3-4-3</div></div>
-    <div class="tile"><div class="k">Captain</div>
-      <div class="v" style="font-size:16px">B.Fernandes</div></div>
-    <div class="tile"><div class="k">Months targeted</div>
-      <div class="v mono">6<u> of 10</u></div></div>
-    <div class="tile"><div class="k">Chip value</div>
-      <div class="v mono">+103<u> pts</u></div></div>
-  </div>
-
-  <section class="action">
-    <h2>Before the deadline <span>&mdash; GW1, 12d 9h away</span></h2>
-    <div class="strip">
-      <div class="tile"><div class="k">Captain</div>
-        <div class="v" style="font-size:16px">B.Fernandes</div></div>
-      <div class="tile"><div class="k">Vice</div>
-        <div class="v" style="font-size:16px">Haaland</div></div>
-      <div class="tile"><div class="k">Transfer</div>
-        <div class="v" style="font-size:14px"><span class="dim">no transfer — roll it</span></div></div>
-      <div class="tile"><div class="k">Flags</div>
-        <div class="v mono">0<u> in squad</u></div></div>
-    </div>
-    <div class="okline">No injury or availability flags in your squad.</div>
-  </section>
-
+<div class="app">
   <input class="tabin" type="radio" name="tab" id="t1" checked>
   <input class="tabin" type="radio" name="tab" id="t2">
   <input class="tabin" type="radio" name="tab" id="t3">
   <input class="tabin" type="radio" name="tab" id="t4">
   <input class="tabin" type="radio" name="tab" id="t5">
-  <nav class="tabs">
-    <label for="t1">Squad</label>
-    <label for="t2">Season<b>10</b></label>
-    <label for="t3">Gameweeks<b>38</b></label>
-    <label for="t4">League</label>
-    <label for="t5">Charts</label>
-  </nav>
 
-  <div class="panels">
+  <aside class="rail">
+    <div class="brand">
+      <div class="mark">FP</div>
+      <div><b>FPL monthly plan</b><span>2026/27 &middot; monthly prizes</span></div>
+    </div>
+    <nav class="tabs">
+      <div class="grp">Plan</div>
+      <label for="t1"><i>&#9679;</i>Squad</label>
+      <label for="t2"><i>&#9632;</i>Season<b>10</b></label>
+      <label for="t3"><i>&#9642;</i>Gameweeks<b>38</b></label>
+      <div class="grp">Analysis</div>
+      <label for="t4"><i>&#9650;</i>League</label>
+      <label for="t5"><i>&#9644;</i>Charts</label>
+    </nav>
+    <div class="railfoot">
+      Rebuilt daily from the live FPL API.<br>2026-08-09 08:51 UTC
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <h1>Gameweek 1</h1>
+      <span class="pill accent"><span class="dot"></span>12d 8h to deadline</span>
+      <span class="pill">20 managers</span>
+      <span class="pill ok"><span class="dot"></span>model ok</span>
+      <span class="spacer"></span>
+      <span class="pill mono">&pound;100.0m</span>
+      <span class="pill">C: B.Fernandes</span>
+    </div>
+
+    <div class="content">
+      <section class="card action">
+    <div class="hd"><h2>Before the deadline</h2>
+      <span class="sub">GW1, 12d 8h away</span></div>
+    <div class="bd"><div class="kpis">
+      <div class="kpi"><div class="k">Captain</div>
+        <div class="v" style="font-size:16px">B.Fernandes</div></div>
+      <div class="kpi"><div class="k">Vice</div>
+        <div class="v" style="font-size:16px">Haaland</div></div>
+      <div class="kpi"><div class="k">Transfer</div>
+        <div class="v" style="font-size:14px"><span class="dim">no transfer — roll it</span></div></div>
+      <div class="kpi"><div class="k">Flags</div>
+        <div class="v mono">0<u> in squad</u></div></div>
+    </div>
+    <div class="okline">No injury or availability flags in your squad.</div></div>
+  </section>
+
     <div class="panel p1">
-  <section>
-    <h2>Starting XI</h2>
-    <div class="scroll"><table>
+  <section class="card">
+    <div class="hd"><h2>Starting XI</h2><span class="pill accent">3-4-3</span>
+      <span class="spacer"></span><span class="sub">&pound;100.0m</span></div>
+    <div class="bd flush"><div class="scroll"><table>
       <thead><tr><th></th><th>Player</th><th>Team</th><th>Pos</th><th class="r">£m</th>
         <th class="r">xP</th><th class="r" title="xP corrected for the model's measured bias — still a forecast, not an outcome">xP adj</th>
         <th>Fixtures</th></tr></thead>
       <tbody><tr><td class="badge mono"></td><td class="nm">Raya</td><td class="dim mono">ARS</td><td class="dim mono">GKP</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">9.5</td><td class="r mono dim">8.4</td><td class="dim mono" style="font-size:11.5px">2H/4A</td></tr><tr><td class="badge mono"></td><td class="nm">Guéhi</td><td class="dim mono">MCI</td><td class="dim mono">DEF</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">9.6</td><td class="r mono dim">8.4</td><td class="dim mono" style="font-size:11.5px">3H/3A</td></tr><tr><td class="badge mono"></td><td class="nm">Shaw</td><td class="dim mono">MUN</td><td class="dim mono">DEF</td><td class="r mono">4.5</td><td class="r mono" style="font-weight:650">8.2</td><td class="r mono dim">7.3</td><td class="dim mono" style="font-size:11.5px">2A/2H</td></tr><tr><td class="badge mono"></td><td class="nm">Pedro Porro</td><td class="dim mono">TOT</td><td class="dim mono">DEF</td><td class="r mono">5.5</td><td class="r mono" style="font-weight:650">6.5</td><td class="r mono dim">5.9</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono">C</td><td class="nm">B.Fernandes</td><td class="dim mono">MUN</td><td class="dim mono">MID</td><td class="r mono">12.0</td><td class="r mono" style="font-weight:650">13.4</td><td class="r mono dim">12.3</td><td class="dim mono" style="font-size:11.5px">2A/2H</td></tr><tr><td class="badge mono"></td><td class="nm">Szoboszlai</td><td class="dim mono">LIV</td><td class="dim mono">MID</td><td class="r mono">7.0</td><td class="r mono" style="font-weight:650">8.5</td><td class="r mono dim">8.0</td><td class="dim mono" style="font-size:11.5px">3A/3H</td></tr><tr><td class="badge mono"></td><td class="nm">Rogers</td><td class="dim mono">CHE</td><td class="dim mono">MID</td><td class="r mono">7.5</td><td class="r mono" style="font-weight:650">8.5</td><td class="r mono dim">8.0</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono"></td><td class="nm">Ndiaye</td><td class="dim mono">EVE</td><td class="dim mono">MID</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">7.2</td><td class="r mono dim">6.9</td><td class="dim mono" style="font-size:11.5px">3H/3A</td></tr><tr><td class="badge mono">V</td><td class="nm">Haaland</td><td class="dim mono">MCI</td><td class="dim mono">FWD</td><td class="r mono">15.5</td><td class="r mono" style="font-weight:650">11.3</td><td class="r mono dim">10.6</td><td class="dim mono" style="font-size:11.5px">3H/3A</td></tr><tr><td class="badge mono"></td><td class="nm">João Pedro</td><td class="dim mono">CHE</td><td class="dim mono">FWD</td><td class="r mono">7.5</td><td class="r mono" style="font-weight:650">8.8</td><td class="r mono dim">8.3</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono"></td><td class="nm">Calvert-Lewin</td><td class="dim mono">LEE</td><td class="dim mono">FWD</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">7.7</td><td class="r mono dim">7.3</td><td class="dim mono" style="font-size:11.5px">3A/3H</td></tr></tbody>
-    </table></div>
+    </table></div></div>
   </section>
 
-  <section>
-    <h2>Bench <span>— in substitution order</span></h2>
-    <div class="scroll"><table class="bench">
+  <section class="card">
+    <div class="hd"><h2>Bench</h2><span class="sub">in substitution order</span></div>
+    <div class="bd flush"><div class="scroll"><table class="bench">
       <thead><tr><th></th><th>Player</th><th>Team</th><th>Pos</th><th class="r">£m</th>
         <th class="r">xP</th><th class="r">xP adj</th><th>Fixtures</th></tr></thead>
       <tbody><tr><td class="badge mono"></td><td class="nm">Dubravka</td><td class="dim mono">TOT</td><td class="dim mono">GKP</td><td class="r mono">4.0</td><td class="r mono" style="font-weight:650">5.7</td><td class="r mono dim">5.2</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono"></td><td class="nm">Hughes</td><td class="dim mono">CRY</td><td class="dim mono">MID</td><td class="r mono">4.5</td><td class="r mono" style="font-weight:650">3.2</td><td class="r mono dim">3.3</td><td class="dim mono" style="font-size:11.5px">3A/4H</td></tr><tr><td class="badge mono"></td><td class="nm">Diop</td><td class="dim mono">IPS</td><td class="dim mono">DEF</td><td class="r mono">4.0</td><td class="r mono" style="font-weight:650">1.4</td><td class="r mono dim">1.7</td><td class="dim mono" style="font-size:11.5px">2H/4A</td></tr><tr><td class="badge mono"></td><td class="nm">van Ewijk <span class="q" title="No Premier League history — role inferred from price">?</span></td><td class="dim mono">COV</td><td class="dim mono">DEF</td><td class="r mono">4.0</td><td class="r mono" style="font-weight:650">0.1</td><td class="r mono dim">0.6</td><td class="dim mono" style="font-size:11.5px">5A/2H</td></tr></tbody>
-    </table></div>
+    </table></div></div>
   </section>
 
     </div>
 
     <div class="panel p2">
-  <section>
-    <h2>Season plan <span>— which months to contest</span></h2>
-    <div class="scroll"><table>
+  <section class="card">
+    <div class="hd"><h2>Season plan</h2><span class="sub">which months to contest</span></div>
+    <div class="bd flush"><div class="scroll"><table>
       <thead><tr><th>Month</th><th>GWs</th><th class="r">#</th>
         <th>Projected vs winning score</th><th>Chips &amp; fixtures</th></tr></thead>
       <tbody><tr class=""><td class="nm">August</td><td class="dim mono">1–2</td><td class="r mono">2</td><td><div class="meter"><span class="fill" style="width:30.5%"></span><span class="tick" style="left:35.0%"></span><span class="val mono">112 / 129</span></div></td><td><span class=dim>—</span></td></tr><tr class="target"><td class="nm">September<span class=tag>TARGET</span></td><td class="dim mono">3–5</td><td class="r mono">3</td><td><div class="meter"><span class="fill" style="width:45.6%"></span><span class="tick" style="left:50.1%"></span><span class="val mono">168 / 185</span></div></td><td><span class="chip">Triple Cap<u> GW3 · +7</u></span></td></tr><tr class=""><td class="nm">October</td><td class="dim mono">6–9</td><td class="r mono">4</td><td><div class="meter"><span class="fill" style="width:56.3%"></span><span class="tick" style="left:64.7%"></span><span class="val mono">208 / 239</span></div></td><td><span class=dim>—</span></td></tr><tr class="target"><td class="nm">November<span class=tag>TARGET</span></td><td class="dim mono">10–12</td><td class="r mono">3</td><td><div class="meter"><span class="fill" style="width:44.0%"></span><span class="tick" style="left:48.8%"></span><span class="val mono">162 / 180</span></div></td><td><span class="chip">Bench Boost<u> GW11 · +6</u></span></td></tr><tr class="target"><td class="nm">December<span class=tag>TARGET</span></td><td class="dim mono">13–18</td><td class="r mono">6</td><td><div class="meter"><span class="fill" style="width:94.6%"></span><span class="tick" style="left:100.0%"></span><span class="val mono">349 / 369</span></div></td><td><span class="chip">Wildcard<u> GW13 · +19</u></span><span class="chip">Free Hit<u> GW16 · +10</u></span></td></tr><tr class=""><td class="nm">January</td><td class="dim mono">19–23</td><td class="r mono">5</td><td><div class="meter"><span class="fill" style="width:71.3%"></span><span class="tick" style="left:82.0%"></span><span class="val mono">263 / 303</span></div></td><td><span class=dim>—</span></td></tr><tr class="target"><td class="nm">February<span class=tag>TARGET</span></td><td class="dim mono">24–27</td><td class="r mono">4</td><td><div class="meter"><span class="fill" style="width:59.3%"></span><span class="tick" style="left:66.4%"></span><span class="val mono">219 / 245</span></div></td><td><span class="chip">Bench Boost<u> GW24 · +6</u></span></td></tr><tr class=""><td class="nm">March</td><td class="dim mono">28–30</td><td class="r mono">3</td><td><div class="meter"><span class="fill" style="width:43.5%"></span><span class="tick" style="left:50.1%"></span><span class="val mono">161 / 185</span></div></td><td><span class=dim>—</span></td></tr><tr class="target"><td class="nm">April<span class=tag>TARGET</span></td><td class="dim mono">31–33</td><td class="r mono">3</td><td><div class="meter"><span class="fill" style="width:51.1%"></span><span class="tick" style="left:51.0%"></span><span class="val mono">189 / 188</span></div></td><td><span class="chip">Free Hit<u> GW33 · +25</u></span></td></tr><tr class="target"><td class="nm">May<span class=tag>TARGET</span></td><td class="dim mono">34–38</td><td class="r mono">5</td><td><div class="meter"><span class="fill" style="width:80.1%"></span><span class="tick" style="left:82.6%"></span><span class="val mono">296 / 305</span></div></td><td><span class="chip">Wildcard<u> GW34 · +20</u></span><span class="chip">Triple Cap<u> GW36 · +11</u></span></td></tr></tbody>
-    </table></div>
-    <div class="legend">
+    </table></div></div>
+    <div class="ft"><div class="legend">
       <i><span class="swatch"></span> your projected points</i>
       <i><span class="needle"></span> what the month's winner scores</i>
       <i>the gap between them is what a chip has to close</i>
-    </div>
+    </div></div>
   </section>
 
-  <section>
-    <h2>How the month lands <span>&mdash; 6,000 simulated seasons of this squad</span></h2>
+  <section class="card">
+    <div class="hd"><h2>How the month lands </h2><span class="sub">6,000 simulated seasons of this squad</span></div>
     <div class="chartbox"><svg viewBox="0 0 620 190" width="100%" height="190" role="img" aria-label="Distribution of simulated scores for the month"><rect x="26.0" y="145.61165048543688" width="15.205882352941178" height="0.3883495145631068" rx="1.5" class="barlose"/><rect x="42.705882352941174" y="145.02912621359224" width="15.205882352941178" height="0.9708737864077669" rx="1.5" class="barlose"/><rect x="59.411764705882355" y="141.92233009708738" width="15.205882352941178" height="4.077669902912621" rx="1.5" class="barlose"/><rect x="76.11764705882354" y="136.67961165048544" width="15.205882352941178" height="9.320388349514563" rx="1.5" class="barlose"/><rect x="92.82352941176471" y="125.41747572815534" width="15.205882352941178" height="20.582524271844658" rx="1.5" class="barlose"/><rect x="109.52941176470588" y="111.24271844660194" width="15.205882352941178" height="34.75728155339806" rx="1.5" class="barlose"/><rect x="126.23529411764707" y="93.18446601941747" width="15.205882352941178" height="52.81553398058252" rx="1.5" class="barlose"/><rect x="142.94117647058823" y="79.59223300970874" width="15.205882352941178" height="66.40776699029126" rx="1.5" class="barlose"/><rect x="159.64705882352942" y="79.20388349514562" width="15.205882352941178" height="66.79611650485438" rx="1.5" class="barlose"/><rect x="176.3529411764706" y="38.62135922330097" width="15.205882352941178" height="107.37864077669903" rx="1.5" class="barlose"/><rect x="193.05882352941177" y="34.932038834951456" width="15.205882352941178" height="111.06796116504854" rx="1.5" class="barlose"/><rect x="209.76470588235296" y="26.0" width="15.205882352941178" height="120.0" rx="1.5" class="barlose"/><rect x="226.47058823529414" y="36.09708737864078" width="15.205882352941178" height="109.90291262135922" rx="1.5" class="barlose"/><rect x="243.1764705882353" y="46.38834951456312" width="15.205882352941178" height="99.61165048543688" rx="1.5" class="barlose"/><rect x="259.88235294117646" y="55.51456310679612" width="15.205882352941178" height="90.48543689320388" rx="1.5" class="barlose"/><rect x="276.5882352941177" y="73.18446601941748" width="15.205882352941178" height="72.81553398058252" rx="1.5" class="barlose"/><rect x="293.29411764705884" y="98.62135922330097" width="15.205882352941178" height="47.37864077669903" rx="1.5" class="barlose"/><rect x="310.0" y="93.76699029126215" width="15.205882352941178" height="52.23300970873786" rx="1.5" class="barlose"/><rect x="326.7058823529412" y="114.7378640776699" width="15.205882352941178" height="31.2621359223301" rx="1.5" class="barwin"/><rect x="343.4117647058824" y="121.53398058252426" width="15.205882352941178" height="24.466019417475728" rx="1.5" class="barwin"/><rect x="360.11764705882354" y="128.9126213592233" width="15.205882352941178" height="17.0873786407767" rx="1.5" class="barwin"/><rect x="376.82352941176475" y="136.48543689320388" width="15.205882352941178" height="9.514563106796118" rx="1.5" class="barwin"/><rect x="393.5294117647059" y="140.1747572815534" width="15.205882352941178" height="5.825242718446602" rx="1.5" class="barwin"/><rect x="410.2352941176471" y="141.3398058252427" width="15.205882352941178" height="4.660194174757281" rx="1.5" class="barwin"/><rect x="426.9411764705883" y="144.05825242718447" width="15.205882352941178" height="1.9417475728155338" rx="1.5" class="barwin"/><rect x="443.64705882352945" y="144.05825242718447" width="15.205882352941178" height="1.9417475728155338" rx="1.5" class="barwin"/><rect x="460.3529411764706" y="145.80582524271844" width="15.205882352941178" height="0.1941747572815534" rx="1.5" class="barwin"/><rect x="477.05882352941177" y="145.80582524271844" width="15.205882352941178" height="0.1941747572815534" rx="1.5" class="barwin"/><rect x="493.764705882353" y="145.80582524271844" width="15.205882352941178" height="0.1941747572815534" rx="1.5" class="barwin"/><rect x="510.47058823529414" y="145.61165048543688" width="15.205882352941178" height="0.3883495145631068" rx="1.5" class="barwin"/><rect x="527.1764705882354" y="146.0" width="15.205882352941178" height="0.0" rx="1.5" class="barwin"/><rect x="543.8823529411765" y="145.80582524271844" width="15.205882352941178" height="0.1941747572815534" rx="1.5" class="barwin"/><rect x="560.5882352941177" y="146.0" width="15.205882352941178" height="0.0" rx="1.5" class="barwin"/><rect x="577.2941176470589" y="145.80582524271844" width="15.205882352941178" height="0.1941747572815534" rx="1.5" class="barwin"/><line x1="327.272830939441" y1="10" x2="327.272830939441" y2="150" class="vline"/><text x="327.272830939441" y="8" text-anchor="middle" class="vlab">to win 135</text><line x1="234.97813879925272" y1="26" x2="234.97813879925272" y2="150" class="mline"/><text x="234.97813879925272" y="22" text-anchor="middle" class="mlab">you 109</text><line x1="26" y1="146" x2="594" y2="146" class="axis"/><text x="26.0" y="162" text-anchor="middle" class="cx">50</text><text x="310.0" y="162" text-anchor="middle" class="cx">130</text><text x="594.0" y="162" text-anchor="middle" class="cx">211</text></svg></div>
     <div class="legend"><i>Green is where you finish ahead of the month&rsquo;s winner,
       grey is where you do not. <b>P(win) 0.9%</b> against a
@@ -276,48 +310,39 @@ footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); paddi
     </div>
 
     <div class="panel p3">
-  <section>
-    <h2>Gameweek plan <span>— projected to the end of the season</span></h2>
-    <div class="strip">
-      <div class="tile"><div class="k">Projected total</div>
+  <section class="card">
+    <div class="hd"><h2>Gameweek plan</h2><span class="sub">projected to the end of the season</span></div>
+    <div class="bd"><div class="kpis">
+      <div class="kpi"><div class="k">Projected total</div>
         <div class="v mono">2244<u> pts</u></div></div>
-      <div class="tile"><div class="k">Transfers</div>
+      <div class="kpi"><div class="k">Transfers</div>
         <div class="v mono">54</div></div>
-      <div class="tile"><div class="k">Hits taken</div>
+      <div class="kpi"><div class="k">Hits taken</div>
         <div class="v mono">0<u> (0 pts)</u></div></div>
     </div>
     <div class="scroll"><table>
       <thead><tr><th>GW</th><th>Captain</th><th>Form</th><th>Projected</th>
         <th>Chip</th><th>Transfers</th></tr></thead>
       <tbody><tr class="mrule"><td colspan="6">August</td></tr><tr class=""><td class="mono nm">1</td><td class="nm">B.Fernandes</td><td class="dim mono">3-4-3</td><td><div class="meter"><span class="fill" style="width:77.0%"></span><span class="val mono">56</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="dim">roll transfer</span></td></tr><tr class=""><td class="mono nm">2</td><td class="nm">B.Fernandes</td><td class="dim mono">3-4-3</td><td><div class="meter"><span class="fill" style="width:78.6%"></span><span class="val mono">57</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="dim">roll transfer</span></td></tr><tr class="mrule"><td colspan="6">September</td></tr><tr class="target"><td class="mono nm">3</td><td class="nm">Haaland</td><td class="dim mono">3-4-3</td><td><div class="meter"><span class="fill" style="width:85.4%"></span><span class="val mono">62</span></div></td><td><span class="chip">Triple Captain</span></td><td class="moves"><span class="dim">roll transfer</span></td></tr><tr class=""><td class="mono nm">4</td><td class="nm">Gabriel</td><td class="dim mono">3-4-3</td><td><div class="meter"><span class="fill" style="width:74.7%"></span><span class="val mono">54</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>van Ewijk</s> &rarr; <b>Gabriel</b></span><span class="move"><s>Diop</s> &rarr; <b>Thiaw</b></span><span class="move"><s>B.Fernandes</s> &rarr; <b>Anderson</b></span></td></tr><tr class=""><td class="mono nm">5</td><td class="nm">Haaland</td><td class="dim mono">4-3-3</td><td><div class="meter"><span class="fill" style="width:80.2%"></span><span class="val mono">58</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Pedro Porro</s> &rarr; <b>Lacroix</b></span></td></tr><tr class="mrule"><td colspan="6">October</td></tr><tr class=""><td class="mono nm">6</td><td class="nm">Gabriel</td><td class="dim mono">4-4-2</td><td><div class="meter"><span class="fill" style="width:75.0%"></span><span class="val mono">54</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Ndiaye</s> &rarr; <b>E.Le Fée</b></span></td></tr><tr class=""><td class="mono nm">7</td><td class="nm">Haaland</td><td class="dim mono">4-4-2</td><td><div class="meter"><span class="fill" style="width:81.9%"></span><span class="val mono">59</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Rogers</s> &rarr; <b>Rice</b></span></td></tr><tr class=""><td class="mono nm">8</td><td class="nm">Gabriel</td><td class="dim mono">3-4-3</td><td><div class="meter"><span class="fill" style="width:77.1%"></span><span class="val mono">56</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Szoboszlai</s> &rarr; <b>Enzo</b></span></td></tr><tr class=""><td class="mono nm">9</td><td class="nm">Haaland</td><td class="dim mono">4-4-2</td><td><div class="meter"><span class="fill" style="width:77.2%"></span><span class="val mono">56</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Lacroix</s> &rarr; <b>Senesi</b></span></td></tr><tr class="mrule"><td colspan="6">November</td></tr><tr class=""><td class="mono nm">10</td><td class="nm">Gabriel</td><td class="dim mono">4-3-3</td><td><div class="meter"><span class="fill" style="width:81.0%"></span><span class="val mono">58</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Thiaw</s> &rarr; <b>Van Hecke</b></span></td></tr><tr class="target"><td class="mono nm">11</td><td class="nm">Haaland</td><td class="dim mono">4-4-2</td><td><div class="meter"><span class="fill" style="width:100.0%"></span><span class="val mono">72</span></div></td><td><span class="chip">Bench Boost</span></td><td class="moves"><span class="move"><s>E.Le Fée</s> &rarr; <b>Tavernier</b></span></td></tr><tr class=""><td class="mono nm">12</td><td class="nm">Calvert-Lewin</td><td class="dim mono">3-4-3</td><td><div class="meter"><span class="fill" style="width:69.9%"></span><span class="val mono">51</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Enzo</s> &rarr; <b>Szoboszlai</b></span></td></tr><tr class="mrule"><td colspan="6">December</td></tr><tr class="target"><td class="mono nm">13</td><td class="nm">Haaland</td><td class="dim mono">5-2-3</td><td><div class="meter"><span class="fill" style="width:81.2%"></span><span class="val mono">59</span></div></td><td><span class="chip">Wildcard</span></td><td class="moves"><span class="move"><s>Tavernier</s> &rarr; <b>Truffert</b></span><span class="move"><s>Van Hecke</s> &rarr; <b>Yarmoliuk</b></span><span class="move"><s>João Pedro</s> &rarr; <b>Thiago</b></span><span class="move"><s>Szoboszlai</s> &rarr; <b>Gomez</b></span><span class="move"><s>Shaw</s> &rarr; <b>Virgil</b></span></td></tr><tr class=""><td class="mono nm">14</td><td class="nm">Haaland</td><td class="dim mono">5-2-3</td><td><div class="meter"><span class="fill" style="width:78.1%"></span><span class="val mono">56</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Senesi</s> &rarr; <b>Tarkowski</b></span></td></tr><tr class=""><td class="mono nm">15</td><td class="nm">Gabriel</td><td class="dim mono">5-2-3</td><td><div class="meter"><span class="fill" style="width:76.5%"></span><span class="val mono">55</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Tarkowski</s> &rarr; <b>Senesi</b></span></td></tr><tr class="target"><td class="mono nm">16</td><td class="nm">Haaland</td><td class="dim mono">5-2-3</td><td><div class="meter"><span class="fill" style="width:86.8%"></span><span class="val mono">63</span></div></td><td><span class="chip">Free Hit</span></td><td class="moves"><span class="move"><s>Truffert</s> &rarr; <b>Kayode</b></span><span class="move"><s>Yarmoliuk</s> &rarr; <b>Enzo</b></span><span class="move"><s>Gomez</s> &rarr; <b>João Pedro</b></span><span class="move"><s>Haaland</s> &rarr; <b>Lacroix</b></span><span class="move"><s>Senesi</s> &rarr; <b>B.Fernandes</b></span></td></tr><tr class=""><td class="mono nm">17</td><td class="nm">B.Fernandes</td><td class="dim mono">5-3-2</td><td><div class="meter"><span class="fill" style="width:81.9%"></span><span class="val mono">59</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Hughes</s> &rarr; <b>João Pedro</b></span><span class="move"><s>Haaland</s> &rarr; <b>B.Fernandes</b></span></td></tr><tr class=""><td class="mono nm">18</td><td class="nm">B.Fernandes</td><td class="dim mono">5-3-2</td><td><div class="meter"><span class="fill" style="width:84.3%"></span><span class="val mono">61</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Truffert</s> &rarr; <b>Lacroix</b></span></td></tr><tr class="mrule"><td colspan="6">January</td></tr><tr class=""><td class="mono nm">19</td><td class="nm">Gabriel</td><td class="dim mono">5-3-2</td><td><div class="meter"><span class="fill" style="width:87.4%"></span><span class="val mono">63</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Senesi</s> &rarr; <b>Tarkowski</b></span></td></tr><tr class=""><td class="mono nm">20</td><td class="nm">B.Fernandes</td><td class="dim mono">5-3-2</td><td><div class="meter"><span class="fill" style="width:79.8%"></span><span class="val mono">58</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Tarkowski</s> &rarr; <b>Senesi</b></span></td></tr><tr class=""><td class="mono nm">21</td><td class="nm">Gabriel</td><td class="dim mono">5-3-2</td><td><div class="meter"><span class="fill" style="width:85.4%"></span><span class="val mono">62</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Lacroix</s> &rarr; <b>Truffert</b></span></td></tr><tr class=""><td class="mono nm">22</td><td class="nm">Gabriel</td><td class="dim mono">5-3-2</td><td><div class="meter"><span class="fill" style="width:77.9%"></span><span class="val mono">56</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>João Pedro</s> &rarr; <b>Watkins</b></span></td></tr><tr class=""><td class="mono nm">23</td><td class="nm">B.Fernandes</td><td class="dim mono">4-3-3</td><td><div class="meter"><span class="fill" style="width:76.7%"></span><span class="val mono">55</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="dim">roll transfer</span></td></tr><tr class="mrule"><td colspan="6">February</td></tr><tr class="target"><td class="mono nm">24</td><td class="nm">Haaland</td><td class="dim mono">5-2-3</td><td><div class="meter"><span class="fill" style="width:92.4%"></span><span class="val mono">67</span></div></td><td><span class="chip">Bench Boost</span></td><td class="moves"><span class="move"><s>Watkins</s> &rarr; <b>Hughes</b></span><span class="move"><s>B.Fernandes</s> &rarr; <b>Haaland</b></span></td></tr><tr class=""><td class="mono nm">25</td><td class="nm">Gabriel</td><td class="dim mono">5-2-3</td><td><div class="meter"><span class="fill" style="width:80.3%"></span><span class="val mono">58</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Senesi</s> &rarr; <b>Lacroix</b></span></td></tr><tr class=""><td class="mono nm">26</td><td class="nm">Haaland</td><td class="dim mono">5-2-3</td><td><div class="meter"><span class="fill" style="width:88.3%"></span><span class="val mono">64</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Rice</s> &rarr; <b>Szoboszlai</b></span></td></tr><tr class=""><td class="mono nm">27</td><td class="nm">Haaland</td><td class="dim mono">5-2-3</td><td><div class="meter"><span class="fill" style="width:79.3%"></span><span class="val mono">57</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Truffert</s> &rarr; <b>Senesi</b></span></td></tr><tr class="mrule"><td colspan="6">March</td></tr><tr class=""><td class="mono nm">28</td><td class="nm">Haaland</td><td class="dim mono">5-2-3</td><td><div class="meter"><span class="fill" style="width:86.7%"></span><span class="val mono">63</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Szoboszlai</s> &rarr; <b>Enzo</b></span></td></tr><tr class=""><td class="mono nm">29</td><td class="nm">Haaland</td><td class="dim mono">5-2-3</td><td><div class="meter"><span class="fill" style="width:81.0%"></span><span class="val mono">58</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="dim">roll transfer</span></td></tr><tr class=""><td class="mono nm">30</td><td class="nm">Gabriel</td><td class="dim mono">5-3-2</td><td><div class="meter"><span class="fill" style="width:81.4%"></span><span class="val mono">59</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Hughes</s> &rarr; <b>João Pedro</b></span><span class="move"><s>Haaland</s> &rarr; <b>B.Fernandes</b></span></td></tr><tr class="mrule"><td colspan="6">April</td></tr><tr class=""><td class="mono nm">31</td><td class="nm">B.Fernandes</td><td class="dim mono">5-3-2</td><td><div class="meter"><span class="fill" style="width:87.3%"></span><span class="val mono">63</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Enzo</s> &rarr; <b>Rice</b></span></td></tr><tr class=""><td class="mono nm">32</td><td class="nm">B.Fernandes</td><td class="dim mono">5-3-2</td><td><div class="meter"><span class="fill" style="width:82.8%"></span><span class="val mono">60</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Lacroix</s> &rarr; <b>Tarkowski</b></span></td></tr><tr class="target"><td class="mono nm">33</td><td class="nm">B.Fernandes</td><td class="dim mono">5-3-2</td><td><div class="meter"><span class="fill" style="width:79.7%"></span><span class="val mono">58</span></div></td><td><span class="chip">Free Hit</span></td><td class="moves"><span class="move"><s>Yarmoliuk</s> &rarr; <b>Barry</b></span><span class="move"><s>Gomez</s> &rarr; <b>Berge</b></span><span class="move"><s>João Pedro</s> &rarr; <b>Semenyo</b></span><span class="move"><s>Virgil</s> &rarr; <b>Thiaw</b></span></td></tr><tr class="mrule"><td colspan="6">May</td></tr><tr class="target"><td class="mono nm">34</td><td class="nm">B.Fernandes</td><td class="dim mono">5-3-2</td><td><div class="meter"><span class="fill" style="width:79.6%"></span><span class="val mono">58</span></div></td><td><span class="chip">Wildcard</span></td><td class="moves"><span class="move"><s>Yarmoliuk</s> &rarr; <b>Enzo</b></span><span class="move"><s>Gomez</s> &rarr; <b>Lacroix</b></span><span class="move"><s>João Pedro</s> &rarr; <b>Hughes</b></span><span class="move"><s>Tarkowski</s> &rarr; <b>Barry</b></span><span class="move"><s>Senesi</s> &rarr; <b>O&#x27;Reilly</b></span></td></tr><tr class=""><td class="mono nm">35</td><td class="nm">B.Fernandes</td><td class="dim mono">5-4-1</td><td><div class="meter"><span class="fill" style="width:75.0%"></span><span class="val mono">54</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Hughes</s> &rarr; <b>Berge</b></span><span class="move"><s>O&#x27;Reilly</s> &rarr; <b>Senesi</b></span></td></tr><tr class="target"><td class="mono nm">36</td><td class="nm">B.Fernandes</td><td class="dim mono">5-4-1</td><td><div class="meter"><span class="fill" style="width:93.5%"></span><span class="val mono">68</span></div></td><td><span class="chip">Triple Captain</span></td><td class="moves"><span class="move"><s>Berge</s> &rarr; <b>Yarmoliuk</b></span></td></tr><tr class=""><td class="mono nm">37</td><td class="nm">Thiago</td><td class="dim mono">4-4-2</td><td><div class="meter"><span class="fill" style="width:80.5%"></span><span class="val mono">58</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Senesi</s> &rarr; <b>Tarkowski</b></span></td></tr><tr class=""><td class="mono nm">38</td><td class="nm">B.Fernandes</td><td class="dim mono">5-4-1</td><td><div class="meter"><span class="fill" style="width:84.2%"></span><span class="val mono">61</span></div></td><td><span class=dim>—</span></td><td class="moves"><span class="move"><s>Thiago</s> &rarr; <b>João Pedro</b></span></td></tr></tbody>
-    </table></div>
-    <div class="legend">
-      <i>Weeks further out say "a good squad for these fixtures" more than
-         "these exact players" — the near weeks are the actionable ones.</i>
-    </div>
+    </table></div></div>
+    <div class="ft">Weeks further out say a good squad for these fixtures more than
+      these exact players &mdash; the near weeks are the actionable ones.</div>
   </section>
     </div>
 
     <div class="panel p4">
-  <section>
-    <h2>Your league</h2>
-    <div class="note"><h3>No league connected</h3>
-      <p style="margin:0 0 8px">Pass your mini-league id and this fills with every
-      rival&rsquo;s actual squad, priced through the same model as yours &mdash; their
-      projected points, their captain, and the ownership that matters.</p>
-      <p style="margin:0"><b>Why it matters:</b> a player most of your league owns
-      cannot win you the month, because his haul lifts everyone. Ownership measured
-      across your nineteen rivals is the number the differential maths needs &mdash;
-      not FPL&rsquo;s global figure, which describes six million strangers.</p>
-      <p style="margin:8px 0 0" class="dim">Find the id in your league URL
-      (<code>.../leagues/<b>123456</b>/standings/c</code>), then run with
-      <code>--league 123456 789012</code> &mdash; as many as you have.</p></div>
+  <section class="card">
+    <div class="hd"><h2>Trend S&amp;S League </h2><span class="sub">league 109579</span></div>
+    <div class="note"><h3>Not available yet</h3>
+      <p style="margin:0">league standings are empty — nothing scored yet this season. This fills in automatically once the
+      first deadline passes, and every rival&rsquo;s squad then gets priced through the
+      same model as yours.</p></div>
   </section>
     </div>
 
     <div class="panel p5">
-  <section>
-    <h2>Actual vs predicted</h2>
+  <section class="card">
+    <div class="hd"><h2>Actual vs predicted</h2></div>
     <div class="note"><h3>Starts at GW1</h3>
       <p style="margin:0 0 8px">Each gameweek&rsquo;s prediction is written down before
       the deadline and scored against what actually happened afterwards. Nothing else
@@ -328,8 +353,8 @@ footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); paddi
       can edit after the fact is not a forecast.</p></div>
   </section>
 
-  <section>
-    <h2>Model accuracy <span>&mdash; 8,392 player-months across four seasons</span></h2>
+  <section class="card">
+    <div class="hd"><h2>Model accuracy </h2><span class="sub">8,392 player-months across four seasons</span></div>
     <div class="chartbox"><svg viewBox="0 0 620 210" width="100%" height="210" role="img" aria-label="Predicted against realised points by decile"><line x1="34" y1="176.0" x2="608" y2="176.0" class="grid"/><text x="28" y="180.0" text-anchor="end" class="cy">0</text><line x1="34" y1="122.7" x2="608" y2="122.7" class="grid"/><text x="28" y="126.7" text-anchor="end" class="cy">8</text><line x1="34" y1="69.3" x2="608" y2="69.3" class="grid"/><text x="28" y="73.3" text-anchor="end" class="cy">15</text><line x1="34" y1="16.0" x2="608" y2="16.0" class="grid"/><text x="28" y="20.0" text-anchor="end" class="cy">23</text><rect x="42.0" y="159.9" width="19.5" height="16.1" rx="2" class="barpred"/><rect x="63.8" y="157.1" width="19.5" height="18.9" rx="2" class="barwin"/><text x="62.7" y="189.0" text-anchor="middle" class="cx">1</text><rect x="99.4" y="148.7" width="19.5" height="27.3" rx="2" class="barpred"/><rect x="121.2" y="145.9" width="19.5" height="30.1" rx="2" class="barwin"/><text x="120.1" y="189.0" text-anchor="middle" class="cx">2</text><rect x="156.8" y="139.6" width="19.5" height="36.4" rx="2" class="barpred"/><rect x="178.6" y="141.7" width="19.5" height="34.3" rx="2" class="barwin"/><text x="177.5" y="189.0" text-anchor="middle" class="cx">3</text><rect x="214.2" y="132.0" width="19.5" height="44.0" rx="2" class="barpred"/><rect x="236.0" y="132.7" width="19.5" height="43.3" rx="2" class="barwin"/><text x="234.9" y="189.0" text-anchor="middle" class="cx">4</text><rect x="271.6" y="124.3" width="19.5" height="51.7" rx="2" class="barpred"/><rect x="293.4" y="129.9" width="19.5" height="46.1" rx="2" class="barwin"/><text x="292.3" y="189.0" text-anchor="middle" class="cx">5</text><rect x="329.0" y="115.2" width="19.5" height="60.8" rx="2" class="barpred"/><rect x="350.8" y="119.4" width="19.5" height="56.6" rx="2" class="barwin"/><text x="349.7" y="189.0" text-anchor="middle" class="cx">6</text><rect x="386.4" y="105.4" width="19.5" height="70.6" rx="2" class="barpred"/><rect x="408.2" y="112.4" width="19.5" height="63.6" rx="2" class="barwin"/><text x="407.1" y="189.0" text-anchor="middle" class="cx">7</text><rect x="443.8" y="94.2" width="19.5" height="81.8" rx="2" class="barpred"/><rect x="465.6" y="97.0" width="19.5" height="79.0" rx="2" class="barwin"/><text x="464.5" y="189.0" text-anchor="middle" class="cx">8</text><rect x="501.2" y="76.7" width="19.5" height="99.3" rx="2" class="barpred"/><rect x="523.0" y="83.7" width="19.5" height="92.3" rx="2" class="barwin"/><text x="521.9" y="189.0" text-anchor="middle" class="cx">9</text><rect x="558.6" y="36.9" width="19.5" height="139.1" rx="2" class="barpred"/><rect x="580.4" y="48.8" width="19.5" height="127.2" rx="2" class="barwin"/><text x="579.3" y="189.0" text-anchor="middle" class="cx">10</text><text x="310.0" y="206" text-anchor="middle" class="cx">tenths of all players, weakest predicted to strongest &rarr;</text></svg></div>
     <div class="legend"><i>Grey is predicted, green is what actually happened, in tenths
       from weakest prediction to strongest. Equal heights would be perfect. The model
@@ -337,8 +362,8 @@ footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); paddi
       carry an <b>xP adj</b> column beside <b>xP</b>.</i></div>
   </section>
 
-  <section>
-    <h2>Your fixtures <span>&mdash; the 11 clubs you own, next 8 gameweeks</span></h2>
+  <section class="card">
+    <div class="hd"><h2>Your fixtures </h2><span class="sub">the 11 clubs you own, next 8 gameweeks</span></div>
     <div class="chartbox"><svg viewBox="0 0 530 404" width="100%" height="404" role="img" aria-label="Fixture difficulty for the next 8 gameweeks" style="max-width:530px"><text x="87.0" y="14" class="cx" text-anchor="middle">1</text><text x="145.0" y="14" class="cx" text-anchor="middle">2</text><text x="203.0" y="14" class="cx" text-anchor="middle">3</text><text x="261.0" y="14" class="cx" text-anchor="middle">4</text><text x="319.0" y="14" class="cx" text-anchor="middle">5</text><text x="377.0" y="14" class="cx" text-anchor="middle">6</text><text x="435.0" y="14" class="cx" text-anchor="middle">7</text><text x="493.0" y="14" class="cx" text-anchor="middle">8</text><text x="0" y="45" class="cy">LIV</text><rect x="59.0" y="25" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="86.5" y="40" text-anchor="middle" class="cf">new</text><text x="87.0" y="52" text-anchor="middle" class="cd">3</text><rect x="117.0" y="25" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="144.5" y="40" text-anchor="middle" class="cf">NFO</text><text x="145.0" y="52" text-anchor="middle" class="cd">3</text><rect x="175.0" y="25" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="202.5" y="40" text-anchor="middle" class="cf">ips</text><text x="203.0" y="52" text-anchor="middle" class="cd">2</text><rect x="233.0" y="25" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="260.5" y="40" text-anchor="middle" class="cf">FUL</text><text x="261.0" y="52" text-anchor="middle" class="cd">2</text><rect x="291.0" y="25" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="318.5" y="40" text-anchor="middle" class="cf">bou</text><text x="319.0" y="52" text-anchor="middle" class="cd">3</text><rect x="349.0" y="25" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="376.5" y="40" text-anchor="middle" class="cf">MCI</text><text x="377.0" y="52" text-anchor="middle" class="cd">4</text><rect x="407.0" y="25" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="434.5" y="40" text-anchor="middle" class="cf">bre</text><text x="435.0" y="52" text-anchor="middle" class="cd">3</text><rect x="465.0" y="25" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="492.5" y="40" text-anchor="middle" class="cf">BHA</text><text x="493.0" y="52" text-anchor="middle" class="cd">2</text><text x="0" y="79" class="cy">CRY</text><rect x="59.0" y="59" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="86.5" y="74" text-anchor="middle" class="cf">eve</text><text x="87.0" y="86" text-anchor="middle" class="cd">3</text><rect x="117.0" y="59" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="144.5" y="74" text-anchor="middle" class="cf">MCI</text><text x="145.0" y="86" text-anchor="middle" class="cd">4</text><rect x="175.0" y="59" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="202.5" y="74" text-anchor="middle" class="cf">ful</text><text x="203.0" y="86" text-anchor="middle" class="cd">3</text><rect x="233.0" y="59" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="260.5" y="74" text-anchor="middle" class="cf">IPS</text><text x="261.0" y="86" text-anchor="middle" class="cd">2</text><rect x="291.0" y="59" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="318.5" y="74" text-anchor="middle" class="cf">lee</text><text x="319.0" y="86" text-anchor="middle" class="cd">3</text><rect x="349.0" y="59" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="376.5" y="74" text-anchor="middle" class="cf">NFO</text><text x="377.0" y="86" text-anchor="middle" class="cd">3</text><rect x="407.0" y="59" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="434.5" y="74" text-anchor="middle" class="cf">bha</text><text x="435.0" y="86" text-anchor="middle" class="cd">3</text><rect x="465.0" y="59" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="492.5" y="74" text-anchor="middle" class="cf">NEW</text><text x="493.0" y="86" text-anchor="middle" class="cd">2</text><text x="0" y="113" class="cy">MUN</text><rect x="59.0" y="93" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="86.5" y="108" text-anchor="middle" class="cf">hul</text><text x="87.0" y="120" text-anchor="middle" class="cd">2</text><rect x="117.0" y="93" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="144.5" y="108" text-anchor="middle" class="cf">IPS</text><text x="145.0" y="120" text-anchor="middle" class="cd">2</text><rect x="175.0" y="93" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="202.5" y="108" text-anchor="middle" class="cf">eve</text><text x="203.0" y="120" text-anchor="middle" class="cd">3</text><rect x="233.0" y="93" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="260.5" y="108" text-anchor="middle" class="cf">MCI</text><text x="261.0" y="120" text-anchor="middle" class="cd">4</text><rect x="291.0" y="93" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="318.5" y="108" text-anchor="middle" class="cf">ful</text><text x="319.0" y="120" text-anchor="middle" class="cd">3</text><rect x="349.0" y="93" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="376.5" y="108" text-anchor="middle" class="cf">TOT</text><text x="377.0" y="120" text-anchor="middle" class="cd">3</text><rect x="407.0" y="93" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="434.5" y="108" text-anchor="middle" class="cf">lee</text><text x="435.0" y="120" text-anchor="middle" class="cd">3</text><rect x="465.0" y="93" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="492.5" y="108" text-anchor="middle" class="cf">BOU</text><text x="493.0" y="120" text-anchor="middle" class="cd">3</text><text x="0" y="147" class="cy">ARS</text><rect x="59.0" y="127" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="86.5" y="142" text-anchor="middle" class="cf">COV</text><text x="87.0" y="154" text-anchor="middle" class="cd">2</text><rect x="117.0" y="127" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="144.5" y="142" text-anchor="middle" class="cf">avl</text><text x="145.0" y="154" text-anchor="middle" class="cd">4</text><rect x="175.0" y="127" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="202.5" y="142" text-anchor="middle" class="cf">CHE</text><text x="203.0" y="154" text-anchor="middle" class="cd">4</text><rect x="233.0" y="127" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="260.5" y="142" text-anchor="middle" class="cf">sun</text><text x="261.0" y="154" text-anchor="middle" class="cd">3</text><rect x="291.0" y="127" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="318.5" y="142" text-anchor="middle" class="cf">bha</text><text x="319.0" y="154" text-anchor="middle" class="cd">3</text><rect x="349.0" y="127" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="376.5" y="142" text-anchor="middle" class="cf">LEE</text><text x="377.0" y="154" text-anchor="middle" class="cd">2</text><rect x="407.0" y="127" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="434.5" y="142" text-anchor="middle" class="cf">nfo</text><text x="435.0" y="154" text-anchor="middle" class="cd">3</text><rect x="465.0" y="127" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="492.5" y="142" text-anchor="middle" class="cf">EVE</text><text x="493.0" y="154" text-anchor="middle" class="cd">3</text><text x="0" y="181" class="cy">CHE</text><rect x="59.0" y="161" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="86.5" y="176" text-anchor="middle" class="cf">ful</text><text x="87.0" y="188" text-anchor="middle" class="cd">3</text><rect x="117.0" y="161" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="144.5" y="176" text-anchor="middle" class="cf">BHA</text><text x="145.0" y="188" text-anchor="middle" class="cd">2</text><rect x="175.0" y="161" width="54.0" height="31" rx="5" fill="var(--fdr5)"/><text x="202.5" y="176" text-anchor="middle" class="cf">ars</text><text x="203.0" y="188" text-anchor="middle" class="cd">5</text><rect x="233.0" y="161" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="260.5" y="176" text-anchor="middle" class="cf">HUL</text><text x="261.0" y="188" text-anchor="middle" class="cd">2</text><rect x="291.0" y="161" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="318.5" y="176" text-anchor="middle" class="cf">bre</text><text x="319.0" y="188" text-anchor="middle" class="cd">3</text><rect x="349.0" y="161" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="376.5" y="176" text-anchor="middle" class="cf">BOU</text><text x="377.0" y="188" text-anchor="middle" class="cd">3</text><rect x="407.0" y="161" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="434.5" y="176" text-anchor="middle" class="cf">eve</text><text x="435.0" y="188" text-anchor="middle" class="cd">3</text><rect x="465.0" y="161" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="492.5" y="176" text-anchor="middle" class="cf">TOT</text><text x="493.0" y="188" text-anchor="middle" class="cd">3</text><text x="0" y="215" class="cy">COV</text><rect x="59.0" y="195" width="54.0" height="31" rx="5" fill="var(--fdr5)"/><text x="86.5" y="210" text-anchor="middle" class="cf">ars</text><text x="87.0" y="222" text-anchor="middle" class="cd">5</text><rect x="117.0" y="195" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="144.5" y="210" text-anchor="middle" class="cf">HUL</text><text x="145.0" y="222" text-anchor="middle" class="cd">2</text><rect x="175.0" y="195" width="54.0" height="31" rx="5" fill="var(--fdr5)"/><text x="202.5" y="210" text-anchor="middle" class="cf">mci</text><text x="203.0" y="222" text-anchor="middle" class="cd">5</text><rect x="233.0" y="195" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="260.5" y="210" text-anchor="middle" class="cf">BHA</text><text x="261.0" y="222" text-anchor="middle" class="cd">2</text><rect x="291.0" y="195" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="318.5" y="210" text-anchor="middle" class="cf">nfo</text><text x="319.0" y="222" text-anchor="middle" class="cd">3</text><rect x="349.0" y="195" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="376.5" y="210" text-anchor="middle" class="cf">NEW</text><text x="377.0" y="222" text-anchor="middle" class="cd">2</text><rect x="407.0" y="195" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="434.5" y="210" text-anchor="middle" class="cf">tot</text><text x="435.0" y="222" text-anchor="middle" class="cd">3</text><rect x="465.0" y="195" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="492.5" y="210" text-anchor="middle" class="cf">FUL</text><text x="493.0" y="222" text-anchor="middle" class="cd">2</text><text x="0" y="249" class="cy">MCI</text><rect x="59.0" y="229" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="86.5" y="244" text-anchor="middle" class="cf">BOU</text><text x="87.0" y="256" text-anchor="middle" class="cd">3</text><rect x="117.0" y="229" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="144.5" y="244" text-anchor="middle" class="cf">cry</text><text x="145.0" y="256" text-anchor="middle" class="cd">3</text><rect x="175.0" y="229" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="202.5" y="244" text-anchor="middle" class="cf">COV</text><text x="203.0" y="256" text-anchor="middle" class="cd">2</text><rect x="233.0" y="229" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="260.5" y="244" text-anchor="middle" class="cf">mun</text><text x="261.0" y="256" text-anchor="middle" class="cd">4</text><rect x="291.0" y="229" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="318.5" y="244" text-anchor="middle" class="cf">SUN</text><text x="319.0" y="256" text-anchor="middle" class="cd">2</text><rect x="349.0" y="229" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="376.5" y="244" text-anchor="middle" class="cf">liv</text><text x="377.0" y="256" text-anchor="middle" class="cd">4</text><rect x="407.0" y="229" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="434.5" y="244" text-anchor="middle" class="cf">IPS</text><text x="435.0" y="256" text-anchor="middle" class="cd">2</text><rect x="465.0" y="229" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="492.5" y="244" text-anchor="middle" class="cf">avl</text><text x="493.0" y="256" text-anchor="middle" class="cd">4</text><text x="0" y="283" class="cy">TOT</text><rect x="59.0" y="263" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="86.5" y="278" text-anchor="middle" class="cf">bre</text><text x="87.0" y="290" text-anchor="middle" class="cd">3</text><rect x="117.0" y="263" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="144.5" y="278" text-anchor="middle" class="cf">NEW</text><text x="145.0" y="290" text-anchor="middle" class="cd">2</text><rect x="175.0" y="263" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="202.5" y="278" text-anchor="middle" class="cf">nfo</text><text x="203.0" y="290" text-anchor="middle" class="cd">3</text><rect x="233.0" y="263" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="260.5" y="278" text-anchor="middle" class="cf">EVE</text><text x="261.0" y="290" text-anchor="middle" class="cd">3</text><rect x="291.0" y="263" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="318.5" y="278" text-anchor="middle" class="cf">AVL</text><text x="319.0" y="290" text-anchor="middle" class="cd">3</text><rect x="349.0" y="263" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="376.5" y="278" text-anchor="middle" class="cf">mun</text><text x="377.0" y="290" text-anchor="middle" class="cd">4</text><rect x="407.0" y="263" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="434.5" y="278" text-anchor="middle" class="cf">COV</text><text x="435.0" y="290" text-anchor="middle" class="cd">2</text><rect x="465.0" y="263" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="492.5" y="278" text-anchor="middle" class="cf">che</text><text x="493.0" y="290" text-anchor="middle" class="cd">4</text><text x="0" y="317" class="cy">EVE</text><rect x="59.0" y="297" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="86.5" y="312" text-anchor="middle" class="cf">CRY</text><text x="87.0" y="324" text-anchor="middle" class="cd">3</text><rect x="117.0" y="297" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="144.5" y="312" text-anchor="middle" class="cf">bou</text><text x="145.0" y="324" text-anchor="middle" class="cd">3</text><rect x="175.0" y="297" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="202.5" y="312" text-anchor="middle" class="cf">MUN</text><text x="203.0" y="324" text-anchor="middle" class="cd">4</text><rect x="233.0" y="297" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="260.5" y="312" text-anchor="middle" class="cf">tot</text><text x="261.0" y="324" text-anchor="middle" class="cd">3</text><rect x="291.0" y="297" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="318.5" y="312" text-anchor="middle" class="cf">IPS</text><text x="319.0" y="324" text-anchor="middle" class="cd">2</text><rect x="349.0" y="297" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="376.5" y="312" text-anchor="middle" class="cf">hul</text><text x="377.0" y="324" text-anchor="middle" class="cd">2</text><rect x="407.0" y="297" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="434.5" y="312" text-anchor="middle" class="cf">CHE</text><text x="435.0" y="324" text-anchor="middle" class="cd">4</text><rect x="465.0" y="297" width="54.0" height="31" rx="5" fill="var(--fdr5)"/><text x="492.5" y="312" text-anchor="middle" class="cf">ars</text><text x="493.0" y="324" text-anchor="middle" class="cd">5</text><text x="0" y="351" class="cy">IPS</text><rect x="59.0" y="331" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="86.5" y="346" text-anchor="middle" class="cf">SUN</text><text x="87.0" y="358" text-anchor="middle" class="cd">2</text><rect x="117.0" y="331" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="144.5" y="346" text-anchor="middle" class="cf">mun</text><text x="145.0" y="358" text-anchor="middle" class="cd">4</text><rect x="175.0" y="331" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="202.5" y="346" text-anchor="middle" class="cf">LIV</text><text x="203.0" y="358" text-anchor="middle" class="cd">4</text><rect x="233.0" y="331" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="260.5" y="346" text-anchor="middle" class="cf">cry</text><text x="261.0" y="358" text-anchor="middle" class="cd">3</text><rect x="291.0" y="331" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="318.5" y="346" text-anchor="middle" class="cf">eve</text><text x="319.0" y="358" text-anchor="middle" class="cd">3</text><rect x="349.0" y="331" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="376.5" y="346" text-anchor="middle" class="cf">FUL</text><text x="377.0" y="358" text-anchor="middle" class="cd">2</text><rect x="407.0" y="331" width="54.0" height="31" rx="5" fill="var(--fdr5)"/><text x="434.5" y="346" text-anchor="middle" class="cf">mci</text><text x="435.0" y="358" text-anchor="middle" class="cd">5</text><rect x="465.0" y="331" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="492.5" y="346" text-anchor="middle" class="cf">NFO</text><text x="493.0" y="358" text-anchor="middle" class="cd">3</text><text x="0" y="385" class="cy">LEE</text><rect x="59.0" y="365" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="86.5" y="380" text-anchor="middle" class="cf">nfo</text><text x="87.0" y="392" text-anchor="middle" class="cd">3</text><rect x="117.0" y="365" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="144.5" y="380" text-anchor="middle" class="cf">BRE</text><text x="145.0" y="392" text-anchor="middle" class="cd">3</text><rect x="175.0" y="365" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="202.5" y="380" text-anchor="middle" class="cf">bha</text><text x="203.0" y="392" text-anchor="middle" class="cd">3</text><rect x="233.0" y="365" width="54.0" height="31" rx="5" fill="var(--fdr2)"/><text x="260.5" y="380" text-anchor="middle" class="cf">NEW</text><text x="261.0" y="392" text-anchor="middle" class="cd">2</text><rect x="291.0" y="365" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="318.5" y="380" text-anchor="middle" class="cf">CRY</text><text x="319.0" y="392" text-anchor="middle" class="cd">3</text><rect x="349.0" y="365" width="54.0" height="31" rx="5" fill="var(--fdr5)"/><text x="376.5" y="380" text-anchor="middle" class="cf">ars</text><text x="377.0" y="392" text-anchor="middle" class="cd">5</text><rect x="407.0" y="365" width="54.0" height="31" rx="5" fill="var(--fdr4)"/><text x="434.5" y="380" text-anchor="middle" class="cf">MUN</text><text x="435.0" y="392" text-anchor="middle" class="cd">4</text><rect x="465.0" y="365" width="54.0" height="31" rx="5" fill="var(--fdr3)"/><text x="492.5" y="380" text-anchor="middle" class="cf">sun</text><text x="493.0" y="392" text-anchor="middle" class="cd">3</text></svg></div>
     <div class="fdrkey">
       <i><b style="background:var(--fdr1)"></b>1</i><i><b style="background:var(--fdr2)"></b>2</i>
@@ -349,26 +374,26 @@ footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); paddi
     </div>
   </section>
 
-  <section>
-    <h2>Value frontier <span>&mdash; expected points against price</span></h2>
+  <section class="card">
+    <div class="hd"><h2>Value frontier </h2><span class="sub">expected points against price</span></div>
     <div class="chartbox"><svg viewBox="0 0 620 260" width="100%" height="260" role="img" aria-label="Expected points against price"><line x1="40" y1="226.0" x2="608" y2="226.0" class="grid"/><text x="34" y="230.0" text-anchor="end" class="cy">0</text><line x1="40" y1="184.0" x2="608" y2="184.0" class="grid"/><text x="34" y="188.0" text-anchor="end" class="cy">3</text><line x1="40" y1="142.0" x2="608" y2="142.0" class="grid"/><text x="34" y="146.0" text-anchor="end" class="cy">6</text><line x1="40" y1="99.99999999999999" x2="608" y2="99.99999999999999" class="grid"/><text x="34" y="103.99999999999999" text-anchor="end" class="cy">9</text><line x1="40" y1="58.0" x2="608" y2="58.0" class="grid"/><text x="34" y="62.0" text-anchor="end" class="cy">12</text><line x1="40" y1="16.0" x2="608" y2="16.0" class="grid"/><text x="34" y="20.0" text-anchor="end" class="cy">15</text><text x="35.18644067796612" y="242" text-anchor="middle" class="cx">4</text><text x="131.45762711864407" y="242" text-anchor="middle" class="cx">6</text><text x="227.72881355932205" y="242" text-anchor="middle" class="cx">8</text><text x="324.0" y="242" text-anchor="middle" class="cx">10</text><text x="420.271186440678" y="242" text-anchor="middle" class="cx">12</text><text x="516.542372881356" y="242" text-anchor="middle" class="cx">14</text><circle cx="227.7" cy="66.9" r="4" class="dot"><title>Gabriel — £8.0m, 11.1 xP</title></circle><circle cx="155.5" cy="82.3" r="4" class="dot"><title>Virgil — £6.5m, 10.1 xP</title></circle><circle cx="227.7" cy="86.3" r="4" class="dot"><title>Thiago — £8.0m, 9.8 xP</title></circle><circle cx="227.7" cy="89.5" r="4" class="dot"><title>Mbeumo — £8.0m, 9.6 xP</title></circle><circle cx="131.5" cy="89.9" r="4" class="dot"><title>Lacroix — £6.0m, 9.5 xP</title></circle><circle cx="203.7" cy="90.5" r="4" class="dot"><title>Rice — £7.5m, 9.5 xP</title></circle><circle cx="131.5" cy="94.5" r="4" class="dot"><title>Senesi — £6.0m, 9.2 xP</title></circle><circle cx="155.5" cy="94.6" r="4" class="dot"><title>Anderson — £6.5m, 9.2 xP</title></circle><circle cx="251.8" cy="95.3" r="4" class="dot"><title>Semenyo — £8.5m, 9.1 xP</title></circle><circle cx="179.6" cy="97.8" r="4" class="dot"><title>Enzo — £7.0m, 9.0 xP</title></circle><circle cx="299.9" cy="102.2" r="4" class="dot"><title>Saka — £9.5m, 8.7 xP</title></circle><circle cx="227.7" cy="104.7" r="4" class="dot"><title>Gibbs-White — £8.0m, 8.5 xP</title></circle><circle cx="107.4" cy="105.0" r="4" class="dot"><title>Mukiele — £5.5m, 8.5 xP</title></circle><circle cx="131.5" cy="105.3" r="4" class="dot"><title>Tarkowski — £6.0m, 8.5 xP</title></circle><circle cx="155.5" cy="105.3" r="4" class="dot"><title>O&#x27;Reilly — £6.5m, 8.4 xP</title></circle><circle cx="227.7" cy="106.8" r="4" class="dot"><title>Cunha — £8.0m, 8.3 xP</title></circle><circle cx="131.5" cy="107.0" r="4" class="dot"><title>E.Le Fée — £6.0m, 8.3 xP</title></circle><circle cx="179.6" cy="109.0" r="4" class="dot"><title>Rashford — £7.0m, 8.2 xP</title></circle><circle cx="107.4" cy="110.5" r="4" class="dot"><title>Chalobah — £5.5m, 8.1 xP</title></circle><circle cx="83.3" cy="110.8" r="4" class="dot"><title>Dalot — £5.0m, 8.1 xP</title></circle><circle cx="131.5" cy="111.5" r="4" class="dot"><title>Matheus N. — £6.0m, 8.0 xP</title></circle><circle cx="83.3" cy="115.1" r="4" class="dot"><title>Alderete — £5.0m, 7.8 xP</title></circle><circle cx="83.3" cy="115.6" r="4" class="dot"><title>Van Hecke — £5.0m, 7.7 xP</title></circle><circle cx="227.7" cy="117.2" r="4" class="dot"><title>Watkins — £8.0m, 7.6 xP</title></circle><circle cx="83.3" cy="117.7" r="4" class="dot"><title>Lammens — £5.0m, 7.6 xP</title></circle><circle cx="107.4" cy="117.9" r="4" class="dot"><title>Palestra — £5.5m, 7.6 xP</title></circle><circle cx="107.4" cy="119.1" r="4" class="dot"><title>Donnarumma — £5.5m, 7.5 xP</title></circle><circle cx="155.5" cy="119.1" r="4" class="dot"><title>Wilson — £6.5m, 7.5 xP</title></circle><circle cx="203.7" cy="121.3" r="4" class="dot"><title>Gyökeres — £7.5m, 7.3 xP</title></circle><circle cx="179.6" cy="122.0" r="4" class="dot"><title>Gakpo — £7.0m, 7.3 xP</title></circle><circle cx="83.3" cy="122.7" r="4" class="dot"><title>Roefs — £5.0m, 7.2 xP</title></circle><circle cx="203.7" cy="122.8" r="4" class="dot"><title>Wirtz — £7.5m, 7.2 xP</title></circle><circle cx="107.4" cy="123.2" r="4" class="dot"><title>Collins — £5.5m, 7.2 xP</title></circle><circle cx="299.9" cy="123.2" r="4" class="dot"><title>Palmer — £9.5m, 7.2 xP</title></circle><circle cx="155.5" cy="123.8" r="4" class="dot"><title>Maddison — £6.5m, 7.2 xP</title></circle><circle cx="83.3" cy="123.9" r="4" class="dot"><title>Ballard — £5.0m, 7.1 xP</title></circle><circle cx="131.5" cy="124.0" r="4" class="dot"><title>Schade — £6.0m, 7.1 xP</title></circle><circle cx="155.5" cy="124.5" r="4" class="dot"><title>Dewsbury-Hall — £6.5m, 7.1 xP</title></circle><circle cx="155.5" cy="124.6" r="4" class="dot"><title>N.Jackson — £6.5m, 7.1 xP</title></circle><circle cx="83.3" cy="125.3" r="4" class="dot"><title>Sánchez — £5.0m, 7.1 xP</title></circle><circle cx="131.5" cy="125.3" r="4" class="dot"><title>Gravenberch — £6.0m, 7.1 xP</title></circle><circle cx="155.5" cy="125.4" r="4" class="dot"><title>O.Dango — £6.5m, 7.0 xP</title></circle><circle cx="179.6" cy="125.7" r="4" class="dot"><title>Bruno G. — £7.0m, 7.0 xP</title></circle><circle cx="83.3" cy="126.2" r="4" class="dot"><title>Kelleher — £5.0m, 7.0 xP</title></circle><circle cx="155.5" cy="126.6" r="4" class="dot"><title>Neto — £6.5m, 7.0 xP</title></circle><circle cx="155.5" cy="126.7" r="4" class="dot"><title>Tzolis — £6.5m, 7.0 xP</title></circle><circle cx="107.4" cy="126.7" r="4" class="dot"><title>Truffert — £5.5m, 6.9 xP</title></circle><circle cx="131.5" cy="126.8" r="4" class="dot"><title>Fernandes — £6.0m, 6.9 xP</title></circle><circle cx="131.5" cy="127.0" r="4" class="dot"><title>Amad — £6.0m, 6.9 xP</title></circle><circle cx="155.5" cy="127.4" r="4" class="dot"><title>Munoz — £6.5m, 6.9 xP</title></circle><circle cx="59.3" cy="127.9" r="4" class="dot"><title>Hume — £4.5m, 6.9 xP</title></circle><circle cx="107.4" cy="129.0" r="4" class="dot"><title>Pickford — £5.5m, 6.8 xP</title></circle><circle cx="107.4" cy="129.1" r="4" class="dot"><title>Ampadu — £5.5m, 6.8 xP</title></circle><circle cx="131.5" cy="129.1" r="4" class="dot"><title>Tavernier — £6.0m, 6.8 xP</title></circle><circle cx="107.4" cy="129.1" r="4" class="dot"><title>Zubimendi — £5.5m, 6.8 xP</title></circle><circle cx="107.4" cy="129.2" r="4" class="dot"><title>Calafiori — £5.5m, 6.8 xP</title></circle><circle cx="107.4" cy="129.3" r="4" class="dot"><title>Xhaka — £5.5m, 6.8 xP</title></circle><circle cx="131.5" cy="129.9" r="4" class="dot"><title>Scott — £6.0m, 6.7 xP</title></circle><circle cx="83.3" cy="130.3" r="4" class="dot"><title>N.Williams — £5.0m, 6.7 xP</title></circle><circle cx="131.5" cy="130.4" r="4" class="dot"><title>Welbeck — £6.0m, 6.7 xP</title></circle><circle cx="420.3" cy="35.1" r="6.5" class="dotown"><title>B.Fernandes — £12.0m, 13.4 xP</title></circle><circle cx="588.7" cy="64.0" r="6.5" class="dotown"><title>Haaland — £15.5m, 11.3 xP</title></circle><circle cx="131.5" cy="89.5" r="6.5" class="dotown"><title>Guéhi — £6.0m, 9.6 xP</title></circle><circle cx="131.5" cy="89.6" r="6.5" class="dotown"><title>Raya — £6.0m, 9.5 xP</title></circle><circle cx="203.7" cy="100.9" r="6.5" class="dotown"><title>João Pedro — £7.5m, 8.8 xP</title></circle><circle cx="179.6" cy="105.0" r="6.5" class="dotown"><title>Szoboszlai — £7.0m, 8.5 xP</title></circle><circle cx="203.7" cy="105.1" r="6.5" class="dotown"><title>Rogers — £7.5m, 8.5 xP</title></circle><circle cx="59.3" cy="109.2" r="6.5" class="dotown"><title>Shaw — £4.5m, 8.2 xP</title></circle><circle cx="131.5" cy="116.1" r="6.5" class="dotown"><title>Calvert-Lewin — £6.0m, 7.7 xP</title></circle><circle cx="131.5" cy="122.8" r="6.5" class="dotown"><title>Ndiaye — £6.0m, 7.2 xP</title></circle><text x="66.3" y="112.2" class="pt">Shaw</text><text x="90.3" y="113.8" class="pt">Dalot</text><text x="138.5" y="92.5" class="pt">Guéhi</text><text x="138.5" y="92.6" class="pt">Raya</text><text x="138.5" y="92.9" class="pt">Lacroix</text><text x="310.0" y="256" text-anchor="middle" class="cx">price £m</text></svg></div>
     <div class="legend"><i>Purple is your squad. The upper-left edge is the efficient
       frontier &mdash; most points per pound. A ranked table shows who scores most;
       this shows who is worth buying under a &pound;100m cap.</i></div>
   </section>
 
-  <section>
-    <h2>Team ratings <span>&mdash; why a fixture is easy</span></h2>
+  <section class="card">
+    <div class="hd"><h2>Team ratings </h2><span class="sub">why a fixture is easy</span></div>
     <div class="chartbox"><svg viewBox="0 0 620 300" width="100%" height="300" role="img" aria-label="Team attack against defence"><line x1="325.9960615784923" y1="16" x2="325.9960615784923" y2="264" class="grid"/><line x1="44" y1="173.605134551883" x2="606" y2="173.605134551883" class="grid"/><text x="329.9960615784923" y="26" class="cq">league average</text><circle cx="67.9" cy="80.5" r="4.5" class="dotown"/><text x="74.9" y="84.0" class="pt">ARS</text><circle cx="265.9" cy="168.8" r="4.5" class="dotown"/><text x="272.9" y="172.3" class="pt">AVL</text><circle cx="333.5" cy="174.0" r="4.5" class="dot"/><text x="340.5" y="177.5" class="pt">BOU</text><circle cx="325.8" cy="164.3" r="4.5" class="dotown"/><text x="332.8" y="167.8" class="pt">BRE</text><circle cx="362.1" cy="208.7" r="4.5" class="dot"/><text x="369.1" y="212.2" class="pt">BHA</text><circle cx="209.8" cy="71.9" r="4.5" class="dotown"/><text x="216.8" y="75.4" class="pt">CHE</text><circle cx="545.6" cy="254.3" r="4.5" class="dot"/><text x="552.6" y="257.8" class="pt">COV</text><circle cx="313.4" cy="168.3" r="4.5" class="dotown"/><text x="320.4" y="171.8" class="pt">CRY</text><circle cx="335.1" cy="187.1" r="4.5" class="dot"/><text x="342.1" y="190.6" class="pt">EVE</text><circle cx="378.0" cy="224.2" r="4.5" class="dot"/><text x="385.0" y="227.7" class="pt">FUL</text><circle cx="553.0" cy="254.1" r="4.5" class="dot"/><text x="560.0" y="257.6" class="pt">HUL</text><circle cx="536.9" cy="255.7" r="4.5" class="dot"/><text x="543.9" y="259.2" class="pt">IPS</text><circle cx="395.2" cy="188.9" r="4.5" class="dot"/><text x="402.2" y="192.4" class="pt">LEE</text><circle cx="180.2" cy="131.5" r="4.5" class="dotown"/><text x="187.2" y="135.0" class="pt">LIV</text><circle cx="128.6" cy="37.4" r="4.5" class="dotown"/><text x="135.6" y="40.9" class="pt">MCI</text><circle cx="188.4" cy="108.4" r="4.5" class="dotown"/><text x="195.4" y="111.9" class="pt">MUN</text><circle cx="367.9" cy="201.9" r="4.5" class="dot"/><text x="374.9" y="205.4" class="pt">NEW</text><circle cx="334.9" cy="189.0" r="4.5" class="dot"/><text x="341.9" y="192.5" class="pt">NFO</text><circle cx="320.3" cy="186.0" r="4.5" class="dot"/><text x="327.3" y="189.5" class="pt">TOT</text><circle cx="377.6" cy="217.0" r="4.5" class="dot"/><text x="384.6" y="220.5" class="pt">SUN</text><text x="310.0" y="296" text-anchor="middle" class="cx">goals conceded (left is better) &rarr;</text><text x="10" y="20" class="cx">goals scored</text></svg></div>
     <div class="legend"><i>Purple = scores more and concedes less than average. Facing a
       weak attack helps your defenders; facing a weak defence helps your forwards. One
       difficulty number cannot tell you which you are getting.</i></div>
   </section>
     </div>
-  </div>
 
-  <div class="note">
-    <h3>How to read this</h3>
+  <section class="card">
+    <div class="hd"><h2>How to read this</h2></div>
+    <div class="bd">
     <ul>
       <li><b>Both columns are forecasts — neither is actual points.</b> <b>xP</b> is the
           model's raw output, which is what the optimiser ranks on. <b>xP adj</b> is the
@@ -386,12 +411,14 @@ footer{color:var(--mut); font-size:12px; border-top:1px solid var(--line); paddi
           Free Hit get much more valuable when they do. This page re-prices daily.</li>
       <li>A two-gameweek month is close to a coin toss whatever your squad looks like.
           Spend chips where there are more gameweeks to work with.</li>
-    </ul>
-  </div>
+    </ul></div>
+  </section>
 
-  <footer>
-    Built from the live FPL API. Validated by walk-forward backtest across three
+  <footer style="color:var(--mut);font-size:12px;border-top:1px solid var(--line);padding-top:14px">
+    Built from the live FPL API. Validated by walk-forward backtest across four
     completed seasons under real transfer rules. Expected points are estimates, not
     predictions.
   </footer>
+    </div>
+  </main>
 </div>
