@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FPL monthly plan</title>
 <style>
 :root{
@@ -195,6 +197,50 @@ svg .pnm{font-size:10.5px; fill:var(--ink); font-weight:600}
 svg .ppr{font-size:9.5px; fill:var(--mut)}
 svg .band{fill:var(--surface-2)}
 
+/* Player dialogs: :target rather than JavaScript, so back also closes them. */
+.modal{position:fixed; inset:0; display:none; place-items:center; z-index:60; padding:18px}
+.modal:target{display:grid}
+.modal .backdrop{position:absolute; inset:0; background:rgba(12,8,16,.55);
+  backdrop-filter:blur(2px)}
+.modal .box{position:relative; width:min(460px,100%); max-height:86vh; overflow-y:auto;
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  box-shadow:var(--shadow-lg)}
+.modal .hd{position:sticky; top:0; z-index:1; background:var(--surface);
+  display:flex; align-items:flex-start; gap:10px; padding:13px 16px;
+  border-bottom:1px solid var(--line)}
+.modal .bd{padding:14px 16px}
+.modal .ft{padding:10px 16px; border-top:1px solid var(--line);
+  background:var(--surface-2); font-size:11.5px; color:var(--mut); line-height:1.5}
+.modal .who{display:flex; flex-direction:column; gap:2px; min-width:0; flex:1 1 auto}
+.modal .who h2{font-size:17px; line-height:1.2}
+.modal .who .sub{font-size:11.5px}
+/* 44px of tap target, pulled back with negative margin so it does not
+   push the title down on a phone. */
+.modal .x{margin:-8px -8px 0 auto; flex:none; color:var(--mut); text-decoration:none;
+  font-size:22px; line-height:1; width:44px; height:44px; display:grid;
+  place-items:center; border-radius:8px}
+/* Three across even at 375px — these are three short numbers, not three cards. */
+.mstats{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; margin-bottom:4px;
+  background:var(--line); border:1px solid var(--line); border-radius:10px;
+  overflow:hidden}
+.mstats>div{background:var(--surface-2); padding:8px 10px}
+.mstats .k{font-size:9.5px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--mut); font-weight:700}
+.mstats .v{font-size:18px; font-weight:700; color:var(--ink); margin-top:1px}
+.modal .x:hover{color:var(--ink); background:var(--surface-2)}
+.modal h3{font-size:10.5px; text-transform:uppercase; letter-spacing:.07em;
+  color:var(--mut); font-weight:700; margin:16px 0 6px}
+.modal table{min-width:0; font-size:13px}
+.modal td{padding:5px 0; border-bottom:1px solid var(--line)}
+.modal tr:last-child td{border-bottom:none}
+.modal .flags{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px}
+.cbar{width:88px; height:7px; border-radius:4px; background:var(--surface-2);
+  overflow:hidden; margin-left:auto}
+.cbar span{display:block; height:100%; border-radius:4px}
+.cbar .pos{background:var(--data)} .cbar .neg{background:var(--warn)}
+a.plink{color:inherit; text-decoration:none; border-bottom:1px dotted var(--line)}
+a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
+
 .panel{display:none; flex-direction:column; gap:22px}
 #t1:checked~main .p1, #t2:checked~main .p2, #t3:checked~main .p3,
 #t4:checked~main .p4, #t5:checked~main .p5{display:flex}
@@ -239,14 +285,14 @@ svg .band{fill:var(--surface-2)}
       <label for="t5"><i>&#9644;</i>Charts</label>
     </nav>
     <div class="railfoot">
-      Rebuilt daily from the live FPL API.<br>2026-08-09 09:11 UTC
+      Rebuilt daily from the live FPL API.<br>2026-08-09 09:30 UTC
     </div>
   </aside>
 
   <main>
     <div class="topbar">
       <h1>Gameweek 1</h1>
-      <span class="pill accent"><span class="dot"></span>12d 8h to deadline</span>
+      <span class="pill accent"><span class="dot"></span>12d 7h to deadline</span>
       <span class="pill">20 managers</span>
       <span class="pill ok"><span class="dot"></span>model ok</span>
       <span class="spacer"></span>
@@ -257,7 +303,7 @@ svg .band{fill:var(--surface-2)}
     <div class="content">
       <section class="card action">
     <div class="hd"><h2>Before the deadline</h2>
-      <span class="sub">GW1, 12d 8h away</span></div>
+      <span class="sub">GW1, 12d 7h away</span></div>
     <div class="bd"><div class="kpis">
       <div class="kpi"><div class="k">Captain</div>
         <div class="v" style="font-size:16px">B.Fernandes</div></div>
@@ -275,7 +321,7 @@ svg .band{fill:var(--surface-2)}
   <section class="card">
     <div class="hd"><h2>On the pitch</h2>
       <span class="sub">3-4-3, captain and vice marked</span></div>
-    <div class="bd"><svg viewBox="0 0 620 430" width="100%" height="430" role="img" aria-label="Starting eleven laid out by position"><rect x="0" y="0" width="620" height="430" rx="12" class="pitch"/><line x1="14" y1="215" x2="606" y2="215" class="pline"/><circle cx="310.0" cy="215" r="46" class="pline" fill="none"/><rect x="222.0" y="14" width="176" height="62" class="pline" fill="none"/><rect x="222.0" y="354" width="176" height="62" class="pline" fill="none"/><g><circle cx="310" cy="47" r="19" class="pdot"/><text x="310" y="51" text-anchor="middle" class="pxp">10</text><text x="310" y="81" text-anchor="middle" class="pnm">Raya</text><text x="310" y="92" text-anchor="middle" class="ppr">ARS &pound;6.0</text></g><g><circle cx="155" cy="150" r="19" class="pdot"/><text x="155" y="154" text-anchor="middle" class="pxp">10</text><text x="155" y="184" text-anchor="middle" class="pnm">Guéhi</text><text x="155" y="196" text-anchor="middle" class="ppr">MCI &pound;6.0</text></g><g><circle cx="310" cy="150" r="19" class="pdot"/><text x="310" y="154" text-anchor="middle" class="pxp">8</text><text x="310" y="184" text-anchor="middle" class="pnm">Shaw</text><text x="310" y="196" text-anchor="middle" class="ppr">MUN &pound;4.5</text></g><g><circle cx="465" cy="150" r="19" class="pdot"/><text x="465" y="154" text-anchor="middle" class="pxp">6</text><text x="465" y="184" text-anchor="middle" class="pnm">Pedro Porro</text><text x="465" y="196" text-anchor="middle" class="ppr">TOT &pound;5.5</text></g><g><circle cx="124" cy="258" r="19" class="pdot"/><circle cx="139" cy="244" r="9" class="parm"/><text x="139" y="248" text-anchor="middle" class="parmt">C</text><text x="124" y="262" text-anchor="middle" class="pxp">13</text><text x="124" y="292" text-anchor="middle" class="pnm">B.Fernandes</text><text x="124" y="303" text-anchor="middle" class="ppr">MUN &pound;12.0</text></g><g><circle cx="248" cy="258" r="19" class="pdot"/><text x="248" y="262" text-anchor="middle" class="pxp">8</text><text x="248" y="292" text-anchor="middle" class="pnm">Szoboszlai</text><text x="248" y="303" text-anchor="middle" class="ppr">LIV &pound;7.0</text></g><g><circle cx="372" cy="258" r="19" class="pdot"/><text x="372" y="262" text-anchor="middle" class="pxp">8</text><text x="372" y="292" text-anchor="middle" class="pnm">Rogers</text><text x="372" y="303" text-anchor="middle" class="ppr">CHE &pound;7.5</text></g><g><circle cx="496" cy="258" r="19" class="pdot"/><text x="496" y="262" text-anchor="middle" class="pxp">7</text><text x="496" y="292" text-anchor="middle" class="pnm">Ndiaye</text><text x="496" y="303" text-anchor="middle" class="ppr">EVE &pound;6.0</text></g><g><circle cx="155" cy="366" r="19" class="pdot"/><circle cx="170" cy="352" r="9" class="parm"/><text x="170" y="356" text-anchor="middle" class="parmt">V</text><text x="155" y="370" text-anchor="middle" class="pxp">11</text><text x="155" y="400" text-anchor="middle" class="pnm">Haaland</text><text x="155" y="410" text-anchor="middle" class="ppr">MCI &pound;15.5</text></g><g><circle cx="310" cy="366" r="19" class="pdot"/><text x="310" y="370" text-anchor="middle" class="pxp">9</text><text x="310" y="400" text-anchor="middle" class="pnm">João Pedro</text><text x="310" y="410" text-anchor="middle" class="ppr">CHE &pound;7.5</text></g><g><circle cx="465" cy="366" r="19" class="pdot"/><text x="465" y="370" text-anchor="middle" class="pxp">8</text><text x="465" y="400" text-anchor="middle" class="pnm">Calvert-Lew</text><text x="465" y="410" text-anchor="middle" class="ppr">LEE &pound;6.0</text></g></svg></div>
+    <div class="bd"><svg viewBox="0 0 620 430" width="100%" height="430" role="img" aria-label="Starting eleven laid out by position"><rect x="0" y="0" width="620" height="430" rx="12" class="pitch"/><line x1="14" y1="215" x2="606" y2="215" class="pline"/><circle cx="310.0" cy="215" r="46" class="pline" fill="none"/><rect x="222.0" y="14" width="176" height="62" class="pline" fill="none"/><rect x="222.0" y="354" width="176" height="62" class="pline" fill="none"/><a href="#p1"><circle cx="310" cy="47" r="19" class="pdot"/><text x="310" y="51" text-anchor="middle" class="pxp">10</text><text x="310" y="81" text-anchor="middle" class="pnm">Raya</text><text x="310" y="92" text-anchor="middle" class="ppr">ARS &pound;6.0</text></a><a href="#p388"><circle cx="155" cy="150" r="19" class="pdot"/><text x="155" y="154" text-anchor="middle" class="pxp">10</text><text x="155" y="184" text-anchor="middle" class="pnm">Guéhi</text><text x="155" y="196" text-anchor="middle" class="ppr">MCI &pound;6.0</text></a><a href="#p423"><circle cx="310" cy="150" r="19" class="pdot"/><text x="310" y="154" text-anchor="middle" class="pxp">8</text><text x="310" y="184" text-anchor="middle" class="pnm">Shaw</text><text x="310" y="196" text-anchor="middle" class="ppr">MUN &pound;4.5</text></a><a href="#p499"><circle cx="465" cy="150" r="19" class="pdot"/><text x="465" y="154" text-anchor="middle" class="pxp">6</text><text x="465" y="184" text-anchor="middle" class="pnm">Pedro Porro</text><text x="465" y="196" text-anchor="middle" class="ppr">TOT &pound;5.5</text></a><a href="#p426"><circle cx="124" cy="258" r="19" class="pdot"/><circle cx="139" cy="244" r="9" class="parm"/><text x="139" y="248" text-anchor="middle" class="parmt">C</text><text x="124" y="262" text-anchor="middle" class="pxp">13</text><text x="124" y="292" text-anchor="middle" class="pnm">B.Fernandes</text><text x="124" y="303" text-anchor="middle" class="ppr">MUN &pound;12.0</text></a><a href="#p368"><circle cx="248" cy="258" r="19" class="pdot"/><text x="248" y="262" text-anchor="middle" class="pxp">8</text><text x="248" y="292" text-anchor="middle" class="pnm">Szoboszlai</text><text x="248" y="303" text-anchor="middle" class="ppr">LIV &pound;7.0</text></a><a href="#p40"><circle cx="372" cy="258" r="19" class="pdot"/><text x="372" y="262" text-anchor="middle" class="pxp">8</text><text x="372" y="292" text-anchor="middle" class="pnm">Rogers</text><text x="372" y="303" text-anchor="middle" class="ppr">CHE &pound;7.5</text></a><a href="#p237"><circle cx="496" cy="258" r="19" class="pdot"/><text x="496" y="262" text-anchor="middle" class="pxp">7</text><text x="496" y="292" text-anchor="middle" class="pnm">Ndiaye</text><text x="496" y="303" text-anchor="middle" class="ppr">EVE &pound;6.0</text></a><a href="#p411"><circle cx="155" cy="366" r="19" class="pdot"/><circle cx="170" cy="352" r="9" class="parm"/><text x="170" y="356" text-anchor="middle" class="parmt">V</text><text x="155" y="370" text-anchor="middle" class="pxp">11</text><text x="155" y="400" text-anchor="middle" class="pnm">Haaland</text><text x="155" y="410" text-anchor="middle" class="ppr">MCI &pound;15.5</text></a><a href="#p165"><circle cx="310" cy="366" r="19" class="pdot"/><text x="310" y="370" text-anchor="middle" class="pxp">9</text><text x="310" y="400" text-anchor="middle" class="pnm">João Pedro</text><text x="310" y="410" text-anchor="middle" class="ppr">CHE &pound;7.5</text></a><a href="#p346"><circle cx="465" cy="366" r="19" class="pdot"/><text x="465" y="370" text-anchor="middle" class="pxp">8</text><text x="465" y="400" text-anchor="middle" class="pnm">Calvert-Lew</text><text x="465" y="410" text-anchor="middle" class="ppr">LEE &pound;6.0</text></a></svg></div>
     <div class="ft">Numbers inside each shirt are expected points for the month. A table
       says who is in the team; this says where the money went.</div>
   </section>
@@ -287,7 +333,7 @@ svg .band{fill:var(--surface-2)}
       <thead><tr><th></th><th>Player</th><th>Team</th><th>Pos</th><th class="r">£m</th>
         <th class="r">xP</th><th class="r" title="xP corrected for the model's measured bias — still a forecast, not an outcome">xP adj</th>
         <th>Fixtures</th></tr></thead>
-      <tbody><tr><td class="badge mono"></td><td class="nm">Raya</td><td class="dim mono">ARS</td><td class="dim mono">GKP</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">9.5</td><td class="r mono dim">8.4</td><td class="dim mono" style="font-size:11.5px">2H/4A</td></tr><tr><td class="badge mono"></td><td class="nm">Guéhi</td><td class="dim mono">MCI</td><td class="dim mono">DEF</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">9.6</td><td class="r mono dim">8.4</td><td class="dim mono" style="font-size:11.5px">3H/3A</td></tr><tr><td class="badge mono"></td><td class="nm">Shaw</td><td class="dim mono">MUN</td><td class="dim mono">DEF</td><td class="r mono">4.5</td><td class="r mono" style="font-weight:650">8.2</td><td class="r mono dim">7.3</td><td class="dim mono" style="font-size:11.5px">2A/2H</td></tr><tr><td class="badge mono"></td><td class="nm">Pedro Porro</td><td class="dim mono">TOT</td><td class="dim mono">DEF</td><td class="r mono">5.5</td><td class="r mono" style="font-weight:650">6.5</td><td class="r mono dim">5.9</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono">C</td><td class="nm">B.Fernandes</td><td class="dim mono">MUN</td><td class="dim mono">MID</td><td class="r mono">12.0</td><td class="r mono" style="font-weight:650">13.4</td><td class="r mono dim">12.3</td><td class="dim mono" style="font-size:11.5px">2A/2H</td></tr><tr><td class="badge mono"></td><td class="nm">Szoboszlai</td><td class="dim mono">LIV</td><td class="dim mono">MID</td><td class="r mono">7.0</td><td class="r mono" style="font-weight:650">8.5</td><td class="r mono dim">8.0</td><td class="dim mono" style="font-size:11.5px">3A/3H</td></tr><tr><td class="badge mono"></td><td class="nm">Rogers</td><td class="dim mono">CHE</td><td class="dim mono">MID</td><td class="r mono">7.5</td><td class="r mono" style="font-weight:650">8.5</td><td class="r mono dim">8.0</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono"></td><td class="nm">Ndiaye</td><td class="dim mono">EVE</td><td class="dim mono">MID</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">7.2</td><td class="r mono dim">6.9</td><td class="dim mono" style="font-size:11.5px">3H/3A</td></tr><tr><td class="badge mono">V</td><td class="nm">Haaland</td><td class="dim mono">MCI</td><td class="dim mono">FWD</td><td class="r mono">15.5</td><td class="r mono" style="font-weight:650">11.3</td><td class="r mono dim">10.6</td><td class="dim mono" style="font-size:11.5px">3H/3A</td></tr><tr><td class="badge mono"></td><td class="nm">João Pedro</td><td class="dim mono">CHE</td><td class="dim mono">FWD</td><td class="r mono">7.5</td><td class="r mono" style="font-weight:650">8.8</td><td class="r mono dim">8.3</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono"></td><td class="nm">Calvert-Lewin</td><td class="dim mono">LEE</td><td class="dim mono">FWD</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">7.7</td><td class="r mono dim">7.3</td><td class="dim mono" style="font-size:11.5px">3A/3H</td></tr></tbody>
+      <tbody><tr><td class="badge mono"></td><td class="nm"><a class="plink" href="#p1">Raya</a></td><td class="dim mono">ARS</td><td class="dim mono">GKP</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">9.5</td><td class="r mono dim">8.4</td><td class="dim mono" style="font-size:11.5px">2H/4A</td></tr><tr><td class="badge mono"></td><td class="nm"><a class="plink" href="#p388">Guéhi</a></td><td class="dim mono">MCI</td><td class="dim mono">DEF</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">9.6</td><td class="r mono dim">8.4</td><td class="dim mono" style="font-size:11.5px">3H/3A</td></tr><tr><td class="badge mono"></td><td class="nm"><a class="plink" href="#p423">Shaw</a></td><td class="dim mono">MUN</td><td class="dim mono">DEF</td><td class="r mono">4.5</td><td class="r mono" style="font-weight:650">8.2</td><td class="r mono dim">7.3</td><td class="dim mono" style="font-size:11.5px">2A/2H</td></tr><tr><td class="badge mono"></td><td class="nm"><a class="plink" href="#p499">Pedro Porro</a></td><td class="dim mono">TOT</td><td class="dim mono">DEF</td><td class="r mono">5.5</td><td class="r mono" style="font-weight:650">6.5</td><td class="r mono dim">5.9</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono">C</td><td class="nm"><a class="plink" href="#p426">B.Fernandes</a></td><td class="dim mono">MUN</td><td class="dim mono">MID</td><td class="r mono">12.0</td><td class="r mono" style="font-weight:650">13.4</td><td class="r mono dim">12.3</td><td class="dim mono" style="font-size:11.5px">2A/2H</td></tr><tr><td class="badge mono"></td><td class="nm"><a class="plink" href="#p368">Szoboszlai</a></td><td class="dim mono">LIV</td><td class="dim mono">MID</td><td class="r mono">7.0</td><td class="r mono" style="font-weight:650">8.5</td><td class="r mono dim">8.0</td><td class="dim mono" style="font-size:11.5px">3A/3H</td></tr><tr><td class="badge mono"></td><td class="nm"><a class="plink" href="#p40">Rogers</a></td><td class="dim mono">CHE</td><td class="dim mono">MID</td><td class="r mono">7.5</td><td class="r mono" style="font-weight:650">8.5</td><td class="r mono dim">8.0</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono"></td><td class="nm"><a class="plink" href="#p237">Ndiaye</a></td><td class="dim mono">EVE</td><td class="dim mono">MID</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">7.2</td><td class="r mono dim">6.9</td><td class="dim mono" style="font-size:11.5px">3H/3A</td></tr><tr><td class="badge mono">V</td><td class="nm"><a class="plink" href="#p411">Haaland</a></td><td class="dim mono">MCI</td><td class="dim mono">FWD</td><td class="r mono">15.5</td><td class="r mono" style="font-weight:650">11.3</td><td class="r mono dim">10.6</td><td class="dim mono" style="font-size:11.5px">3H/3A</td></tr><tr><td class="badge mono"></td><td class="nm"><a class="plink" href="#p165">João Pedro</a></td><td class="dim mono">CHE</td><td class="dim mono">FWD</td><td class="r mono">7.5</td><td class="r mono" style="font-weight:650">8.8</td><td class="r mono dim">8.3</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono"></td><td class="nm"><a class="plink" href="#p346">Calvert-Lewin</a></td><td class="dim mono">LEE</td><td class="dim mono">FWD</td><td class="r mono">6.0</td><td class="r mono" style="font-weight:650">7.7</td><td class="r mono dim">7.3</td><td class="dim mono" style="font-size:11.5px">3A/3H</td></tr></tbody>
     </table></div></div>
   </section>
 
@@ -296,7 +342,7 @@ svg .band{fill:var(--surface-2)}
     <div class="bd flush"><div class="scroll"><table class="bench">
       <thead><tr><th></th><th>Player</th><th>Team</th><th>Pos</th><th class="r">£m</th>
         <th class="r">xP</th><th class="r">xP adj</th><th>Fixtures</th></tr></thead>
-      <tbody><tr><td class="badge mono"></td><td class="nm">Dubravka</td><td class="dim mono">TOT</td><td class="dim mono">GKP</td><td class="r mono">4.0</td><td class="r mono" style="font-weight:650">5.7</td><td class="r mono dim">5.2</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono"></td><td class="nm">Hughes</td><td class="dim mono">CRY</td><td class="dim mono">MID</td><td class="r mono">4.5</td><td class="r mono" style="font-weight:650">3.2</td><td class="r mono dim">3.3</td><td class="dim mono" style="font-size:11.5px">3A/4H</td></tr><tr><td class="badge mono"></td><td class="nm">Diop</td><td class="dim mono">IPS</td><td class="dim mono">DEF</td><td class="r mono">4.0</td><td class="r mono" style="font-weight:650">1.4</td><td class="r mono dim">1.7</td><td class="dim mono" style="font-size:11.5px">2H/4A</td></tr><tr><td class="badge mono"></td><td class="nm">van Ewijk <span class="q" title="No Premier League history — role inferred from price">?</span></td><td class="dim mono">COV</td><td class="dim mono">DEF</td><td class="r mono">4.0</td><td class="r mono" style="font-weight:650">0.1</td><td class="r mono dim">0.6</td><td class="dim mono" style="font-size:11.5px">5A/2H</td></tr></tbody>
+      <tbody><tr><td class="badge mono"></td><td class="nm"><a class="plink" href="#p497">Dubravka</a></td><td class="dim mono">TOT</td><td class="dim mono">GKP</td><td class="r mono">4.0</td><td class="r mono" style="font-weight:650">5.7</td><td class="r mono dim">5.2</td><td class="dim mono" style="font-size:11.5px">3A/2H</td></tr><tr><td class="badge mono"></td><td class="nm"><a class="plink" href="#p212">Hughes</a></td><td class="dim mono">CRY</td><td class="dim mono">MID</td><td class="r mono">4.5</td><td class="r mono" style="font-weight:650">3.2</td><td class="r mono dim">3.3</td><td class="dim mono" style="font-size:11.5px">3A/4H</td></tr><tr><td class="badge mono"></td><td class="nm"><a class="plink" href="#p259">Diop</a></td><td class="dim mono">IPS</td><td class="dim mono">DEF</td><td class="r mono">4.0</td><td class="r mono" style="font-weight:650">1.4</td><td class="r mono dim">1.7</td><td class="dim mono" style="font-size:11.5px">2H/4A</td></tr><tr><td class="badge mono"></td><td class="nm"><a class="plink" href="#p175">van Ewijk</a> <span class="q" title="No Premier League history — role inferred from price">?</span></td><td class="dim mono">COV</td><td class="dim mono">DEF</td><td class="r mono">4.0</td><td class="r mono" style="font-weight:650">0.1</td><td class="r mono dim">0.6</td><td class="dim mono" style="font-size:11.5px">5A/2H</td></tr></tbody>
     </table></div></div>
   </section>
 
@@ -449,4 +495,395 @@ svg .band{fill:var(--surface-2)}
   </footer>
     </div>
   </main>
+</div>
+<div class="modal" id="p1">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>Raya</h2>
+        <span class="sub">GKP &middot; ARS &middot;
+          &pound;6.0m &middot; 31.0% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">9.5</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">8.4</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Clean sheet</td><td class="r mono">+4.54</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+4.37</td><td><div class="cbar"><span class="pos" style="width:96%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.64</td><td><div class="cbar"><span class="pos" style="width:14%"></span></div></td></tr><tr><td class="nm">Saves</td><td class="r mono">+0.50</td><td><div class="cbar"><span class="pos" style="width:11%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.42</td><td><div class="cbar"><span class="neg" style="width:9%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.08</td><td><div class="cbar"><span class="neg" style="width:2%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">5.21</td></tr><tr><td class="mono">GW2</td><td class="dim">away</td><td class="dim mono">fdr 4</td><td class="r mono nm">4.34</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">87.44 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">96.81%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.00</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.00</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.28</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">4.18</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div><div class="modal" id="p40">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>Rogers</h2>
+        <span class="sub">MID &middot; CHE &middot;
+          &pound;7.5m &middot; 28.8% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">8.5</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">8.0</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Appearance</td><td class="r mono">+4.15</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+1.96</td><td><div class="cbar"><span class="pos" style="width:47%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.90</td><td><div class="cbar"><span class="pos" style="width:22%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.88</td><td><div class="cbar"><span class="pos" style="width:21%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.79</td><td><div class="cbar"><span class="pos" style="width:19%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.39</td><td><div class="cbar"><span class="neg" style="width:9%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.16</td><td><div class="cbar"><span class="pos" style="width:4%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">4.09</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">4.37</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">85.87 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">96.48%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.18</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.12</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.43</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">4.59</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div><div class="modal" id="p165">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>João Pedro</h2>
+        <span class="sub">FWD &middot; CHE &middot;
+          &pound;7.5m &middot; 55.0% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">8.8</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">8.3</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Appearance</td><td class="r mono">+3.65</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+3.46</td><td><div class="cbar"><span class="pos" style="width:95%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+1.56</td><td><div class="cbar"><span class="pos" style="width:43%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.36</td><td><div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.27</td><td><div class="cbar"><span class="neg" style="width:7%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.01</td><td><div class="cbar"><span class="pos" style="width:0%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">4.20</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">4.56</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">72.21 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">82.15%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.49</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.07</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.90</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">5.78</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div><div class="modal" id="p175">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>van Ewijk</h2>
+        <span class="sub">DEF &middot; COV &middot;
+          &pound;4.0m &middot; 15.9% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">0.1</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">0.6</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      <div class="flags"><span class="pill warn">no Premier League history</span></div>
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Appearance</td><td class="r mono">+0.31</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.24</td><td><div class="cbar"><span class="neg" style="width:78%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.02</td><td><div class="cbar"><span class="pos" style="width:8%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.02</td><td><div class="cbar"><span class="pos" style="width:5%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.01</td><td><div class="cbar"><span class="pos" style="width:4%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.01</td><td><div class="cbar"><span class="neg" style="width:4%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 5</td><td class="r mono nm">-0.02</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">0.14</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">2.86 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">0.19%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.06</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.06</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.25</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">4.01</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div><div class="modal" id="p212">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>Hughes</h2>
+        <span class="sub">MID &middot; CRY &middot;
+          &pound;4.5m &middot; 11.1% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">3.2</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">3.3</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      <div class="flags"><span class="pill accent">#8 on corners</span></div>
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Appearance</td><td class="r mono">+2.32</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.36</td><td><div class="cbar"><span class="pos" style="width:16%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.29</td><td><div class="cbar"><span class="neg" style="width:13%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.27</td><td><div class="cbar"><span class="pos" style="width:12%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.21</td><td><div class="cbar"><span class="pos" style="width:9%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.17</td><td><div class="cbar"><span class="pos" style="width:7%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.12</td><td><div class="cbar"><span class="pos" style="width:5%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">1.63</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 4</td><td class="r mono nm">1.52</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">41.82 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">44.21%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.10</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.12</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.14</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">3.26</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div><div class="modal" id="p237">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>Ndiaye</h2>
+        <span class="sub">MID &middot; EVE &middot;
+          &pound;6.0m &middot; 15.8% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">7.2</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">6.9</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      <div class="flags"><span class="pill accent">first on penalties</span></div>
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Appearance</td><td class="r mono">+3.35</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+1.98</td><td><div class="cbar"><span class="pos" style="width:59%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.64</td><td><div class="cbar"><span class="pos" style="width:19%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.53</td><td><div class="cbar"><span class="pos" style="width:16%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.46</td><td><div class="cbar"><span class="pos" style="width:14%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.40</td><td><div class="cbar"><span class="pos" style="width:12%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.15</td><td><div class="cbar"><span class="neg" style="width:4%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">home</td><td class="dim mono">fdr 3</td><td class="r mono nm">3.73</td></tr><tr><td class="mono">GW2</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">3.49</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">72.75 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">81.61%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.20</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.14</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.26</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">4.21</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div><div class="modal" id="p259">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>Diop</h2>
+        <span class="sub">DEF &middot; IPS &middot;
+          &pound;4.0m &middot; 19.1% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">1.4</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">1.7</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Appearance</td><td class="r mono">+1.34</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.75</td><td><div class="cbar"><span class="neg" style="width:56%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.33</td><td><div class="cbar"><span class="pos" style="width:24%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.21</td><td><div class="cbar"><span class="pos" style="width:16%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.15</td><td><div class="cbar"><span class="pos" style="width:11%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.14</td><td><div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.10</td><td><div class="cbar"><span class="neg" style="width:7%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.05</td><td><div class="cbar"><span class="pos" style="width:4%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">0.94</td></tr><tr><td class="mono">GW2</td><td class="dim">away</td><td class="dim mono">fdr 4</td><td class="r mono nm">0.43</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">22.07 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">18.66%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.07</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.04</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.29</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">3.74</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div><div class="modal" id="p346">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>Calvert-Lewin</h2>
+        <span class="sub">FWD &middot; LEE &middot;
+          &pound;6.0m &middot; 24.1% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">7.7</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">7.3</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      <div class="flags"><span class="pill accent">first on penalties</span></div>
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Goals</td><td class="r mono">+3.39</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+3.25</td><td><div class="cbar"><span class="pos" style="width:96%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+1.02</td><td><div class="cbar"><span class="pos" style="width:30%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.21</td><td><div class="cbar"><span class="pos" style="width:6%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.17</td><td><div class="cbar"><span class="neg" style="width:5%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">3.68</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 3</td><td class="r mono nm">4.01</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">70.15 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">75.21%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.49</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.04</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.65</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">4.81</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div><div class="modal" id="p368">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>Szoboszlai</h2>
+        <span class="sub">MID &middot; LIV &middot;
+          &pound;7.0m &middot; 46.4% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">8.5</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">8.0</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      <div class="flags"><span class="pill accent">second on penalties</span><span class="pill accent">first on free kicks</span><span class="pill accent">#4 on corners</span></div>
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Appearance</td><td class="r mono">+3.89</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+1.34</td><td><div class="cbar"><span class="pos" style="width:34%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+1.05</td><td><div class="cbar"><span class="pos" style="width:27%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+1.00</td><td><div class="cbar"><span class="pos" style="width:26%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.82</td><td><div class="cbar"><span class="pos" style="width:21%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.79</td><td><div class="cbar"><span class="pos" style="width:20%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.41</td><td><div class="cbar"><span class="neg" style="width:11%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">4.13</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 3</td><td class="r mono nm">4.34</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">84.90 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">93.90%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.14</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.18</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.52</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">4.45</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div><div class="modal" id="p388">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>Guéhi</h2>
+        <span class="sub">DEF &middot; MCI &middot;
+          &pound;6.0m &middot; 23.5% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">9.6</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">8.4</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Appearance</td><td class="r mono">+3.97</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+3.17</td><td><div class="cbar"><span class="pos" style="width:80%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+1.23</td><td><div class="cbar"><span class="pos" style="width:31%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+1.06</td><td><div class="cbar"><span class="pos" style="width:27%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.70</td><td><div class="cbar"><span class="pos" style="width:18%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.62</td><td><div class="cbar"><span class="neg" style="width:16%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.39</td><td><div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.34</td><td><div class="cbar"><span class="neg" style="width:9%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">home</td><td class="dim mono">fdr 3</td><td class="r mono nm">5.05</td></tr><tr><td class="mono">GW2</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">4.51</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">83.51 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">91.89%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.11</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.07</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.36</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">4.87</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div><div class="modal" id="p411">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>Haaland</h2>
+        <span class="sub">FWD &middot; MCI &middot;
+          &pound;15.5m &middot; 74.4% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">11.3</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">10.6</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      <div class="flags"><span class="pill accent">first on penalties</span></div>
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Goals</td><td class="r mono">+5.31</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+3.79</td><td><div class="cbar"><span class="pos" style="width:71%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+1.99</td><td><div class="cbar"><span class="pos" style="width:37%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.40</td><td><div class="cbar"><span class="pos" style="width:7%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.14</td><td><div class="cbar"><span class="neg" style="width:3%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">home</td><td class="dim mono">fdr 3</td><td class="r mono nm">6.01</td></tr><tr><td class="mono">GW2</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">5.33</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">79.03 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">89.83%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.70</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.07</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">1.12</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">6.78</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div><div class="modal" id="p423">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>Shaw</h2>
+        <span class="sub">DEF &middot; MUN &middot;
+          &pound;4.5m &middot; 24.5% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">8.2</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">7.3</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      <div class="flags"><span class="pill accent">third on corners</span></div>
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Clean sheet</td><td class="r mono">+3.77</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+3.73</td><td><div class="cbar"><span class="pos" style="width:99%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.41</td><td><div class="cbar"><span class="pos" style="width:11%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.41</td><td><div class="cbar"><span class="neg" style="width:11%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.39</td><td><div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.36</td><td><div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.34</td><td><div class="cbar"><span class="neg" style="width:9%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.26</td><td><div class="cbar"><span class="pos" style="width:7%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 2</td><td class="r mono nm">3.92</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">4.26</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">77.45 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">90.26%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.03</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.06</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.13</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">3.34</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div><div class="modal" id="p426">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>B.Fernandes</h2>
+        <span class="sub">MID &middot; MUN &middot;
+          &pound;12.0m &middot; 48.6% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">13.4</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">12.3</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      <div class="flags"><span class="pill accent">first on penalties</span><span class="pill accent">first on free kicks</span><span class="pill accent">#5 on corners</span></div>
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Goals</td><td class="r mono">+4.05</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+3.84</td><td><div class="cbar"><span class="pos" style="width:95%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+2.25</td><td><div class="cbar"><span class="pos" style="width:56%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+2.05</td><td><div class="cbar"><span class="pos" style="width:51%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.98</td><td><div class="cbar"><span class="pos" style="width:24%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.48</td><td><div class="cbar"><span class="pos" style="width:12%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.29</td><td><div class="cbar"><span class="neg" style="width:7%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 2</td><td class="r mono nm">6.36</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">7.00</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">81.48 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">92.16%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.28</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.31</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.96</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">6.34</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div><div class="modal" id="p497">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>Dubravka</h2>
+        <span class="sub">GKP &middot; TOT &middot;
+          &pound;4.0m &middot; 23.3% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">5.7</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">5.2</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Appearance</td><td class="r mono">+3.21</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+1.91</td><td><div class="cbar"><span class="pos" style="width:59%"></span></div></td></tr><tr><td class="nm">Saves</td><td class="r mono">+1.09</td><td><div class="cbar"><span class="pos" style="width:34%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.79</td><td><div class="cbar"><span class="neg" style="width:25%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.32</td><td><div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.06</td><td><div class="cbar"><span class="neg" style="width:2%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">2.71</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">2.96</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">75.28 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">81.62%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.00</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.00</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.20</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">2.90</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div><div class="modal" id="p499">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>Pedro Porro</h2>
+        <span class="sub">DEF &middot; TOT &middot;
+          &pound;5.5m &middot; 23.5% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">6.5</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">5.9</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+      </div>
+      <div class="flags"><span class="pill accent">first on free kicks</span><span class="pill accent">#6 on corners</span></div>
+      <h3>Where the points come from</h3>
+      <table><tr><td class="nm">Appearance</td><td class="r mono">+3.61</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+2.17</td><td><div class="cbar"><span class="pos" style="width:60%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.88</td><td><div class="cbar"><span class="neg" style="width:24%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.64</td><td><div class="cbar"><span class="pos" style="width:18%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.58</td><td><div class="cbar"><span class="pos" style="width:16%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.49</td><td><div class="cbar"><span class="neg" style="width:14%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.44</td><td><div class="cbar"><span class="pos" style="width:12%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.39</td><td><div class="cbar"><span class="pos" style="width:11%"></span></div></td></tr></table>
+      <h3>By fixture</h3>
+      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">2.86</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">3.60</td></tr></table>
+      <h3>Underlying rates</h3>
+      <table><tr><td class="dim">Expected minutes</td><td class="r mono">75.40 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">84.65%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.04</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.12</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.26</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">3.83</td></tr></table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
 </div>

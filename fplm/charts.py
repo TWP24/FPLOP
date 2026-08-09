@@ -356,7 +356,7 @@ def calibration_bars(deciles: list[tuple[float, float]], W: int = 620, H: int = 
     return "".join(out)
 
 
-def pitch(xi, bench, captain: int, vice: int, W: int = 620) -> str:
+def pitch(xi, bench, captain: int, vice: int, W: int = 620, link: bool = False) -> str:
     """The XI laid out on a pitch, which is how anyone actually reads a squad.
 
     A table tells you who is in the team; a pitch tells you the *shape* — whether the
@@ -394,7 +394,8 @@ def pitch(xi, bench, captain: int, vice: int, W: int = 620) -> str:
         for i, p in enumerate(line, start=1):
             x = step * i
             mark = "C" if p.pid == captain else ("V" if p.pid == vice else "")
-            out.append(f'<g><circle cx="{x:.0f}" cy="{y:.0f}" r="19" class="pdot"/>')
+            g0 = f'<a href="#p{p.pid}">' if link else '<g>'
+            out.append(g0 + f'<circle cx="{x:.0f}" cy="{y:.0f}" r="19" class="pdot"/>')
             if mark:
                 out.append(f'<circle cx="{x+15:.0f}" cy="{y-14:.0f}" r="9" class="parm"/>'
                            f'<text x="{x+15:.0f}" y="{y-10:.0f}" text-anchor="middle" '
@@ -404,7 +405,8 @@ def pitch(xi, bench, captain: int, vice: int, W: int = 620) -> str:
             out.append(f'<text x="{x:.0f}" y="{y+34:.0f}" text-anchor="middle" '
                        f'class="pnm">{_esc(p.name[:11])}</text>')
             out.append(f'<text x="{x:.0f}" y="{y+45:.0f}" text-anchor="middle" '
-                       f'class="ppr">{_esc(p.team_name)} &pound;{p.price:.1f}</text></g>')
+                       f'class="ppr">{_esc(p.team_name)} &pound;{p.price:.1f}</text>'
+                       + ('</a>' if link else '</g>'))
     out.append("</svg>")
     return "".join(out)
 

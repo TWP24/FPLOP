@@ -229,6 +229,50 @@ svg .pnm{font-size:10.5px; fill:var(--ink); font-weight:600}
 svg .ppr{font-size:9.5px; fill:var(--mut)}
 svg .band{fill:var(--surface-2)}
 
+/* Player dialogs: :target rather than JavaScript, so back also closes them. */
+.modal{position:fixed; inset:0; display:none; place-items:center; z-index:60; padding:18px}
+.modal:target{display:grid}
+.modal .backdrop{position:absolute; inset:0; background:rgba(12,8,16,.55);
+  backdrop-filter:blur(2px)}
+.modal .box{position:relative; width:min(460px,100%); max-height:86vh; overflow-y:auto;
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  box-shadow:var(--shadow-lg)}
+.modal .hd{position:sticky; top:0; z-index:1; background:var(--surface);
+  display:flex; align-items:flex-start; gap:10px; padding:13px 16px;
+  border-bottom:1px solid var(--line)}
+.modal .bd{padding:14px 16px}
+.modal .ft{padding:10px 16px; border-top:1px solid var(--line);
+  background:var(--surface-2); font-size:11.5px; color:var(--mut); line-height:1.5}
+.modal .who{display:flex; flex-direction:column; gap:2px; min-width:0; flex:1 1 auto}
+.modal .who h2{font-size:17px; line-height:1.2}
+.modal .who .sub{font-size:11.5px}
+/* 44px of tap target, pulled back with negative margin so it does not
+   push the title down on a phone. */
+.modal .x{margin:-8px -8px 0 auto; flex:none; color:var(--mut); text-decoration:none;
+  font-size:22px; line-height:1; width:44px; height:44px; display:grid;
+  place-items:center; border-radius:8px}
+/* Three across even at 375px — these are three short numbers, not three cards. */
+.mstats{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; margin-bottom:4px;
+  background:var(--line); border:1px solid var(--line); border-radius:10px;
+  overflow:hidden}
+.mstats>div{background:var(--surface-2); padding:8px 10px}
+.mstats .k{font-size:9.5px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--mut); font-weight:700}
+.mstats .v{font-size:18px; font-weight:700; color:var(--ink); margin-top:1px}
+.modal .x:hover{color:var(--ink); background:var(--surface-2)}
+.modal h3{font-size:10.5px; text-transform:uppercase; letter-spacing:.07em;
+  color:var(--mut); font-weight:700; margin:16px 0 6px}
+.modal table{min-width:0; font-size:13px}
+.modal td{padding:5px 0; border-bottom:1px solid var(--line)}
+.modal tr:last-child td{border-bottom:none}
+.modal .flags{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px}
+.cbar{width:88px; height:7px; border-radius:4px; background:var(--surface-2);
+  overflow:hidden; margin-left:auto}
+.cbar span{display:block; height:100%; border-radius:4px}
+.cbar .pos{background:var(--data)} .cbar .neg{background:var(--warn)}
+a.plink{color:inherit; text-decoration:none; border-bottom:1px dotted var(--line)}
+a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
+
 .panel{display:none; flex-direction:column; gap:22px}
 #t1:checked~main .p1, #t2:checked~main .p2, #t3:checked~main .p3,
 #t4:checked~main .p4, #t5:checked~main .p5{display:flex}
@@ -255,6 +299,112 @@ svg .band{fill:var(--surface-2)}
 
 def _esc(s) -> str:
     return html.escape(str(s))
+
+
+COMPONENT_LABEL = {
+    "appearance": "Appearance", "goals": "Goals", "assists": "Assists",
+    "clean_sheet": "Clean sheet", "defcon": "Defensive contribution",
+    "bonus": "Bonus", "saves": "Saves", "conceded": "Goals conceded", "cards": "Cards",
+}
+
+
+def _player_modals(squad, table, rates) -> str:
+    """One dialog per squad player, explaining where their xP comes from.
+
+    Driven by :target rather than JavaScript, so the page stays a static file and the
+    browser back button closes the dialog for free.
+
+    The point is auditability. Every number on this page is a model output, and a model
+    output you cannot interrogate is just an assertion. This shows the fixtures, the
+    per-component split and the underlying per-90 rates that produced it, so a figure
+    that looks wrong can be checked rather than trusted.
+    """
+    out = []
+    for p in squad.players:
+        r = rates.get(p.pid)
+        totals: dict[str, float] = {}
+        for f in p.fixtures:
+            for k, v in f.components.items():
+                totals[k] = totals.get(k, 0.0) + v
+        if not totals:
+            continue
+        span = max(abs(v) for v in totals.values()) or 1.0
+
+        comp = ""
+        # A component that rounds to zero is not information — a forward with no
+        # defensive contribution just has one fewer row.
+        for k, v in sorted(totals.items(), key=lambda kv: -abs(kv[1])):
+            if abs(v) < 0.005:
+                continue
+            w = abs(v) / span * 100
+            comp += (f'<tr><td class="nm">{COMPONENT_LABEL.get(k, k)}</td>'
+                     f'<td class="r mono">{v:+.2f}</td>'
+                     f'<td><div class="cbar"><span class="{"neg" if v < 0 else "pos"}" '
+                     f'style="width:{w:.0f}%"></span></div></td></tr>')
+
+        fx = ""
+        for f in sorted(p.fixtures, key=lambda x: x.event):
+            opp = _esc(f"{'vs' if f.home else 'at'} team {f.opponent}")
+            fx += (f'<tr><td class="mono">GW{f.event}</td>'
+                   f'<td class="dim">{"home" if f.home else "away"}</td>'
+                   f'<td class="dim mono">fdr {f.fdr}</td>'
+                   f'<td class="r mono nm">{f.xp:.2f}</td></tr>')
+
+        rate_rows = ""
+        if r:
+            for label, val, unit in [
+                ("Expected minutes", r.exp_minutes, " per match"),
+                ("Chance of starting", r.p_start * 100, "%"),
+                ("Goals per 90", r.xg90, ""),
+                ("Assists per 90", r.xa90, ""),
+                ("Bonus per 90", r.bonus90, ""),
+                ("Points per 90 last season", r.pp90, ""),
+            ]:
+                rate_rows += (f'<tr><td class="dim">{label}</td>'
+                              f'<td class="r mono">{val:.2f}{unit}</td></tr>')
+
+        flags = ""
+        if r:
+            ORD = {1: "first", 2: "second", 3: "third"}
+            for label, val in (("penalties", r.penalties_order),
+                               ("free kicks", r.freekicks_order),
+                               ("corners", r.corners_order)):
+                if val:
+                    flags += (f'<span class="pill accent">{ORD.get(val, f"#{val}")} '
+                              f'on {label}</span>')
+        if r and "no-PL-history" in r.flags:
+            flags += '<span class="pill warn">no Premier League history</span>'
+        if r and r.news:
+            flags += f'<span class="pill warn">{_esc(r.news[:52])}</span>'
+
+        out.append(f'''<div class="modal" id="p{p.pid}">
+  <a class="backdrop" href="#" aria-label="Close"></a>
+  <div class="box">
+    <div class="hd">
+      <div class="who"><h2>{_esc(p.name)}</h2>
+        <span class="sub">{POS[p.pos]} &middot; {_esc(p.team_name)} &middot;
+          &pound;{p.price:.1f}m &middot; {p.selected_by:.1f}% owned</span></div>
+      <a class="x" href="#" aria-label="Close">&times;</a></div>
+    <div class="bd">
+      <div class="mstats">
+        <div><div class="k">xP</div><div class="v mono">{p.xp:.1f}</div></div>
+        <div><div class="k">xP adj</div>
+          <div class="v mono">{calibrate(p.xp, p.n_fixtures, p.pos):.1f}</div></div>
+        <div><div class="k">Fixtures</div><div class="v mono">{p.n_fixtures}</div></div>
+      </div>
+      {f'<div class="flags">{flags}</div>' if flags else ''}
+      <h3>Where the points come from</h3>
+      <table>{comp}</table>
+      <h3>By fixture</h3>
+      <table>{fx}</table>
+      <h3>Underlying rates</h3>
+      <table>{rate_rows}</table>
+    </div>
+    <div class="ft">Components are expected points for the whole month, already scaled
+      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+  </div>
+</div>''')
+    return "".join(out)
 
 
 def _countdown(deadline: str) -> str:
@@ -307,7 +457,7 @@ def _action_panel(plan, squad, rates, gwplans, deadline: str) -> str:
 
     if alerts:
         rows = "".join(
-            f'<tr><td class="nm">{_esc(p.name)}'
+            f'<tr><td class="nm"><a class="plink" href="#p{p.pid}">{_esc(p.name)}</a>'
             f'{" <span class=tag>STARTING</span>" if inxi == 0 else ""}</td>'
             f'<td class="dim mono">{_esc(p.team_name)}</td>'
             f'<td class="r mono">{p.xp:.1f}</td>'
@@ -534,7 +684,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
         q = ' <span class="q" title="No Premier League history — role inferred from price">?</span>' if "no-PL-history" in p.flags else ""
         return (
             f'<tr><td class="badge mono">{_esc(mark)}</td>'
-            f'<td class="nm">{_esc(p.name)}{q}</td>'
+            f'<td class="nm"><a class="plink" href="#p{p.pid}">{_esc(p.name)}</a>{q}</td>'
             f'<td class="dim mono">{_esc(p.team_name)}</td>'
             f'<td class="dim mono">{POS[p.pos]}</td>'
             f'<td class="r mono">{p.price:.1f}</td>'
@@ -655,10 +805,11 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     model_chip = (f'<span class="pill warn">{_esc(plan.provider_note[:46])}</span>'
                   if plan.provider_note else '<span class="pill ok">'
                   '<span class="dot"></span>model ok</span>')
+    player_modals = _player_modals(squad, now_table, rates_ref or {})
     pitch_block = f'''<section class="card">
     <div class="hd"><h2>On the pitch</h2>
       <span class="sub">{squad.formation}, captain and vice marked</span></div>
-    <div class="bd">{charts.pitch(squad.xi, squad.bench, squad.captain, squad.vice)}</div>
+    <div class="bd">{charts.pitch(squad.xi, squad.bench, squad.captain, squad.vice, link=True)}</div>
     <div class="ft">Numbers inside each shirt are expected points for the month. A table
       says who is in the team; this says where the money went.</div>
   </section>'''
@@ -712,7 +863,14 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
             f'<td>{chips or "<span class=dim>—</span>"}{notes}</td></tr>'
         )
 
-    return f"""<title>{_esc(title)}</title>
+    # The charset and viewport declarations matter more than they look. This file is
+    # read three ways, and only one of them is an HTTP server that supplies a charset
+    # header — opened from iCloud Drive on a phone it is a file:// URL with no headers
+    # at all, which rendered every accented name as mojibake. Without the viewport line
+    # a phone lays the page out at 980px and zooms out to fit.
+    return f"""<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{_esc(title)}</title>
 <style>{CSS}</style>
 <div class="app">
   <input class="tabin" type="radio" name="tab" id="t1" checked>
@@ -850,6 +1008,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     </div>
   </main>
 </div>
+{player_modals}
 """
 
 

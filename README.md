@@ -142,6 +142,12 @@ Five tabs, plus a **before the deadline** panel that leads with team news on you
 squad — 55 players currently carry injury text the model reads and would otherwise never
 show.
 
+Any player in the squad — in a table or on the pitch — opens a breakdown showing
+where their expected points come from: the split by scoring event, the per-fixture
+figures, the underlying per-90 rates and their set-piece duty. Both the components and
+the fixtures sum to the headline number, so a figure that looks wrong can be checked
+rather than taken on trust.
+
 **Squad** · **Season** (chips, months to contest, simulated outcome distribution) ·
 **Gameweeks** (every week to GW38 with transfers, captain, chips) · **League** (rivals'
 real squads and ownership measured in *your* league) · **Charts**.
