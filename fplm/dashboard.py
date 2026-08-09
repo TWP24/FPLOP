@@ -386,6 +386,7 @@ def _gameweek_section(gwplans) -> str:
             f'<td class="dim mono">{_esc(g.formation)}</td>'
             f'<td><div class="meter"><span class="fill" style="width:{w:.1f}%"></span>'
             f'<span class="val mono">{g.net_projected:.0f}</span></div></td>'
+            f'<td class="r mono dim">{running:.0f}</td>'
             f'<td>{chip or "<span class=dim>—</span>"}</td>'
             f'<td class="moves">{moves}</td></tr>'
         )
