@@ -219,6 +219,15 @@ svg .predline{stroke-width:2.5; stroke-linejoin:round}
 svg .mlab{font-size:10px; fill:var(--chart); font-weight:700}
 svg .dot{fill:var(--mut); opacity:.42}
 svg .dotown,svg .preddot{fill:var(--chart)}
+svg .pitch{fill:var(--ok-wash); stroke:var(--line)}
+svg .pline{stroke:var(--line); stroke-width:1.5; fill:none}
+svg .pdot{fill:var(--surface); stroke:var(--accent); stroke-width:2}
+svg .parm{fill:var(--accent)}
+svg .parmt{font-size:9px; fill:var(--accent-ink); font-weight:750}
+svg .pxp{font-size:12.5px; fill:var(--ink); font-weight:700}
+svg .pnm{font-size:10.5px; fill:var(--ink); font-weight:600}
+svg .ppr{font-size:9.5px; fill:var(--mut)}
+svg .band{fill:var(--surface-2)}
 
 .panel{display:none; flex-direction:column; gap:22px}
 #t1:checked~main .p1, #t2:checked~main .p2, #t3:checked~main .p3,
@@ -646,6 +655,23 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     model_chip = (f'<span class="pill warn">{_esc(plan.provider_note[:46])}</span>'
                   if plan.provider_note else '<span class="pill ok">'
                   '<span class="dot"></span>model ok</span>')
+    pitch_block = f'''<section class="card">
+    <div class="hd"><h2>On the pitch</h2>
+      <span class="sub">{squad.formation}, captain and vice marked</span></div>
+    <div class="bd">{charts.pitch(squad.xi, squad.bench, squad.captain, squad.vice)}</div>
+    <div class="ft">Numbers inside each shirt are expected points for the month. A table
+      says who is in the team; this says where the money went.</div>
+  </section>'''
+
+    traj_block = (f'''<section class="card">
+    <div class="hd"><h2>Season trajectory</h2>
+      <span class="sub">cumulative projected points, banded by month</span></div>
+    <div class="bd">{charts.season_trajectory(gwplans)}</div>
+    <div class="ft">Shaded blocks are months and dots are chips. A season total is one
+      number; this shows where it accumulates &mdash; the six-gameweek December block is
+      the one that pays.</div>
+  </section>''' if gwplans else "")
+
     gw_section = _gameweek_section(gwplans)
     n_months = len(plan.months)
     n_gws = len(gwplans) if gwplans else 0
@@ -729,6 +755,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
       {action_panel}
 
     <div class="panel p1">
+  {pitch_block}
+
   <section class="card">
     <div class="hd"><h2>Starting XI</h2><span class="pill accent">{squad.formation}</span>
       <span class="spacer"></span><span class="sub">&pound;{squad.cost:.1f}m</span></div>
@@ -771,6 +799,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
 
     <div class="panel p3">
   {gw_section}
+
+  {traj_block}
     </div>
 
     <div class="panel p4">

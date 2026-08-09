@@ -354,3 +354,111 @@ def calibration_bars(deciles: list[tuple[float, float]], W: int = 620, H: int = 
                f'tenths of all players, weakest predicted to strongest &rarr;</text>')
     out.append("</svg>")
     return "".join(out)
+
+
+def pitch(xi, bench, captain: int, vice: int, W: int = 620) -> str:
+    """The XI laid out on a pitch, which is how anyone actually reads a squad.
+
+    A table tells you who is in the team; a pitch tells you the *shape* — whether the
+    budget went into three premium forwards or five defenders, and where the weak slot
+    is. Deliberately restrained: a faint tinted surface with markings rather than a
+    bright green, so it sits inside the rest of the design instead of shouting over it.
+    """
+    if not xi:
+        return ""
+    rows: dict[int, list] = {1: [], 2: [], 3: [], 4: []}
+    for p in xi:
+        rows.setdefault(p.pos, []).append(p)
+    for k in rows:
+        rows[k].sort(key=lambda p: -p.xp)
+
+    H = 430
+    out = [f'<svg viewBox="0 0 {W} {H}" width="100%" height="{H}" role="img" '
+           f'aria-label="Starting eleven laid out by position">']
+    # Pitch surface and markings.
+    out.append(f'<rect x="0" y="0" width="{W}" height="{H}" rx="12" class="pitch"/>')
+    out.append(f'<line x1="14" y1="{H/2:.0f}" x2="{W-14}" y2="{H/2:.0f}" class="pline"/>')
+    out.append(f'<circle cx="{W/2}" cy="{H/2:.0f}" r="46" class="pline" fill="none"/>')
+    bw, bh = 176, 62
+    out.append(f'<rect x="{(W-bw)/2}" y="14" width="{bw}" height="{bh}" class="pline" fill="none"/>')
+    out.append(f'<rect x="{(W-bw)/2}" y="{H-14-bh}" width="{bw}" height="{bh}" class="pline" fill="none"/>')
+
+    # Goalkeeper at the top, forwards at the bottom.
+    bands = {1: 0.11, 2: 0.35, 3: 0.60, 4: 0.85}
+    for pos, frac in bands.items():
+        line = rows.get(pos, [])
+        if not line:
+            continue
+        y = H * frac
+        step = W / (len(line) + 1)
+        for i, p in enumerate(line, start=1):
+            x = step * i
+            mark = "C" if p.pid == captain else ("V" if p.pid == vice else "")
+            out.append(f'<g><circle cx="{x:.0f}" cy="{y:.0f}" r="19" class="pdot"/>')
+            if mark:
+                out.append(f'<circle cx="{x+15:.0f}" cy="{y-14:.0f}" r="9" class="parm"/>'
+                           f'<text x="{x+15:.0f}" y="{y-10:.0f}" text-anchor="middle" '
+                           f'class="parmt">{mark}</text>')
+            out.append(f'<text x="{x:.0f}" y="{y+4:.0f}" text-anchor="middle" '
+                       f'class="pxp">{p.xp:.0f}</text>')
+            out.append(f'<text x="{x:.0f}" y="{y+34:.0f}" text-anchor="middle" '
+                       f'class="pnm">{_esc(p.name[:11])}</text>')
+            out.append(f'<text x="{x:.0f}" y="{y+45:.0f}" text-anchor="middle" '
+                       f'class="ppr">{_esc(p.team_name)} &pound;{p.price:.1f}</text></g>')
+    out.append("</svg>")
+    return "".join(out)
+
+
+def season_trajectory(gwplans, W: int = 620, H: int = 230) -> str:
+    """Cumulative projected points across the season, banded by month.
+
+    The month bands are the point. A season total is one number; this shows where it
+    accumulates, and a six-gameweek December stands out as the block that pays.
+    """
+    if not gwplans:
+        return ""
+    pad_l, pad_b, pad_t, pad_r = 42, 30, 16, 12
+    cum, running = [], 0.0
+    for g in gwplans:
+        running += g.net_projected
+        cum.append((g.gw, running, g.month, g.chip_label))
+    hi = cum[-1][1] or 1
+
+    def sx(i):
+        return pad_l + i * (W - pad_l - pad_r) / max(len(cum) - 1, 1)
+
+    def sy(v):
+        return H - pad_b - (v / hi) * (H - pad_b - pad_t)
+
+    out = [f'<svg viewBox="0 0 {W} {H}" width="100%" height="{H}" role="img" '
+           f'aria-label="Cumulative projected points across the season">']
+
+    # Alternating month bands behind the line.
+    start, shade = 0, True
+    for i in range(1, len(cum) + 1):
+        if i == len(cum) or cum[i][2] != cum[start][2]:
+            if shade:
+                out.append(f'<rect x="{sx(start):.1f}" y="{pad_t}" '
+                           f'width="{sx(i-1)-sx(start):.1f}" height="{H-pad_b-pad_t}" '
+                           f'class="band"/>')
+            mid = (sx(start) + sx(i - 1)) / 2
+            out.append(f'<text x="{mid:.0f}" y="{H-pad_b+13}" text-anchor="middle" '
+                       f'class="cx">{_esc(cum[start][2][:3])}</text>')
+            start, shade = i, not shade
+
+    for g in range(0, 5):
+        v = hi * g / 4
+        out.append(f'<line x1="{pad_l}" y1="{sy(v):.1f}" x2="{W-pad_r}" y2="{sy(v):.1f}" '
+                   f'class="grid"/><text x="{pad_l-6}" y="{sy(v)+4:.1f}" text-anchor="end" '
+                   f'class="cy">{v:.0f}</text>')
+
+    pts = " ".join(f"{sx(i):.1f},{sy(v):.1f}" for i, (_, v, _, _) in enumerate(cum))
+    out.append(f'<polyline points="{pts}" fill="none" class="predline"/>')
+    for i, (gw, v, _, chip) in enumerate(cum):
+        if chip:
+            out.append(f'<circle cx="{sx(i):.1f}" cy="{sy(v):.1f}" r="4.5" class="dotown">'
+                       f'<title>GW{gw}: {_esc(chip)}</title></circle>')
+    out.append(f'<text x="{W-pad_r}" y="{pad_t+2}" text-anchor="end" class="cq">'
+               f'{hi:.0f} pts by GW{cum[-1][0]} &middot; dots are chips</text>')
+    out.append("</svg>")
+    return "".join(out)
