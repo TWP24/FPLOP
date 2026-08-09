@@ -1,116 +1,90 @@
-# fplm — an FPL team builder for monthly prizes
+# fplm — an FPL tool for monthly-prize leagues
 
-A statistical squad builder for Fantasy Premier League leagues where **each month pays
-a cash prize**. That objective is different from season-long FPL in ways that change
-what you should actually pick, so the tool optimises for the month and then measures
-how often the squad it picked would actually *win* one.
+A squad builder, chip planner and dashboard for Fantasy Premier League leagues where
+**each month pays a cash prize**. That objective is different from season-long FPL in
+ways that change what you should pick, so the tool optimises for the month and then
+measures how often the squad it picked would actually *win* one.
 
-Everything below that sounds like a claim was measured. Where the evidence was thin or
-contradicted what I expected, that is said plainly.
+**Live: [twp24.github.io/FPLOP](https://twp24.github.io/FPLOP/)** — rebuilt every
+morning on GitHub's runners, no local machine involved.
+
+Everything below that sounds like a claim was measured. Where the evidence contradicted
+what I expected — which was most of the time — that is what is written down.
 
 ```bash
+./fplm.sh plan                      # squad, chips, week-by-week plan, dashboard
 ./fplm.sh months                    # the monthly buckets and how uneven they are
-./fplm.sh players -m August         # ranked player outlook for a month
-./fplm.sh build -m August           # optimise a squad
-./fplm.sh frontier -m August        # sweep risk appetite, rank by P(win month)
-./fplm.sh backtest                  # walk-forward validation on 2025/26
+./fplm.sh template                  # the most-owned legal fifteen, vs the model's
+./fplm.sh players -m August         # ranked player outlook
+./fplm.sh backtest                  # walk-forward validation, four seasons
 ```
 
 ---
 
-## The three things that actually matter
+## The finding that matters most: the crowd beats the model
 
-### 1. Months are wildly uneven, and they are fixed in advance
+Scored on **actual points** across four seasons, tilting squad selection toward what
+everyone else owns beats pure expected points, monotonically:
 
-FPL publishes the month boundaries itself, and the 2026/27 season looks like this:
+| ownership weight | season total |
+|---|---|
+| 0.0 — pure model | 1,790 |
+| 0.5 | 1,928 |
+| **1.0 — pure template** | **1,974** |
 
-| Month | GWs | # |
-|---|---|---|
-| August | 1–2 | **2** |
-| September | 3–5 | 3 |
-| October | 6–9 | 4 |
-| November | 10–12 | 3 |
-| December | 13–18 | **6** |
-| January | 19–23 | 5 |
-| February | 24–27 | 4 |
-| March | 28–30 | 3 |
-| April | 31–33 | 3 |
-| May | 34–38 | 5 |
+**+184 points a season, winning 3 of 4 seasons.** Not a hedge — the better strategy.
 
-Every month pays the same prize, but August is two gameweeks and December is six. A
-two-gameweek month is close to a coin toss — one captain haul decides it. A six-gameweek
-month rewards the better squad far more reliably.
+The reason is information, not cleverness. The crowd sees fitness, team news, who the
+manager rates and who has quietly been dropped. This model reads last season's per-90
+rates and a fixture list. Six million people reading team news beat it, and they beat it
+*even though* the ownership squad starts obvious dead weight.
 
-The practical consequence: **your chips and your transfer budget are worth most in the
-short months**, because that is where a single decision swings the whole prize. Run
-`./fplm.sh months` for the live picture.
+So `plan` defaults to `--start template`. The fifteen come from ownership; the eleven and
+the armband are then chosen on expected points, because ownership is a reason to buy a
+player and never a reason to start him.
 
-### 2. Expected points is not the objective — winning is
+## Months are uneven, and fixed in advance
 
-A conventional FPL optimiser maximises expected points. To win a month you have to beat
-the *best* of N rivals, which is a question about the tail of your distribution, not its
-mean. So the tool simulates the whole month 10,000+ times, builds a field of rival
-managers, and scores everyone **in the same simulated universe**.
+FPL publishes the boundaries itself. August is **2 gameweeks**, December is **6** — same
+prize. A two-gameweek month is close to a coin toss; one captain haul decides it.
 
-That last part matters more than it sounds. If you and every rival own the same captain,
-that captain hauling does not help you win. Simulating rivals separately would destroy
-this correlation and make template picks look far better than they are.
+Your chips and transfers are worth most where a single decision swings a whole prize.
+`./fplm.sh months` shows the live picture.
 
-### 3. Why chasing differentials usually loses
+## Chasing differentials loses
 
-This is where the tool told me I was wrong.
+The folk theory — behind on the mean, so buy variance — is sound until you price it. An
+extra point of spread is worth having only if it costs less than **0.56** points of mean;
+degrading the squad to get it costs about **2**. Measured across 8 simulated fields:
 
-The folk theory is sound as far as it goes: if your expected score sits below the score
-needed to win, extra variance helps you. Formally, with `P(win) ≈ Φ((μ − T)/σ)` and
-`μ < T`, increasing `σ` raises your chances.
-
-The catch is what variance *costs*. In August the optimiser's squad has μ ≈ 117 against
-a best-rival target T ≈ 130, with σ ≈ 21. Working through the derivative, an extra point
-of σ is worth having only if it costs less than **0.56 points of mean**. Buying variance
-by degrading the squad actually costs about **2 points of mean per point of σ**. It is a
-bad trade, and it is a bad trade by a factor of four.
-
-Buying variance the *other* way — owning players the field does not — is much cheaper,
-because only the part of a player's variance the field is not also exposed to can move
-you up the table. With the field owning a player with probability `o`, your differential
-exposure is `(1 − o)` and the variance of your lead scales with `(1 − o)²`. A 60%-owned
-premium contributes only 16% of his raw variance to your chances; a 3%-owned punt
-contributes 94%. The optimiser prices risk on that quantity, not on raw variance.
-
-Even then, measured across 8 independent simulated fields:
-
-| risk λ | P(win), 19 rivals | beat λ=0 in |
+| risk λ | P(win), 19 rivals | beat λ=0 |
 |---|---|---|
 | 0 | **18.8%** | — |
-| 0.1 | 18.4% | 4 of 8 |
 | 0.3 | 11.1% | 0 of 8 |
-| 1.0 | 7.9% | 0 of 8 |
 
-**In a 20-manager league, maximise expected points.** Deliberate differential-chasing is
-a losing strategy. The edge comes from being better, not different.
+It only starts paying above ~40 rivals. `suggested_lam` picks from `--rivals`, and for a
+20-person league returns 0 — ownership has no effect on your squad at all.
 
-That flips with league size, and the crossover is around 40 rivals:
+## Hits do not pay
 
-| rivals | λ=0 | λ=0.1 | λ=0.3 | best |
-|---|---|---|---|---|
-| 5 | **36.9%** | 31.7 | 22.4 | λ=0 |
-| 9 | **28.3%** | 25.1 | 15.8 | λ=0 |
-| 19 | **17.1%** | 16.5 | 11.0 | λ=0 |
-| 49 | 8.7 | **9.8%** | 6.7 | λ=0.1 |
-| 99 | 5.5 | **7.7%** | 5.4 | λ=0.1 |
+| max hits | season total | vs never |
+|---|---|---|
+| **0** | 1,790 | — |
+| 3 | 1,834 | +45 |
 
-Skill and difference are substitutes. In a small league a good squad already wins about
-one month in five against a 1-in-20 baseline, so just be good. Across a hundred rivals
-someone gets lucky regardless of how good you are, and the only way into that tail is
-owning players they do not. `build` picks λ from `--rivals` automatically.
++45 looks like a win until the per-season split: **+19, −42, +214, −11**. One season is
+the whole result and two of four go backwards.
+
+The control settles it: with **perfect foresight**, allowing hits is worth **+259** a
+season; with this model, **+30**. Hits pay handsomely when your predictions justify a −4.
+These don't. Default is 0, and the condition for revisiting is written into the source.
 
 ---
 
-## Does the model actually work?
+## Does the model work?
 
-`./fplm.sh backtest` rebuilds the model from scratch at the start of every month of
-2025/26 using **only** gameweeks already played, then scores it against what happened.
-29,757 player-gameweeks, no leakage across the month boundary.
+`./fplm.sh backtest` rebuilds from scratch at every month boundary using **only**
+gameweeks already played.
 
 ```
                        rho  PPG rho    MAE   optimiser  template  median
@@ -120,171 +94,97 @@ owning players they do not. `build` picks λ from `--rivals` automatically.
 pooled (24 months)   0.444    0.447   5.27         233       206     162
 ```
 
-- `rho` — rank correlation of predicted vs actual monthly points.
-- `optimiser / template / median` — points a squad built each way *actually* scored.
+**The optimiser's squad scored 233 points a month against 162 for a median legal squad.**
+That is the number that matters.
 
-**The optimiser's squad scored 233 points per month against 162 for a median legal
-squad.** That is the number that matters; rank correlation
-is only a means to it.
+But on pure ranking the model is **level with points-per-game to date** (0.444 vs 0.447)
+— fractionally behind, in fact. The squad-level gap comes from combining that ranking
+with fixtures, budget and squad constraints, not from ranking players better.
 
-Two honest caveats:
+### 14 changes tested, zero net gain
 
-- On pure ranking the model is **level with points-per-game to date** (0.420 vs 0.419),
-  not ahead of it. It wins the early months, when PPG has little data, and loses the late
-  ones. The squad-level gap comes from combining that ranking with fixtures, budget and
-  the squad constraints — not from ranking players better.
-- FPL's own published `xP` is excluded from the table above. It is only populated in
-  scattered gameweeks in this archive (GW7, 10, 11, 12 are entirely empty), so scoring a
-  partial month against a full-month actual flattered it to a meaningless rho of 0.90.
-  The backtest now reports it only where a month has >80% coverage.
+A ten-agent audit plus follow-up work tested fourteen model changes. **None survived.**
+Everything that ever worked was structural — a missing autosub scorer, a minutes model
+shrinking to a price prior, clean sheets using the wrong distribution, hits not charged
+to months. Bugs, not insights.
 
-### What the backtest changed
+The diagnostic that explains it: **rho within the top 60 by prediction — the only region
+the optimiser shops in — is ~0.17 and barely moves.** Agents produced pooled rho gains of
++0.10 that bought nothing, because they improved separation among players already
+excluded.
 
-Two real bugs, both found only by running it:
+The project is instrument-limited, not idea-limited: expected-goals data starts in
+2022/23, so four seasons is the ceiling, and the optimiser metric's standard error is
+4–5 points a month.
 
-1. **The minutes model was the whole problem.** The original version shrank observed
-   start rates toward a price-percentile prior weighted by minutes played. Expected
-   minutes is the single largest input to expected points, and the price prior was
-   swamping real data. Anchoring on realised minutes per game took rho from **0.314 to
-   0.415** in one change.
-2. **The analytic model and the simulator disagreed by 8 points a month** — meaning the
-   ILP was optimising something the simulator did not score. Three causes: clean sheets
-   used plain Poisson while the simulator's overdispersed match multiplier makes shut-outs
-   ~19% likelier (Jensen's inequality — the model was systematically undervaluing
-   defenders); defensive contribution was discounted by `p_start` twice; and saves and
-   goals-conceded ignored that FPL *floors* rather than pays pro rata. They now agree to
-   **0.2%**.
+## Two models, one switch
 
-The blend between the structural model and realised points per 90 survives as a tunable
-(`--empirical-weight`) but, once minutes were fixed, the backtest could no longer tell
-the settings apart — rho 0.412 to 0.421 across the entire range, inside the noise for
-eight months. The default sits at the flat top of that curve. It is not a tuned constant
-and is not presented as one.
+```bash
+./fplm.sh plan --model fplm      # built in, runs anywhere
+./fplm.sh plan --model dastan    # SmartPlayFPL's open model
+```
 
----
+On 17,622 identical player-gameweeks, [Dastan](https://github.com/qazybekb/smartplayfpl-dastan)
+is better where its data reaches — **starters rho 0.414 against 0.356**, MAE 0.919
+against 1.272 — and beats FPL's own `ep_next` too. Blending was tested and rejected: the
+best blend beats pure Dastan by +0.002 rho against seed noise of 0.0106. This model
+contributes no independent signal.
 
-## How the model works
-
-**Team ratings** (`ratings.py`). FPL zeroes `strength_attack_*` and `strength_defence_*`
-pre-season, so ratings are derived from three signals and blended: squad xG, squad xGC,
-and FPL's own `strength_overall` plus the difficulty it assigns to teams facing that
-opponent. Promoted clubs have no Premier League history, so they fall back entirely to
-FPL's prior — visible as `prior wt` ≈ 1.0 in `./fplm.sh teams`.
-
-Goals are negative binomial, not Poisson: a Gamma(4, ¼) multiplier per team per match.
-Real football is overdispersed, and this is also what correlates teammates, so tripling
-up on one attack is correctly priced as riskier than three players from three clubs.
-
-**Player points** (`xp.py`). Per-90 rates from last season, shrunk toward positional
-means by sample size, then priced against the FPL scoring table: appearance, goals,
-assists, clean sheets, defensive contribution, saves, bonus, cards, goals conceded. The
-structural model is run twice — once for the real fixture, once against a neutral
-opponent — and their ratio gives fixture sensitivity, which is trustworthy even when the
-absolute level is not.
-
-**Optimiser** (`optimise.py`). An integer program over the full squad: 15 players, £100m,
-max 3 per club, legal formation, captain, with bench points discounted to 12%. Supports
-transfer planning from your current squad with hits costed at −4.
-
-**Simulator** (`simulate.py`). 10,000+ months, correlated within teams, with automatic
-substitutions and vice-captaincy. Rivals are built by solving the same optimisation under
-*their own* noisy beliefs, so the field is competitive rather than random — modelling
-rivals as noise made every squad look like a winner (P(win) fell from 34% to 20% when
-this was fixed, and 5% is the chance baseline).
+Its feature frame currently ends at 2025-26, so for 2026/27 it falls back and says why.
+`predictions.json` records which model made each forecast, so the tracker settles it with
+data. `./fetch_dastan.sh` vendors it. See [DASTAN_INTEGRATION.md](DASTAN_INTEGRATION.md).
 
 ---
+
+## What's on the dashboard
+
+Five tabs, plus a **before the deadline** panel that leads with team news on your own
+squad — 55 players currently carry injury text the model reads and would otherwise never
+show.
+
+**Squad** · **Season** (chips, months to contest, simulated outcome distribution) ·
+**Gameweeks** (every week to GW38 with transfers, captain, chips) · **League** (rivals'
+real squads and ownership measured in *your* league) · **Charts**.
+
+Both `xP` and `xP adj` are shown. Both are forecasts — the second has the model's
+measured bias removed (realised = 0.56 + 0.881 × predicted over 8,392 player-months).
+Actual outcomes appear from GW1 via the tracker, which writes each prediction down
+**before** the deadline and never revises it.
+
+## Running it
+
+```bash
+python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
+./fplm.sh plan
+```
+
+Three independent delivery paths, which fail for different reasons:
+
+| | updates | needs |
+|---|---|---|
+| GitHub Pages | daily 06:50 UTC | nothing of yours |
+| launchd → iCloud Drive | daily 07:50 local | the Mac powered on |
+| `./refresh.sh` | on demand | you |
+
+Repository variables `FPL_ENTRY`, `FPL_LEAGUE` (space-separated for several),
+`FPL_RIVALS`, `FPL_START` configure the cloud build.
 
 ## Known weaknesses
 
-These are real, and they are where the model will hurt you:
-
 - **Pre-season minutes are guesswork.** 164 of 564 players have no Premier League
-  history, and their role is inferred from price alone. They are flagged `*` in
-  `players` output. This is the weakest part of the model and the reason
-  `--minutes-csv` exists — feed it what you know about confirmed signings and pre-season
-  friendlies:
-  ```
-  # name,minutes_per_start
-  Rashford,80
-  ```
-- **Penalty duty is not modelled.** A player newly on penalties will be underrated;
-  `pens-1st` is surfaced as a flag but carries no points adjustment.
-- **Doubles and blanks do not exist yet.** All 380 fixtures currently sit one-per-team
-  per gameweek. They appear later from cup postponements and matter enormously in a
-  monthly league. `months` will flag them once they exist.
-- **P(win) has real sampling error.** It depends on which 19 rivals get drawn — estimates
-  moved between 14% and 22% across field draws. Treat the ranking between squads as
-  meaningful and the absolute percentage as approximate.
-- **Automatic substitutions are applied per month, not per gameweek.** The simulator
-  only subs a player out if they miss the *entire* month, whereas FPL subs per gameweek.
-  In a six-gameweek month this understates simulated scores by roughly 3% against the
-  analytic figure — which is why `build` reports a simulated mean below its own xP. It
-  affects you and every rival identically, so P(win) is largely unharmed, but the
-  absolute simulated totals are a slight underestimate.
-- **The backtest is one season, eight months.** Differences below about 0.02 in rho are
-  noise. It was used to find bugs, not to tune constants finely, and the tuning it did
-  inform is documented as such.
+  history and their role is inferred from **price**. Flagged `?` on the dashboard. This
+  is the weakest part of the model and the reason `--minutes-csv` exists — it is also the
+  one place a human beats it outright.
+- **Team strength fields change units at GW1** (1–5 pre-season, ~1000–1400 after) and the
+  granular attack/defence fields go from zero to populated. Documented in
+  `ratings.build`, deliberately unhandled until real values exist.
+- **Blanks and doubles do not exist yet.** Chip values use a documented prior for where
+  they historically land, which retires itself as soon as the real fixtures show one.
+- **P(win) has real sampling error** — it depends which 19 rivals get drawn. Treat the
+  ranking between squads as meaningful and the percentage as approximate.
+- **Automatic substitutions are per gameweek in the backtest but per month in the Monte
+  Carlo**, understating simulated totals ~3%. Affects you and every rival identically.
 
----
-
-## Setup
-
-```bash
-cd ~/fpl
-python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
-./fplm.sh months
-```
-
-Backtest data (already downloaded to `data/`) comes from
-[vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League):
-
-```bash
-curl -L -o data/merged_gw_2025-26.csv \
-  https://raw.githubusercontent.com/vaastav/Fantasy-Premier-League/master/data/2025-26/gws/merged_gw.csv
-```
-
-### Useful flags
-
-```bash
-./fplm.sh build -m August --rivals 19 --budget 100 --include Haaland --exclude Saka
-./fplm.sh build -m September --entry 1234567 --free-transfers 2 --max-hits 1
-./fplm.sh players -m December --position DEF --sort value --limit 40
-./fplm.sh frontier -m August --rivals 19 --sims 20000
-```
-
-`--entry` is your FPL team id (the number in your team's URL), used to plan transfers
-from your actual squad rather than building from scratch.
-
----
-
-## Running it without your Mac
-
-`refresh.sh` plus the launchd agent keeps the plan current on your own machine, and
-copies it into iCloud Drive so it reaches your phone. That needs the Mac to be on at
-some point each day, which is no good if you are away.
-
-`.github/workflows/refresh.yml` removes that dependency. It rebuilds the plan on
-GitHub's runners every morning and publishes it to GitHub Pages, so the Mac can be shut
-and the URL still updates.
-
-To turn it on:
-
-1. Push this repo to GitHub (private is fine — Pages works on private repos on paid
-   plans; on a free plan the repo needs to be public for Pages, and there is nothing
-   sensitive in here beyond an FPL entry id).
-2. **Settings → Pages → Source: GitHub Actions**.
-3. **Settings → Secrets and variables → Actions → Variables**, add:
-   - `FPL_ENTRY` — your entry id, so the plan starts from your real squad
-   - `FPL_LEAGUE` — your mini-league id, or several space-separated
-     (`123456 789012`). Each gets its own block, because ownership differs between
-     leagues and a player who is template in one can be a differential in another.
-   - `FPL_RIVALS` — league size minus you (defaults to 19)
-4. **Actions → Refresh FPL plan → Run workflow** to check it before trusting the schedule.
-
-The page then lives at `https://<user>.github.io/fplm/`, which you can bookmark or add
-to your phone's home screen.
-
-Two things worth knowing. GitHub schedules run in UTC and ignore daylight saving, so
-06:50 UTC is 07:50 Irish summer time and 06:50 in winter. And GitHub disables scheduled
-workflows in repositories with no activity for 60 days — a daily commit is not required,
-but the repo cannot go completely untouched for two months.
+Backtest data comes from
+[vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League);
+`data/README.md` has the fetch commands.
