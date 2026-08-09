@@ -370,7 +370,7 @@ def cmd_plan(args) -> None:
         boot, fixtures, prior_weight=args.prior_weight, minutes_override=overrides,
         rivals=args.rivals, monthly_weight=args.monthly_weight,
         min_minutes=args.min_minutes, budget=args.budget, current_squad=current,
-        start=args.start,
+        start=args.start, model=args.model,
     )
 
     from . import forecast as fcmod
@@ -387,7 +387,9 @@ def cmd_plan(args) -> None:
     if p.months:
         gw_xp = p.months[0].squad_xp / max(p.months[0].n_gws, 1)
         cap = next((x.name for x in p.squad.players if x.pid == p.squad.captain), "")
-        tracking.record_prediction(p.next_gw, gw_xp, captain=cap)
+        tracking.record_prediction(p.next_gw, gw_xp, captain=cap, model=args.model)
+    if p.provider_note:
+        print(f"{DIM}model: {p.provider_note}{RESET}")
     if args.entry:
         tracking.fill_actuals(args.entry)
 
@@ -508,6 +510,10 @@ def main(argv: list[str] | None = None) -> None:
                     help="1.0 plans purely for monthly prizes, 0.0 purely for the season.")
     sp.add_argument("--out", help="HTML output path (default plan.html)")
     sp.add_argument("--title", default="FPL monthly plan")
+    sp.add_argument("--model", choices=["fplm", "dastan"], default="fplm",
+                    help="Which expected-points model to use. 'dastan' is measurably "
+                         "better where its data reaches (starters rho 0.414 vs 0.356) "
+                         "but falls back to fplm, saying why, when it cannot run.")
     sp.add_argument("--start", choices=["template", "xp"], default="template",
                     help="How to pick the starting squad. 'template' takes the "
                          "most-owned legal fifteen, which beat pure expected points by "

@@ -12,3 +12,4 @@ data/
 # Prediction log — written by the tool, but it is a record, not a build artifact.
 # Kept out of git so CI runs never overwrite the local one, and vice versa.
 predictions.json
+vendor/

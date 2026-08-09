@@ -629,7 +629,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     <div class="eyebrow">Season 2026/27 · monthly prize league</div>
     <h1>{_esc(title)}</h1>
     <div class="stamp mono">Refreshed {_esc(plan.generated)} &nbsp;·&nbsp;
-        next deadline GW{plan.next_gw} &nbsp;·&nbsp; {rivals + 1} managers</div>
+        next deadline GW{plan.next_gw} &nbsp;·&nbsp; {rivals + 1} managers
+        {f'&nbsp;·&nbsp; {_esc(plan.provider_note)}' if plan.provider_note else ''}</div>
   </header>
 
   <div class="strip">

@@ -51,10 +51,18 @@ class SeasonPlan:
     sim_scores: object = None      # Monte Carlo month totals, for the distribution chart
     sim_target: float = 0.0        # score the month's winner is expected to post
     sim_p_win: float = 0.0
+    provider_note: str = ""
 
     @property
     def contested(self) -> list[MonthPlan]:
         return [m for m in self.months if m.contest]
+
+
+def _season_label(boot: dict) -> str:
+    """FPL does not publish a season string, so derive it from the GW1 deadline."""
+    ev = sorted(boot["events"], key=lambda e: e["id"])
+    year = int(ev[0]["deadline_time"][:4]) if ev else 2026
+    return f"{year}-{str(year + 1)[2:]}"
 
 
 def build(
@@ -69,6 +77,7 @@ def build(
     current_squad: set[int] | None = None,
     simulate: bool = True,
     start: str = "xp",
+    model: str = "fplm",
 ) -> SeasonPlan:
     """Build a whole-season plan from today's data."""
     team_ratings = rt.build(boot, fixtures, prior_weight=prior_weight)
@@ -82,6 +91,28 @@ def build(
     tables = {
         m.name: mo.build_table(boot, fixtures, rates, team_ratings, m) for m in months
     }
+
+    # A different provider replaces the xP values while leaving every other field —
+    # price, ownership, fixtures, minutes — exactly as built, so the optimiser, the
+    # chip planner and the dashboard are all indifferent to which model produced them.
+    provider_note = ""
+    if model != "fplm":
+        from pathlib import Path as _P
+
+        from . import providers as pv
+
+        season = _season_label(boot)
+        prov, provider_note = pv.resolve(model, season, next_gw)
+        if prov.name != "fplm":
+            cmap = pv.code_map_from(_P(__file__).resolve().parent.parent
+                                    / "data" / f"players_raw_{season}.csv")
+            for m in months:
+                got = prov.predict(boot, fixtures, m, season=season, code_map=cmap)
+                if not got.ok:
+                    continue
+                for pid, v in got.xp.items():
+                    if pid in tables[m.name]:
+                        tables[m.name][pid].xp = v
 
     # The starting squad is chosen for the month we are about to enter, but a squad
     # persists, so long-month value is blended in according to `monthly_weight`.
@@ -236,6 +267,7 @@ def build(
             pass
 
     return SeasonPlan(
+        provider_note=provider_note,
         generated=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         next_gw=next_gw,
         squad=squad,

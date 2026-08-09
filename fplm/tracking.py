@@ -33,6 +33,7 @@ class GWRecord:
     rank: int | None = None
     captain: str = ""
     chip: str | None = None
+    model: str = "fplm"   # which provider produced this forecast
 
     @property
     def played(self) -> bool:
@@ -59,7 +60,7 @@ def save(records: dict[int, GWRecord]) -> None:
 
 
 def record_prediction(gw: int, predicted: float, captain: str = "",
-                      chip: str | None = None) -> dict[int, GWRecord]:
+                      chip: str | None = None, model: str = "fplm") -> dict[int, GWRecord]:
     """Write down what we expect, before the gameweek is played.
 
     Existing predictions are never overwritten. Re-running the tool the day before a
@@ -68,7 +69,8 @@ def record_prediction(gw: int, predicted: float, captain: str = "",
     """
     recs = load()
     if gw not in recs:
-        recs[gw] = GWRecord(gw=gw, predicted=round(predicted, 1), captain=captain, chip=chip)
+        recs[gw] = GWRecord(gw=gw, predicted=round(predicted, 1), captain=captain,
+                            chip=chip, model=model)
         save(recs)
     return recs
 
