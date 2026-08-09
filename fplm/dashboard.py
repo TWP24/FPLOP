@@ -351,12 +351,23 @@ def _gameweek_section(gwplans) -> str:
     total_pts = sum(g.net_projected for g in gwplans)
     peak = max((g.net_projected for g in gwplans), default=1) or 1
 
+    # Month subtotals, because the prize is monthly — a divider that only carries a
+    # name makes you add up six rows in your head to answer the question the whole
+    # tool exists for.
+    by_month: dict[str, float] = {}
+    for g in gwplans:
+        by_month[g.month] = by_month.get(g.month, 0.0) + g.net_projected
+
+    running = 0.0
     last_month = None
     for g in gwplans:
-        # A rule between months makes the scoring periods legible at a glance.
         if g.month != last_month:
-            rows += (f'<tr class="mrule"><td colspan="6">{_esc(g.month)}</td></tr>')
+            sub = by_month[g.month]
+            n_gw = sum(1 for x in gwplans if x.month == g.month)
+            rows += (f'<tr class="mrule"><td colspan="4">{_esc(g.month)}</td>'
+                     f'<td colspan="3" class="r">{sub:.0f} pts over {n_gw} GW</td></tr>')
             last_month = g.month
+        running += g.net_projected
 
         moves = "".join(
             f'<span class="move"><s>{_esc(m.out_name)}</s> &rarr; '
@@ -382,8 +393,10 @@ def _gameweek_section(gwplans) -> str:
     return f"""<section class="card">
     <div class="hd"><h2>Gameweek plan</h2><span class="sub">projected to the end of the season</span></div>
     <div class="bd"><div class="kpis">
-      <div class="kpi"><div class="k">Projected total</div>
-        <div class="v mono">{total_pts:.0f}<u> pts</u></div></div>
+      <div class="kpi"><div class="k">Season total xP</div>
+        <div class="v mono">{total_pts:.0f}<u> pts, net of hits</u></div></div>
+      <div class="kpi"><div class="k">Per gameweek</div>
+        <div class="v mono">{total_pts / max(len(gwplans), 1):.1f}<u> avg</u></div></div>
       <div class="kpi"><div class="k">Transfers</div>
         <div class="v mono">{total_moves}</div></div>
       <div class="kpi"><div class="k">Hits taken</div>
@@ -391,7 +404,7 @@ def _gameweek_section(gwplans) -> str:
     </div>
     <div class="scroll"><table>
       <thead><tr><th>GW</th><th>Captain</th><th>Form</th><th>Projected</th>
-        <th>Chip</th><th>Transfers</th></tr></thead>
+        <th class="r">Cumulative</th><th>Chip</th><th>Transfers</th></tr></thead>
       <tbody>{rows}</tbody>
     </table></div></div>
     <div class="ft">Weeks further out say a good squad for these fixtures more than
