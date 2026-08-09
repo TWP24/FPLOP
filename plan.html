@@ -234,8 +234,19 @@ svg .band{fill:var(--surface-2)}
 .modal td{padding:5px 0; border-bottom:1px solid var(--line)}
 .modal tr:last-child td{border-bottom:none}
 .modal .flags{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px}
-.cbar{width:88px; height:7px; border-radius:4px; background:var(--surface-2);
-  overflow:hidden; margin-left:auto}
+.cbar{width:100%; max-width:88px; height:5px; border-radius:4px;
+  background:var(--surface-2); overflow:hidden; margin:3px 0 0 auto}
+/* One column per gameweek. Six-gameweek months are wider than a phone, so the
+   table scrolls inside the dialog rather than stretching it. */
+.tscroll{overflow-x:auto; margin:0 -2px}
+.gwtab th{font-size:9.5px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--mut); font-weight:700; padding:2px 0; border:none; text-align:left}
+.gwtab th.r,.gwtab td.r{text-align:right}
+.gwtab th.r{padding-left:12px}
+.gwtab td{padding:6px 0 6px 12px; vertical-align:top; white-space:nowrap}
+.gwtab td.nm{padding-left:0; white-space:normal}
+.gwtab tr.tot td{border-bottom:none; border-top:1px solid var(--line);
+  font-weight:700; color:var(--ink)}
 .cbar span{display:block; height:100%; border-radius:4px}
 .cbar .pos{background:var(--data)} .cbar .neg{background:var(--warn)}
 a.plink{color:inherit; text-decoration:none; border-bottom:1px dotted var(--line)}
@@ -285,7 +296,7 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <label for="t5"><i>&#9644;</i>Charts</label>
     </nav>
     <div class="railfoot">
-      Rebuilt daily from the live FPL API.<br>2026-08-09 09:30 UTC
+      Rebuilt daily from the live FPL API.<br>2026-08-09 09:56 UTC
     </div>
   </aside>
 
@@ -506,21 +517,22 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">9.5</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">8.4</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">4.8</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">4.2</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Clean sheet</td><td class="r mono">+4.54</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+4.37</td><td><div class="cbar"><span class="pos" style="width:96%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.64</td><td><div class="cbar"><span class="pos" style="width:14%"></span></div></td></tr><tr><td class="nm">Saves</td><td class="r mono">+0.50</td><td><div class="cbar"><span class="pos" style="width:11%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.42</td><td><div class="cbar"><span class="neg" style="width:9%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.08</td><td><div class="cbar"><span class="neg" style="width:2%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">5.21</td></tr><tr><td class="mono">GW2</td><td class="dim">away</td><td class="dim mono">fdr 4</td><td class="r mono nm">4.34</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">H &middot; fdr 2</th><th class="r dim">A &middot; fdr 4</th></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+2.71<div class="cbar"><span class="pos" style="width:100%"></span></div></td><td class="r mono">+1.83<div class="cbar"><span class="pos" style="width:68%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+2.19<div class="cbar"><span class="pos" style="width:81%"></span></div></td><td class="r mono">+2.19<div class="cbar"><span class="pos" style="width:81%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.36<div class="cbar"><span class="pos" style="width:13%"></span></div></td><td class="r mono">+0.27<div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Saves</td><td class="r mono">+0.11<div class="cbar"><span class="pos" style="width:4%"></span></div></td><td class="r mono">+0.40<div class="cbar"><span class="pos" style="width:15%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.11<div class="cbar"><span class="neg" style="width:4%"></span></div></td><td class="r mono">-0.31<div class="cbar"><span class="neg" style="width:12%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.04<div class="cbar"><span class="neg" style="width:2%"></span></div></td><td class="r mono">-0.04<div class="cbar"><span class="neg" style="width:2%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">5.21</td><td class="r mono">4.34</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">87.44 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">96.81%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.00</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.00</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.28</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">4.18</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 9.5 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div><div class="modal" id="p40">
   <a class="backdrop" href="#" aria-label="Close"></a>
@@ -532,21 +544,22 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">8.5</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">8.0</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">4.2</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">4.0</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Appearance</td><td class="r mono">+4.15</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+1.96</td><td><div class="cbar"><span class="pos" style="width:47%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.90</td><td><div class="cbar"><span class="pos" style="width:22%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.88</td><td><div class="cbar"><span class="pos" style="width:21%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.79</td><td><div class="cbar"><span class="pos" style="width:19%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.39</td><td><div class="cbar"><span class="neg" style="width:9%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.16</td><td><div class="cbar"><span class="pos" style="width:4%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">4.09</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">4.37</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">A &middot; fdr 3</th><th class="r dim">H &middot; fdr 2</th></tr><tr><td class="nm">Appearance</td><td class="r mono">+2.08<div class="cbar"><span class="pos" style="width:100%"></span></div></td><td class="r mono">+2.08<div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.91<div class="cbar"><span class="pos" style="width:44%"></span></div></td><td class="r mono">+1.06<div class="cbar"><span class="pos" style="width:51%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.43<div class="cbar"><span class="pos" style="width:21%"></span></div></td><td class="r mono">+0.47<div class="cbar"><span class="pos" style="width:23%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.43<div class="cbar"><span class="pos" style="width:21%"></span></div></td><td class="r mono">+0.46<div class="cbar"><span class="pos" style="width:22%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.36<div class="cbar"><span class="pos" style="width:18%"></span></div></td><td class="r mono">+0.42<div class="cbar"><span class="pos" style="width:20%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.19<div class="cbar"><span class="neg" style="width:9%"></span></div></td><td class="r mono">-0.19<div class="cbar"><span class="neg" style="width:9%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.08<div class="cbar"><span class="pos" style="width:4%"></span></div></td><td class="r mono">+0.08<div class="cbar"><span class="pos" style="width:4%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">4.09</td><td class="r mono">4.37</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">85.87 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">96.48%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.18</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.12</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.43</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">4.59</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 8.5 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div><div class="modal" id="p165">
   <a class="backdrop" href="#" aria-label="Close"></a>
@@ -558,21 +571,22 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">8.8</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">8.3</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">4.4</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">4.1</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Appearance</td><td class="r mono">+3.65</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+3.46</td><td><div class="cbar"><span class="pos" style="width:95%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+1.56</td><td><div class="cbar"><span class="pos" style="width:43%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.36</td><td><div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.27</td><td><div class="cbar"><span class="neg" style="width:7%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.01</td><td><div class="cbar"><span class="pos" style="width:0%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">4.20</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">4.56</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">A &middot; fdr 3</th><th class="r dim">H &middot; fdr 2</th></tr><tr><td class="nm">Appearance</td><td class="r mono">+1.83<div class="cbar"><span class="pos" style="width:98%"></span></div></td><td class="r mono">+1.83<div class="cbar"><span class="pos" style="width:98%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+1.60<div class="cbar"><span class="pos" style="width:86%"></span></div></td><td class="r mono">+1.86<div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.75<div class="cbar"><span class="pos" style="width:40%"></span></div></td><td class="r mono">+0.81<div class="cbar"><span class="pos" style="width:43%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.16<div class="cbar"><span class="pos" style="width:9%"></span></div></td><td class="r mono">+0.19<div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.14<div class="cbar"><span class="neg" style="width:7%"></span></div></td><td class="r mono">-0.14<div class="cbar"><span class="neg" style="width:7%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">4.20</td><td class="r mono">4.56</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">72.21 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">82.15%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.49</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.07</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.90</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">5.78</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 8.8 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div><div class="modal" id="p175">
   <a class="backdrop" href="#" aria-label="Close"></a>
@@ -584,21 +598,22 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">0.1</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">0.6</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">0.1</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">0.3</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       <div class="flags"><span class="pill warn">no Premier League history</span></div>
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Appearance</td><td class="r mono">+0.31</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.24</td><td><div class="cbar"><span class="neg" style="width:78%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.02</td><td><div class="cbar"><span class="pos" style="width:8%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.02</td><td><div class="cbar"><span class="pos" style="width:5%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.01</td><td><div class="cbar"><span class="pos" style="width:4%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.01</td><td><div class="cbar"><span class="neg" style="width:4%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 5</td><td class="r mono nm">-0.02</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">0.14</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">A &middot; fdr 5</th><th class="r dim">H &middot; fdr 2</th></tr><tr><td class="nm">Appearance</td><td class="r mono">+0.16<div class="cbar"><span class="pos" style="width:83%"></span></div></td><td class="r mono">+0.16<div class="cbar"><span class="pos" style="width:83%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.19<div class="cbar"><span class="neg" style="width:100%"></span></div></td><td class="r mono">-0.05<div class="cbar"><span class="neg" style="width:28%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.01<div class="cbar"><span class="pos" style="width:3%"></span></div></td><td class="r mono">+0.02<div class="cbar"><span class="pos" style="width:9%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.01<div class="cbar"><span class="pos" style="width:3%"></span></div></td><td class="r mono">+0.01<div class="cbar"><span class="pos" style="width:5%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.00<div class="cbar"><span class="pos" style="width:2%"></span></div></td><td class="r mono">+0.01<div class="cbar"><span class="pos" style="width:5%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.01<div class="cbar"><span class="neg" style="width:3%"></span></div></td><td class="r mono">-0.01<div class="cbar"><span class="neg" style="width:3%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">-0.02</td><td class="r mono">0.14</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">2.86 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">0.19%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.06</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.06</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.25</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">4.01</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 0.1 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div><div class="modal" id="p212">
   <a class="backdrop" href="#" aria-label="Close"></a>
@@ -610,21 +625,22 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">3.2</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">3.3</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">1.6</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">1.7</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       <div class="flags"><span class="pill accent">#8 on corners</span></div>
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Appearance</td><td class="r mono">+2.32</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.36</td><td><div class="cbar"><span class="pos" style="width:16%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.29</td><td><div class="cbar"><span class="neg" style="width:13%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.27</td><td><div class="cbar"><span class="pos" style="width:12%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.21</td><td><div class="cbar"><span class="pos" style="width:9%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.17</td><td><div class="cbar"><span class="pos" style="width:7%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.12</td><td><div class="cbar"><span class="pos" style="width:5%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">1.63</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 4</td><td class="r mono nm">1.52</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">A &middot; fdr 3</th><th class="r dim">H &middot; fdr 4</th></tr><tr><td class="nm">Appearance</td><td class="r mono">+1.16<div class="cbar"><span class="pos" style="width:100%"></span></div></td><td class="r mono">+1.16<div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.20<div class="cbar"><span class="pos" style="width:17%"></span></div></td><td class="r mono">+0.16<div class="cbar"><span class="pos" style="width:14%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.15<div class="cbar"><span class="neg" style="width:13%"></span></div></td><td class="r mono">-0.15<div class="cbar"><span class="neg" style="width:13%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.15<div class="cbar"><span class="pos" style="width:13%"></span></div></td><td class="r mono">+0.12<div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.13<div class="cbar"><span class="pos" style="width:11%"></span></div></td><td class="r mono">+0.08<div class="cbar"><span class="pos" style="width:7%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.08<div class="cbar"><span class="pos" style="width:7%"></span></div></td><td class="r mono">+0.08<div class="cbar"><span class="pos" style="width:7%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.06<div class="cbar"><span class="pos" style="width:5%"></span></div></td><td class="r mono">+0.06<div class="cbar"><span class="pos" style="width:5%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">1.63</td><td class="r mono">1.52</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">41.82 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">44.21%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.10</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.12</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.14</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">3.26</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 3.2 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div><div class="modal" id="p237">
   <a class="backdrop" href="#" aria-label="Close"></a>
@@ -636,21 +652,22 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">7.2</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">6.9</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">3.6</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">3.5</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       <div class="flags"><span class="pill accent">first on penalties</span></div>
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Appearance</td><td class="r mono">+3.35</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+1.98</td><td><div class="cbar"><span class="pos" style="width:59%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.64</td><td><div class="cbar"><span class="pos" style="width:19%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.53</td><td><div class="cbar"><span class="pos" style="width:16%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.46</td><td><div class="cbar"><span class="pos" style="width:14%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.40</td><td><div class="cbar"><span class="pos" style="width:12%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.15</td><td><div class="cbar"><span class="neg" style="width:4%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">home</td><td class="dim mono">fdr 3</td><td class="r mono nm">3.73</td></tr><tr><td class="mono">GW2</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">3.49</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">H &middot; fdr 3</th><th class="r dim">A &middot; fdr 3</th></tr><tr><td class="nm">Appearance</td><td class="r mono">+1.68<div class="cbar"><span class="pos" style="width:100%"></span></div></td><td class="r mono">+1.68<div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+1.06<div class="cbar"><span class="pos" style="width:63%"></span></div></td><td class="r mono">+0.92<div class="cbar"><span class="pos" style="width:55%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.35<div class="cbar"><span class="pos" style="width:21%"></span></div></td><td class="r mono">+0.30<div class="cbar"><span class="pos" style="width:18%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.26<div class="cbar"><span class="pos" style="width:16%"></span></div></td><td class="r mono">+0.26<div class="cbar"><span class="pos" style="width:16%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.25<div class="cbar"><span class="pos" style="width:15%"></span></div></td><td class="r mono">+0.21<div class="cbar"><span class="pos" style="width:13%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.21<div class="cbar"><span class="pos" style="width:12%"></span></div></td><td class="r mono">+0.19<div class="cbar"><span class="pos" style="width:12%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.07<div class="cbar"><span class="neg" style="width:4%"></span></div></td><td class="r mono">-0.07<div class="cbar"><span class="neg" style="width:4%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">3.73</td><td class="r mono">3.49</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">72.75 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">81.61%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.20</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.14</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.26</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">4.21</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 7.2 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div><div class="modal" id="p259">
   <a class="backdrop" href="#" aria-label="Close"></a>
@@ -662,21 +679,22 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">1.4</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">1.7</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">0.7</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">0.8</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Appearance</td><td class="r mono">+1.34</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.75</td><td><div class="cbar"><span class="neg" style="width:56%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.33</td><td><div class="cbar"><span class="pos" style="width:24%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.21</td><td><div class="cbar"><span class="pos" style="width:16%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.15</td><td><div class="cbar"><span class="pos" style="width:11%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.14</td><td><div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.10</td><td><div class="cbar"><span class="neg" style="width:7%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.05</td><td><div class="cbar"><span class="pos" style="width:4%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">0.94</td></tr><tr><td class="mono">GW2</td><td class="dim">away</td><td class="dim mono">fdr 4</td><td class="r mono nm">0.43</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">H &middot; fdr 2</th><th class="r dim">A &middot; fdr 4</th></tr><tr><td class="nm">Appearance</td><td class="r mono">+0.67<div class="cbar"><span class="pos" style="width:100%"></span></div></td><td class="r mono">+0.67<div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.23<div class="cbar"><span class="neg" style="width:34%"></span></div></td><td class="r mono">-0.52<div class="cbar"><span class="neg" style="width:78%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.23<div class="cbar"><span class="pos" style="width:34%"></span></div></td><td class="r mono">+0.10<div class="cbar"><span class="pos" style="width:15%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.13<div class="cbar"><span class="pos" style="width:20%"></span></div></td><td class="r mono">+0.08<div class="cbar"><span class="pos" style="width:12%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.08<div class="cbar"><span class="pos" style="width:11%"></span></div></td><td class="r mono">+0.08<div class="cbar"><span class="pos" style="width:11%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.08<div class="cbar"><span class="pos" style="width:12%"></span></div></td><td class="r mono">+0.06<div class="cbar"><span class="pos" style="width:9%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.05<div class="cbar"><span class="neg" style="width:7%"></span></div></td><td class="r mono">-0.05<div class="cbar"><span class="neg" style="width:7%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.03<div class="cbar"><span class="pos" style="width:5%"></span></div></td><td class="r mono">+0.02<div class="cbar"><span class="pos" style="width:3%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">0.94</td><td class="r mono">0.43</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">22.07 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">18.66%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.07</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.04</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.29</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">3.74</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 1.4 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div><div class="modal" id="p346">
   <a class="backdrop" href="#" aria-label="Close"></a>
@@ -688,21 +706,22 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">7.7</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">7.3</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">3.8</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">3.7</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       <div class="flags"><span class="pill accent">first on penalties</span></div>
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Goals</td><td class="r mono">+3.39</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+3.25</td><td><div class="cbar"><span class="pos" style="width:96%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+1.02</td><td><div class="cbar"><span class="pos" style="width:30%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.21</td><td><div class="cbar"><span class="pos" style="width:6%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.17</td><td><div class="cbar"><span class="neg" style="width:5%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">3.68</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 3</td><td class="r mono nm">4.01</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">A &middot; fdr 3</th><th class="r dim">H &middot; fdr 3</th></tr><tr><td class="nm">Goals</td><td class="r mono">+1.56<div class="cbar"><span class="pos" style="width:85%"></span></div></td><td class="r mono">+1.83<div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+1.62<div class="cbar"><span class="pos" style="width:89%"></span></div></td><td class="r mono">+1.62<div class="cbar"><span class="pos" style="width:89%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.49<div class="cbar"><span class="pos" style="width:27%"></span></div></td><td class="r mono">+0.53<div class="cbar"><span class="pos" style="width:29%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.10<div class="cbar"><span class="pos" style="width:5%"></span></div></td><td class="r mono">+0.11<div class="cbar"><span class="pos" style="width:6%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.08<div class="cbar"><span class="neg" style="width:5%"></span></div></td><td class="r mono">-0.08<div class="cbar"><span class="neg" style="width:5%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">3.68</td><td class="r mono">4.01</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">70.15 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">75.21%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.49</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.04</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.65</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">4.81</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 7.7 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div><div class="modal" id="p368">
   <a class="backdrop" href="#" aria-label="Close"></a>
@@ -714,21 +733,22 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">8.5</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">8.0</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">4.2</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">4.0</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       <div class="flags"><span class="pill accent">second on penalties</span><span class="pill accent">first on free kicks</span><span class="pill accent">#4 on corners</span></div>
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Appearance</td><td class="r mono">+3.89</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+1.34</td><td><div class="cbar"><span class="pos" style="width:34%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+1.05</td><td><div class="cbar"><span class="pos" style="width:27%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+1.00</td><td><div class="cbar"><span class="pos" style="width:26%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.82</td><td><div class="cbar"><span class="pos" style="width:21%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.79</td><td><div class="cbar"><span class="pos" style="width:20%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.41</td><td><div class="cbar"><span class="neg" style="width:11%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">4.13</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 3</td><td class="r mono nm">4.34</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">A &middot; fdr 3</th><th class="r dim">H &middot; fdr 3</th></tr><tr><td class="nm">Appearance</td><td class="r mono">+1.94<div class="cbar"><span class="pos" style="width:100%"></span></div></td><td class="r mono">+1.94<div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.63<div class="cbar"><span class="pos" style="width:32%"></span></div></td><td class="r mono">+0.71<div class="cbar"><span class="pos" style="width:37%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.49<div class="cbar"><span class="pos" style="width:25%"></span></div></td><td class="r mono">+0.56<div class="cbar"><span class="pos" style="width:29%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.49<div class="cbar"><span class="pos" style="width:25%"></span></div></td><td class="r mono">+0.52<div class="cbar"><span class="pos" style="width:27%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.41<div class="cbar"><span class="pos" style="width:21%"></span></div></td><td class="r mono">+0.41<div class="cbar"><span class="pos" style="width:21%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.38<div class="cbar"><span class="pos" style="width:19%"></span></div></td><td class="r mono">+0.41<div class="cbar"><span class="pos" style="width:21%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.21<div class="cbar"><span class="neg" style="width:11%"></span></div></td><td class="r mono">-0.21<div class="cbar"><span class="neg" style="width:11%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">4.13</td><td class="r mono">4.34</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">84.90 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">93.90%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.14</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.18</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.52</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">4.45</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 8.5 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div><div class="modal" id="p388">
   <a class="backdrop" href="#" aria-label="Close"></a>
@@ -740,21 +760,22 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">9.6</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">8.4</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">4.8</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">4.2</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Appearance</td><td class="r mono">+3.97</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+3.17</td><td><div class="cbar"><span class="pos" style="width:80%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+1.23</td><td><div class="cbar"><span class="pos" style="width:31%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+1.06</td><td><div class="cbar"><span class="pos" style="width:27%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.70</td><td><div class="cbar"><span class="pos" style="width:18%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.62</td><td><div class="cbar"><span class="neg" style="width:16%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.39</td><td><div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.34</td><td><div class="cbar"><span class="neg" style="width:9%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">home</td><td class="dim mono">fdr 3</td><td class="r mono nm">5.05</td></tr><tr><td class="mono">GW2</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">4.51</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">H &middot; fdr 3</th><th class="r dim">A &middot; fdr 3</th></tr><tr><td class="nm">Appearance</td><td class="r mono">+1.99<div class="cbar"><span class="pos" style="width:100%"></span></div></td><td class="r mono">+1.99<div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+1.71<div class="cbar"><span class="pos" style="width:86%"></span></div></td><td class="r mono">+1.46<div class="cbar"><span class="pos" style="width:73%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.68<div class="cbar"><span class="pos" style="width:34%"></span></div></td><td class="r mono">+0.55<div class="cbar"><span class="pos" style="width:28%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.53<div class="cbar"><span class="pos" style="width:27%"></span></div></td><td class="r mono">+0.53<div class="cbar"><span class="pos" style="width:27%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.37<div class="cbar"><span class="pos" style="width:18%"></span></div></td><td class="r mono">+0.33<div class="cbar"><span class="pos" style="width:17%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.26<div class="cbar"><span class="neg" style="width:13%"></span></div></td><td class="r mono">-0.35<div class="cbar"><span class="neg" style="width:18%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.22<div class="cbar"><span class="pos" style="width:11%"></span></div></td><td class="r mono">+0.18<div class="cbar"><span class="pos" style="width:9%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.17<div class="cbar"><span class="neg" style="width:9%"></span></div></td><td class="r mono">-0.17<div class="cbar"><span class="neg" style="width:9%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">5.05</td><td class="r mono">4.51</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">83.51 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">91.89%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.11</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.07</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.36</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">4.87</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 9.6 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div><div class="modal" id="p411">
   <a class="backdrop" href="#" aria-label="Close"></a>
@@ -766,21 +787,22 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">11.3</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">10.6</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">5.7</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">5.3</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       <div class="flags"><span class="pill accent">first on penalties</span></div>
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Goals</td><td class="r mono">+5.31</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+3.79</td><td><div class="cbar"><span class="pos" style="width:71%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+1.99</td><td><div class="cbar"><span class="pos" style="width:37%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.40</td><td><div class="cbar"><span class="pos" style="width:7%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.14</td><td><div class="cbar"><span class="neg" style="width:3%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">home</td><td class="dim mono">fdr 3</td><td class="r mono nm">6.01</td></tr><tr><td class="mono">GW2</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">5.33</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">H &middot; fdr 3</th><th class="r dim">A &middot; fdr 3</th></tr><tr><td class="nm">Goals</td><td class="r mono">+2.93<div class="cbar"><span class="pos" style="width:100%"></span></div></td><td class="r mono">+2.38<div class="cbar"><span class="pos" style="width:81%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+1.90<div class="cbar"><span class="pos" style="width:65%"></span></div></td><td class="r mono">+1.90<div class="cbar"><span class="pos" style="width:65%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+1.05<div class="cbar"><span class="pos" style="width:36%"></span></div></td><td class="r mono">+0.94<div class="cbar"><span class="pos" style="width:32%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.22<div class="cbar"><span class="pos" style="width:7%"></span></div></td><td class="r mono">+0.18<div class="cbar"><span class="pos" style="width:6%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.07<div class="cbar"><span class="neg" style="width:2%"></span></div></td><td class="r mono">-0.07<div class="cbar"><span class="neg" style="width:2%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">6.01</td><td class="r mono">5.33</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">79.03 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">89.83%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.70</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.07</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">1.12</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">6.78</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 11.3 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div><div class="modal" id="p423">
   <a class="backdrop" href="#" aria-label="Close"></a>
@@ -792,21 +814,22 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">8.2</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">7.3</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">4.1</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">3.6</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       <div class="flags"><span class="pill accent">third on corners</span></div>
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Clean sheet</td><td class="r mono">+3.77</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+3.73</td><td><div class="cbar"><span class="pos" style="width:99%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.41</td><td><div class="cbar"><span class="pos" style="width:11%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.41</td><td><div class="cbar"><span class="neg" style="width:11%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.39</td><td><div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.36</td><td><div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.34</td><td><div class="cbar"><span class="neg" style="width:9%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.26</td><td><div class="cbar"><span class="pos" style="width:7%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 2</td><td class="r mono nm">3.92</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">4.26</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">A &middot; fdr 2</th><th class="r dim">H &middot; fdr 2</th></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+1.78<div class="cbar"><span class="pos" style="width:89%"></span></div></td><td class="r mono">+1.99<div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+1.86<div class="cbar"><span class="pos" style="width:94%"></span></div></td><td class="r mono">+1.86<div class="cbar"><span class="pos" style="width:94%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.19<div class="cbar"><span class="pos" style="width:9%"></span></div></td><td class="r mono">+0.22<div class="cbar"><span class="pos" style="width:11%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.20<div class="cbar"><span class="neg" style="width:10%"></span></div></td><td class="r mono">-0.20<div class="cbar"><span class="neg" style="width:10%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.18<div class="cbar"><span class="pos" style="width:9%"></span></div></td><td class="r mono">+0.21<div class="cbar"><span class="pos" style="width:11%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.18<div class="cbar"><span class="pos" style="width:9%"></span></div></td><td class="r mono">+0.18<div class="cbar"><span class="pos" style="width:9%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.20<div class="cbar"><span class="neg" style="width:10%"></span></div></td><td class="r mono">-0.15<div class="cbar"><span class="neg" style="width:7%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.12<div class="cbar"><span class="pos" style="width:6%"></span></div></td><td class="r mono">+0.14<div class="cbar"><span class="pos" style="width:7%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">3.92</td><td class="r mono">4.26</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">77.45 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">90.26%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.03</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.06</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.13</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">3.34</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 8.2 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div><div class="modal" id="p426">
   <a class="backdrop" href="#" aria-label="Close"></a>
@@ -818,21 +841,22 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">13.4</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">12.3</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">6.7</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">6.2</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       <div class="flags"><span class="pill accent">first on penalties</span><span class="pill accent">first on free kicks</span><span class="pill accent">#5 on corners</span></div>
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Goals</td><td class="r mono">+4.05</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+3.84</td><td><div class="cbar"><span class="pos" style="width:95%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+2.25</td><td><div class="cbar"><span class="pos" style="width:56%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+2.05</td><td><div class="cbar"><span class="pos" style="width:51%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.98</td><td><div class="cbar"><span class="pos" style="width:24%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.48</td><td><div class="cbar"><span class="pos" style="width:12%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.29</td><td><div class="cbar"><span class="neg" style="width:7%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 2</td><td class="r mono nm">6.36</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">7.00</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">A &middot; fdr 2</th><th class="r dim">H &middot; fdr 2</th></tr><tr><td class="nm">Goals</td><td class="r mono">+1.87<div class="cbar"><span class="pos" style="width:85%"></span></div></td><td class="r mono">+2.18<div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Appearance</td><td class="r mono">+1.92<div class="cbar"><span class="pos" style="width:88%"></span></div></td><td class="r mono">+1.92<div class="cbar"><span class="pos" style="width:88%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+1.04<div class="cbar"><span class="pos" style="width:47%"></span></div></td><td class="r mono">+1.21<div class="cbar"><span class="pos" style="width:56%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.98<div class="cbar"><span class="pos" style="width:45%"></span></div></td><td class="r mono">+1.07<div class="cbar"><span class="pos" style="width:49%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.46<div class="cbar"><span class="pos" style="width:21%"></span></div></td><td class="r mono">+0.52<div class="cbar"><span class="pos" style="width:24%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.24<div class="cbar"><span class="pos" style="width:11%"></span></div></td><td class="r mono">+0.24<div class="cbar"><span class="pos" style="width:11%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.14<div class="cbar"><span class="neg" style="width:7%"></span></div></td><td class="r mono">-0.14<div class="cbar"><span class="neg" style="width:7%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">6.36</td><td class="r mono">7.00</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">81.48 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">92.16%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.28</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.31</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.96</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">6.34</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 13.4 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div><div class="modal" id="p497">
   <a class="backdrop" href="#" aria-label="Close"></a>
@@ -844,21 +868,22 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">5.7</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">5.2</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">2.8</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">2.6</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Appearance</td><td class="r mono">+3.21</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+1.91</td><td><div class="cbar"><span class="pos" style="width:59%"></span></div></td></tr><tr><td class="nm">Saves</td><td class="r mono">+1.09</td><td><div class="cbar"><span class="pos" style="width:34%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.79</td><td><div class="cbar"><span class="neg" style="width:25%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.32</td><td><div class="cbar"><span class="pos" style="width:10%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.06</td><td><div class="cbar"><span class="neg" style="width:2%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">2.71</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">2.96</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">A &middot; fdr 3</th><th class="r dim">H &middot; fdr 2</th></tr><tr><td class="nm">Appearance</td><td class="r mono">+1.60<div class="cbar"><span class="pos" style="width:100%"></span></div></td><td class="r mono">+1.60<div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.79<div class="cbar"><span class="pos" style="width:49%"></span></div></td><td class="r mono">+1.12<div class="cbar"><span class="pos" style="width:70%"></span></div></td></tr><tr><td class="nm">Saves</td><td class="r mono">+0.69<div class="cbar"><span class="pos" style="width:43%"></span></div></td><td class="r mono">+0.40<div class="cbar"><span class="pos" style="width:25%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.49<div class="cbar"><span class="neg" style="width:30%"></span></div></td><td class="r mono">-0.30<div class="cbar"><span class="neg" style="width:19%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.15<div class="cbar"><span class="pos" style="width:9%"></span></div></td><td class="r mono">+0.17<div class="cbar"><span class="pos" style="width:11%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.03<div class="cbar"><span class="neg" style="width:2%"></span></div></td><td class="r mono">-0.03<div class="cbar"><span class="neg" style="width:2%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">2.71</td><td class="r mono">2.96</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">75.28 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">81.62%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.00</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.00</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.20</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">2.90</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 5.7 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div><div class="modal" id="p499">
   <a class="backdrop" href="#" aria-label="Close"></a>
@@ -870,20 +895,21 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">6.5</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">5.9</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">2</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">3.2</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">2.9</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">2</div></div>
       </div>
       <div class="flags"><span class="pill accent">first on free kicks</span><span class="pill accent">#6 on corners</span></div>
-      <h3>Where the points come from</h3>
-      <table><tr><td class="nm">Appearance</td><td class="r mono">+3.61</td><td><div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+2.17</td><td><div class="cbar"><span class="pos" style="width:60%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.88</td><td><div class="cbar"><span class="neg" style="width:24%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.64</td><td><div class="cbar"><span class="pos" style="width:18%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.58</td><td><div class="cbar"><span class="pos" style="width:16%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.49</td><td><div class="cbar"><span class="neg" style="width:14%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.44</td><td><div class="cbar"><span class="pos" style="width:12%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.39</td><td><div class="cbar"><span class="pos" style="width:11%"></span></div></td></tr></table>
-      <h3>By fixture</h3>
-      <table><tr><td class="mono">GW1</td><td class="dim">away</td><td class="dim mono">fdr 3</td><td class="r mono nm">2.86</td></tr><tr><td class="mono">GW2</td><td class="dim">home</td><td class="dim mono">fdr 2</td><td class="r mono nm">3.60</td></tr></table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab"><tr><th></th><th class="r">GW1</th><th class="r">GW2</th></tr><tr><th></th><th class="r dim">A &middot; fdr 3</th><th class="r dim">H &middot; fdr 2</th></tr><tr><td class="nm">Appearance</td><td class="r mono">+1.80<div class="cbar"><span class="pos" style="width:100%"></span></div></td><td class="r mono">+1.80<div class="cbar"><span class="pos" style="width:100%"></span></div></td></tr><tr><td class="nm">Clean sheet</td><td class="r mono">+0.89<div class="cbar"><span class="pos" style="width:50%"></span></div></td><td class="r mono">+1.28<div class="cbar"><span class="pos" style="width:71%"></span></div></td></tr><tr><td class="nm">Goals conceded</td><td class="r mono">-0.54<div class="cbar"><span class="neg" style="width:30%"></span></div></td><td class="r mono">-0.33<div class="cbar"><span class="neg" style="width:19%"></span></div></td></tr><tr><td class="nm">Assists</td><td class="r mono">+0.28<div class="cbar"><span class="pos" style="width:16%"></span></div></td><td class="r mono">+0.36<div class="cbar"><span class="pos" style="width:20%"></span></div></td></tr><tr><td class="nm">Defensive contribution</td><td class="r mono">+0.29<div class="cbar"><span class="pos" style="width:16%"></span></div></td><td class="r mono">+0.29<div class="cbar"><span class="pos" style="width:16%"></span></div></td></tr><tr><td class="nm">Cards</td><td class="r mono">-0.25<div class="cbar"><span class="neg" style="width:14%"></span></div></td><td class="r mono">-0.25<div class="cbar"><span class="neg" style="width:14%"></span></div></td></tr><tr><td class="nm">Bonus</td><td class="r mono">+0.21<div class="cbar"><span class="pos" style="width:12%"></span></div></td><td class="r mono">+0.24<div class="cbar"><span class="pos" style="width:13%"></span></div></td></tr><tr><td class="nm">Goals</td><td class="r mono">+0.17<div class="cbar"><span class="pos" style="width:10%"></span></div></td><td class="r mono">+0.22<div class="cbar"><span class="pos" style="width:12%"></span></div></td></tr><tr class="tot"><td class="nm">Total</td><td class="r mono">2.86</td><td class="r mono">3.60</td></tr></table></div>
       <h3>Underlying rates</h3>
       <table><tr><td class="dim">Expected minutes</td><td class="r mono">75.40 per match</td></tr><tr><td class="dim">Chance of starting</td><td class="r mono">84.65%</td></tr><tr><td class="dim">Goals per 90</td><td class="r mono">0.04</td></tr><tr><td class="dim">Assists per 90</td><td class="r mono">0.12</td></tr><tr><td class="dim">Bonus per 90</td><td class="r mono">0.26</td></tr><tr><td class="dim">Points per 90 last season</td><td class="r mono">3.83</td></tr></table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across 2 gameweeks that is 6.5 xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div>

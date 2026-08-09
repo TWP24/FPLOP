@@ -266,8 +266,19 @@ svg .band{fill:var(--surface-2)}
 .modal td{padding:5px 0; border-bottom:1px solid var(--line)}
 .modal tr:last-child td{border-bottom:none}
 .modal .flags{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px}
-.cbar{width:88px; height:7px; border-radius:4px; background:var(--surface-2);
-  overflow:hidden; margin-left:auto}
+.cbar{width:100%; max-width:88px; height:5px; border-radius:4px;
+  background:var(--surface-2); overflow:hidden; margin:3px 0 0 auto}
+/* One column per gameweek. Six-gameweek months are wider than a phone, so the
+   table scrolls inside the dialog rather than stretching it. */
+.tscroll{overflow-x:auto; margin:0 -2px}
+.gwtab th{font-size:9.5px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--mut); font-weight:700; padding:2px 0; border:none; text-align:left}
+.gwtab th.r,.gwtab td.r{text-align:right}
+.gwtab th.r{padding-left:12px}
+.gwtab td{padding:6px 0 6px 12px; vertical-align:top; white-space:nowrap}
+.gwtab td.nm{padding-left:0; white-space:normal}
+.gwtab tr.tot td{border-bottom:none; border-top:1px solid var(--line);
+  font-weight:700; color:var(--ink)}
 .cbar span{display:block; height:100%; border-radius:4px}
 .cbar .pos{background:var(--data)} .cbar .neg{background:var(--warn)}
 a.plink{color:inherit; text-decoration:none; border-bottom:1px dotted var(--line)}
@@ -322,33 +333,38 @@ def _player_modals(squad, table, rates) -> str:
     out = []
     for p in squad.players:
         r = rates.get(p.pid)
-        totals: dict[str, float] = {}
-        for f in p.fixtures:
-            for k, v in f.components.items():
-                totals[k] = totals.get(k, 0.0) + v
-        if not totals:
+        fixtures = sorted(p.fixtures, key=lambda x: x.event)
+        if not fixtures:
             continue
-        span = max(abs(v) for v in totals.values()) or 1.0
 
-        comp = ""
-        # A component that rounds to zero is not information — a forward with no
-        # defensive contribution just has one fewer row.
-        for k, v in sorted(totals.items(), key=lambda kv: -abs(kv[1])):
-            if abs(v) < 0.005:
-                continue
-            w = abs(v) / span * 100
-            comp += (f'<tr><td class="nm">{COMPONENT_LABEL.get(k, k)}</td>'
-                     f'<td class="r mono">{v:+.2f}</td>'
-                     f'<td><div class="cbar"><span class="{"neg" if v < 0 else "pos"}" '
-                     f'style="width:{w:.0f}%"></span></div></td></tr>')
+        # Per gameweek, not summed over the month. A month total invites exactly the
+        # wrong reading: appearance at 3.84 looks like a big edge until you notice it
+        # is two matches of the 2 points every starter gets. Per gameweek the numbers
+        # sit on a scale you already know from the scoring rules.
+        keys = [k for k in {k for f in fixtures for k in f.components}
+                if any(abs(f.components.get(k, 0.0)) >= 0.005 for f in fixtures)]
+        keys.sort(key=lambda k: -sum(abs(f.components.get(k, 0.0)) for f in fixtures))
+        if not keys:
+            continue
+        span = max((abs(f.components.get(k, 0.0)) for k in keys for f in fixtures),
+                   default=1.0) or 1.0
 
-        fx = ""
-        for f in sorted(p.fixtures, key=lambda x: x.event):
-            opp = _esc(f"{'vs' if f.home else 'at'} team {f.opponent}")
-            fx += (f'<tr><td class="mono">GW{f.event}</td>'
-                   f'<td class="dim">{"home" if f.home else "away"}</td>'
-                   f'<td class="dim mono">fdr {f.fdr}</td>'
-                   f'<td class="r mono nm">{f.xp:.2f}</td></tr>')
+        head = "".join(f'<th class="r">GW{f.event}</th>' for f in fixtures)
+        venue = "".join(f'<th class="r dim">{"H" if f.home else "A"} &middot; fdr {f.fdr}'
+                        f'</th>' for f in fixtures)
+        comp = (f'<tr><th></th>{head}</tr><tr><th></th>{venue}</tr>')
+        for k in keys:
+            cells = ""
+            for f in fixtures:
+                v = f.components.get(k, 0.0)
+                w = abs(v) / span * 100
+                cells += (f'<td class="r mono">{v:+.2f}'
+                          f'<div class="cbar"><span class="{"neg" if v < 0 else "pos"}" '
+                          f'style="width:{w:.0f}%"></span></div></td>')
+            comp += f'<tr><td class="nm">{COMPONENT_LABEL.get(k, k)}</td>{cells}</tr>'
+        comp += ('<tr class="tot"><td class="nm">Total</td>'
+                 + "".join(f'<td class="r mono">{f.xp:.2f}</td>' for f in fixtures)
+                 + '</tr>')
 
         rate_rows = ""
         if r:
@@ -387,21 +403,23 @@ def _player_modals(squad, table, rates) -> str:
       <a class="x" href="#" aria-label="Close">&times;</a></div>
     <div class="bd">
       <div class="mstats">
-        <div><div class="k">xP</div><div class="v mono">{p.xp:.1f}</div></div>
-        <div><div class="k">xP adj</div>
-          <div class="v mono">{calibrate(p.xp, p.n_fixtures, p.pos):.1f}</div></div>
-        <div><div class="k">Fixtures</div><div class="v mono">{p.n_fixtures}</div></div>
+        <div><div class="k">xP / GW</div>
+          <div class="v mono">{p.xp / max(p.n_fixtures, 1):.1f}</div></div>
+        <div><div class="k">xP adj / GW</div>
+          <div class="v mono">{calibrate(p.xp, p.n_fixtures, p.pos)
+                               / max(p.n_fixtures, 1):.1f}</div></div>
+        <div><div class="k">Gameweeks</div><div class="v mono">{p.n_fixtures}</div></div>
       </div>
       {f'<div class="flags">{flags}</div>' if flags else ''}
-      <h3>Where the points come from</h3>
-      <table>{comp}</table>
-      <h3>By fixture</h3>
-      <table>{fx}</table>
+      <h3>Expected points per gameweek</h3>
+      <div class="tscroll"><table class="gwtab">{comp}</table></div>
       <h3>Underlying rates</h3>
       <table>{rate_rows}</table>
     </div>
-    <div class="ft">Components are expected points for the whole month, already scaled
-      by expected minutes and fixture difficulty. They sum to the xP above.</div>
+    <div class="ft">Every figure is one gameweek, already scaled by expected minutes
+      and that fixture's difficulty. Each column's components sum to its Total.
+      Across {p.n_fixtures} gameweeks that is {p.xp:.1f} xP, which is the number the
+      squad tables rank on.</div>
   </div>
 </div>''')
     return "".join(out)
