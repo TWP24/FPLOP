@@ -80,6 +80,29 @@ START_SHRINK_GAMES = 5.0
 # recent regime, so the pooled figure is evidence from a world that no longer exists.
 RECONCILE = 0.0
 
+# Every club plays exactly 11 x 90 = 990 minutes per match, so a club's expected
+# minutes must sum to 990. They do not. On the 2026/27 pre-season frame the three
+# promoted clubs come to 106 (HUL), 163 (COV) and 323 (IPS) while Spurs reach 1365 —
+# the model believes Hull will field roughly one player. The cause is that a player
+# with no Premier League history has his start rate inferred from price, and a
+# promoted club's entire squad has no history.
+#
+# Measured and left OFF, which is the fifteenth change to end that way. Reconciling
+# each club to 990 does what it claims — mean absolute deviation falls from 253 to 14,
+# and the calibration slope moves from 0.809 to 1.024, almost exactly ideal — but it
+# costs optimiser points: -5.78/month at strength 0.5 and -6.22 at 1.0, paired over 32
+# months, better in only 13 and 12 of them. The same trade CS_SHRINK documents above:
+# fixing calibration while losing the ranking the optimiser actually buys on.
+#
+# One caveat is written down rather than argued away. The backtest never sees the
+# regime this was built for. It starts three months into a season, where clubs run
+# 736-1543 (mean deviation 218), and it has never scored a club sitting at 11% of its
+# true minutes, because that only happens to a promoted side before a ball is kicked.
+# The measurement above is therefore evidence against turning this on globally, and
+# says nothing either way about the pre-season promoted-club case.
+MINUTES_RECONCILE = 0.0
+TEAM_MATCH_MINUTES = 990.0
+
 # Goals conceded by an average team against an average opponent, used as the neutral
 # reference fixture when measuring how good or bad a real fixture is.
 NEUTRAL_GOALS_AGAINST = 1.42
@@ -347,6 +370,8 @@ def build_rates(boot: dict, minutes_override: dict[int, float] | None = None) ->
             news=e.get("news", ""),
             flags=flags,
         )
+
+    reconcile_minutes(rates)
     return rates
 
 
@@ -562,6 +587,42 @@ def fixture_xp(
     comps = {k: v * scale for k, v in comps.items()}
 
     return FixtureXP(r.pid, fixture["event"], opponent, home, fdr, xp, var_fix * scale, comps)
+
+
+def reconcile_minutes(rates: dict, strength: float | None = None) -> None:
+    """Scale each club's start probabilities so its expected minutes sum to 990.
+
+    Modifies `rates` in place. Scaling p_start rather than exp_minutes directly keeps
+    the appearance points, the 60-minute probability and the minutes share consistent
+    with each other — moving exp_minutes alone would pay a player for minutes the
+    appearance model does not think he plays.
+
+    Capping at 1.0 loses mass, so the correction is applied a few times; clubs needing
+    a large uplift converge in two or three passes.
+    """
+    strength = MINUTES_RECONCILE if strength is None else strength
+    if strength <= 0:
+        return
+
+    by_team: dict[int, list] = {}
+    for r in rates.values():
+        by_team.setdefault(r.team, []).append(r)
+
+    for squad in by_team.values():
+        for _ in range(4):
+            got = sum(r.exp_minutes for r in squad)
+            if got <= 1e-6:
+                break
+            factor = (TEAM_MATCH_MINUTES / got) ** strength
+            if abs(factor - 1.0) < 1e-3:
+                break
+            for r in squad:
+                r.p_start = min(r.p_start * factor, 1.0)
+                r.p_cameo = min(r.p_cameo * factor, max(0.0, 1.0 - r.p_start))
+                mins_given_start = (r.p60_given_start * r.mins_per_start
+                                    + (1 - r.p60_given_start) * SHORT_START_MINUTES)
+                r.exp_minutes = r.p_start * mins_given_start + r.p_cameo * CAMEO_MINUTES
+                r.p60 = r.p_start * r.p60_given_start
 
 
 def calibrate(xp: float, n_fixtures: int = 1, pos: int | None = None) -> float:

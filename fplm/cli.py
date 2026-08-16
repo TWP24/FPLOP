@@ -42,7 +42,16 @@ def _read_minutes_csv(path: str, boot: dict) -> dict[int, float]:
         for row in csv.reader(fh):
             if not row or row[0].startswith("#"):
                 continue
-            key, val = row[0].strip(), float(row[1])
+            key = row[0].strip()
+            try:
+                val = float(row[1])
+            except (ValueError, IndexError):
+                # A header row is the obvious thing to write given the format this
+                # function documents, so accept one rather than dying on it.
+                if not out and key.lower() in ("name", "id", "player", "web_name"):
+                    continue
+                print(f"  ! minutes-csv: skipping unreadable row {row!r}", file=sys.stderr)
+                continue
             pid = int(key) if key.isdigit() else by_name.get(key.lower())
             if pid is None:
                 print(f"  ! minutes-csv: no player matching {key!r}", file=sys.stderr)
