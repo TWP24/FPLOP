@@ -34,6 +34,7 @@ class GWRecord:
     captain: str = ""
     chip: str | None = None
     model: str = "fplm"   # which provider produced this forecast
+    note: str = ""        # why this entry was corrected, if it ever was
 
     @property
     def played(self) -> bool:
