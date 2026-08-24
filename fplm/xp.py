@@ -279,6 +279,18 @@ def build_rates(boot: dict, minutes_override: dict[int, float] | None = None) ->
     what you actually know about pre-season and confirmed signings.
     """
     elements = boot["elements"]
+
+    # How many gameweeks have actually been played. `games_available` only exists on
+    # the synthetic elements the backtest builds; the live FPL API has no such field,
+    # so this used to fall back to 38 — a whole season. Before a ball was kicked that
+    # was invisible, because `starts` was 0 and the price prior took over entirely. At
+    # the GW1 rollover it became a live fault: a player who started the only match
+    # scored starts/38 = 0.026, and every start probability in the model collapsed.
+    #
+    # The most-started player has started every gameweek played, which makes this
+    # self-calibrating and works identically for the live API and the backtest.
+    games_played = float(max((e.get("starts") or 0) for e in elements) or 1)
+
     means = _positional_means(elements)
     pctl = _price_percentile(elements)
     minutes_override = minutes_override or {}
@@ -300,7 +312,7 @@ def build_rates(boot: dict, minutes_override: dict[int, float] | None = None) ->
         # and expected minutes is the single most important input to expected points.
         # So the observed rate leads, and the price-implied prior only fills the gap
         # for players with no Premier League history.
-        games = float(e.get("games_available", 38) or 38)
+        games = float(e.get("games_available", 0) or games_played)
         prior_start = 1.0 / (1.0 + math.exp(-(pctl[pid] - 0.72) * 9.0))
 
         if m > 0 and e["starts"] > 0:
