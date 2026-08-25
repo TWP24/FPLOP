@@ -106,6 +106,7 @@ def solve(
     free_transfers: int = 1,
     max_hits_per_gw: int = 0,
     decay: float = DECAY,
+    lam: float = 0.0,
     ft_terminal_value: float | None = None,
     time_limit: int = 120,
 ) -> HorizonPlan | None:
@@ -140,12 +141,20 @@ def solve(
     h = pulp.LpVariable.dicts("h", gws, lowBound=0, upBound=max_hits_per_gw,
                               cat="Integer")
 
+    # Differential variance, priced exactly as the single-week solver prices it. A
+    # horizon model that only maximises expected points buys the template, and owning
+    # the template means finishing mid-table by construction — which is fatal when the
+    # prize goes to whoever tops the league rather than to whoever scores most in
+    # expectation. Planning transfers well and planning to win are different problems
+    # and the squad has to solve both at once.
+    dvar = {pid: getattr(ref[pid], "differential_var", 0.0) for pid in ids}
+
     obj = []
     for gi, g in enumerate(gws):
         w = decay ** gi
         for pid in ids:
-            obj.append(w * s[pid][g] * xp[(pid, g)])
-            obj.append(w * c[pid][g] * xp[(pid, g)])
+            obj.append(w * s[pid][g] * (xp[(pid, g)] + lam * dvar[pid]))
+            obj.append(w * c[pid][g] * (xp[(pid, g)] + lam * dvar[pid]))
             obj.append(w * (x[pid][g] - s[pid][g]) * (BENCH_WEIGHT * xp[(pid, g)]))
         obj.append(-w * HIT_COST * h[g])
     if ft_terminal_value:

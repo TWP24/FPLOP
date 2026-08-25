@@ -201,7 +201,8 @@ def build(
         # Measured over four seasons, planning four gameweeks jointly is worth +22.5
         # points across twenty-one gameweeks, better in every season.
         squad = _solve_with_horizon(boot, fixtures, rates, team_ratings, next_gw,
-                                    current_squad, cons, blended, budget)
+                                    current_squad, cons, blended, budget, rivals,
+                                    current_month, simulate)
         if squad is None:
             squad = _solve_for_win(boot, fixtures, tables[current_month.name], rates,
                                    team_ratings, current_month, blended, cons, rivals,
@@ -318,16 +319,23 @@ def build(
 
 
 def _solve_with_horizon(boot, fixtures, rates, team_ratings, next_gw, current_squad,
-                       cons, blended, budget: float, span: int = 4):
+                       cons, blended, budget: float, rivals: int = 19,
+                       month=None, simulate: bool = True, span: int = 4):
     """Decide this week's transfer as the first move of a multi-gameweek plan.
 
-    Builds a table per gameweek across the horizon, solves them jointly, and returns
-    the squad the plan wants to hold *now*. Only the first gameweek is acted on; the
-    rest exist so that holding a transfer, or spending one early, can be priced.
+    Two things have to be true of the answer at once. It has to spend transfers at
+    the right time, which needs several gameweeks solved jointly — a single week
+    cannot express holding one back. And it has to be a squad that wins a month,
+    which is not the same as the squad with the most expected points: buy the
+    template and you finish mid-table by construction, which loses a prize paid to
+    whoever finishes top.
 
-    Returns None when there is no squad to plan from, when the horizon cannot be
-    built, or when the solver does not land — the caller then falls back to the
-    single-week path, because a plan built myopically beats no plan at all.
+    So the horizon is solved at several risk levels and the winner is chosen by
+    simulated win probability, rather than by maximising expected points and hoping,
+    or by looking the risk level up in a table.
+
+    Returns None when there is no squad to plan from, the horizon cannot be built, or
+    nothing solves — the caller falls back to the single-week paths.
     """
     if not current_squad:
         return None
@@ -337,40 +345,74 @@ def _solve_with_horizon(boot, fixtures, rates, team_ratings, next_gw, current_sq
         gws = [g for g in range(next_gw, next_gw + span) if g <= 38]
         tabs = {}
         for g in gws:
-            month = mo.Month(0, f"gw{g}", g, g)
-            tbl = mo.build_table(boot, fixtures, rates, team_ratings, month)
+            tbl = mo.build_table(boot, fixtures, rates, team_ratings,
+                                 mo.Month(0, f"gw{g}", g, g))
             if tbl:
                 tabs[g] = tbl
         if next_gw not in tabs or len(tabs) < 2:
             return None
 
         held_cost = sum(blended[p].price for p in current_squad if p in blended)
-        plan = hzmod.solve(tabs, set(current_squad), max(budget - held_cost, 0.0),
-                           cons, free_transfers=cons.free_transfers,
-                           max_hits_per_gw=cons.max_hits, time_limit=60)
-        if plan is None or next_gw not in plan.squads:
-            return None
-        fifteen = plan.squads[next_gw]
-        if not all(p in blended for p in fifteen):
-            return None
+        bank = max(budget - held_cost, 0.0)
 
-        # The horizon model ranks on raw expected points. Re-solve the eleven and the
-        # armband on the blended view the rest of the plan uses, with the fifteen held
-        # fixed, so the displayed squad is internally consistent.
-        refield = opt.solve(
-            {pid: v for pid, v in blended.items() if pid in fifteen},
-            lam=0.0,
-            cons=opt.Constraints(budget=999.0, min_expected_minutes=0.0,
-                                 include=set(fifteen)),
-        )
-        if refield is None:
+        # Build the field before choosing anything, then price differential risk
+        # against what it actually owns. Optimising against published ownership while
+        # being scored against this field would leave the objective and the
+        # evaluation measuring different things.
+        sim = field = None
+        if simulate:
+            try:
+                from .simulate import MonthSimulator
+
+                sim = MonthSimulator(boot, fixtures, tabs[next_gw], rates,
+                                     team_ratings,
+                                     mo.Month(0, f"gw{next_gw}", next_gw, next_gw),
+                                     n_sims=4000)
+                field = sim.build_field(rivals, cons)
+                tabs = {g: sim.apply_field_ownership(t) for g, t in tabs.items()}
+            except Exception:  # noqa: BLE001
+                sim = field = None
+
+        lams = [0.0, 0.1, 0.2, 0.3] if sim else [opt.suggested_lam(rivals)]
+        candidates = []
+        for lam in lams:
+            plan = hzmod.solve(tabs, set(current_squad), bank, cons,
+                               free_transfers=cons.free_transfers,
+                               max_hits_per_gw=cons.max_hits, lam=lam,
+                               time_limit=60)
+            if plan is None or next_gw not in plan.squads:
+                continue
+            fifteen = plan.squads[next_gw]
+            if not all(p in blended for p in fifteen):
+                continue
+            sq = _refield(fifteen, blended, lam)
+            if sq is not None:
+                candidates.append(sq)
+        if not candidates:
             return None
-        return opt.Squad(players=[blended[p.pid] for p in refield.players],
-                         starters=refield.starters, captain=refield.captain,
-                         vice=refield.vice, lam=0.0,
-                         cost=sum(blended[p].price for p in fifteen))
+        if sim is None or field is None or len(candidates) == 1:
+            return candidates[0]
+        # Every candidate is scored against the same field, so the comparison is
+        # paired rather than four separate draws.
+        return max(candidates, key=lambda sq: sim.evaluate(sq, field).p_win)
     except Exception:  # noqa: BLE001 — never fail a plan for want of a horizon
         return None
+
+
+def _refield(fifteen, blended, lam):
+    """Best legal eleven and armband from a fixed fifteen, on the blended view."""
+    refield = opt.solve(
+        {pid: v for pid, v in blended.items() if pid in fifteen},
+        lam=lam,
+        cons=opt.Constraints(budget=999.0, min_expected_minutes=0.0,
+                             include=set(fifteen)),
+    )
+    if refield is None:
+        return None
+    return opt.Squad(players=[blended[p.pid] for p in refield.players],
+                     starters=refield.starters, captain=refield.captain,
+                     vice=refield.vice, lam=lam,
+                     cost=sum(blended[p].price for p in fifteen))
 
 
 def _solve_for_win(boot, fixtures, now_tbl, rates, team_ratings, month, blended,
