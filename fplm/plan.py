@@ -52,6 +52,7 @@ class SeasonPlan:
     sim_target: float = 0.0        # score the month's winner is expected to post
     sim_p_win: float = 0.0
     provider_note: str = ""
+    start_note: str = ""
 
     @property
     def contested(self) -> list[MonthPlan]:
@@ -141,7 +142,12 @@ def build(
         current_squad=current_squad or set(),
     )
 
-    if start == "template":
+    # Forcing the most-owned fifteen is a pre-season device: before a ball is kicked
+    # there is no squad to keep, and the measured result is that the crowd's fifteen
+    # beats the model's. Once a real squad exists that reasoning no longer applies —
+    # you cannot buy the template without paying for the transfers, and the plan has
+    # to start from the team actually owned and recommend moves from there.
+    if start == "template" and not current_squad:
         # The most-owned legal fifteen, solved rather than taken in ownership order —
         # picking greedily spends the budget on premiums and then cannot fill the last
         # slots, which is not what real managers do.
@@ -190,8 +196,25 @@ def build(
     else:
         squad = opt.solve(blended, lam=opt.suggested_lam(rivals), cons=cons)
 
+    start_note = ("most-owned fifteen (no squad held yet)"
+                  if start == "template" and not current_squad
+                  else f"held squad of {len(current_squad)}, "
+                       f"{cons.free_transfers} free transfer(s), max {cons.max_hits} hits"
+                  if current_squad else "expected points")
+
+    if squad is None and current_squad:
+        # Relaxing to a free rebuild silently would show a fifteen that ignores the
+        # transfer rules and the squad actually owned, which is worse than saying so.
+        squad = opt.solve(blended, lam=0.0,
+                          cons=opt.Constraints(budget=budget,
+                                               current_squad=current_squad))
+        start_note = ("could not find a legal move from the held squad — "
+                      "showing it unchanged") if squad else start_note
     if squad is None:
         squad = opt.solve(blended, lam=0.0, cons=opt.Constraints(budget=budget))
+        if current_squad:
+            start_note = ("WARNING: no legal plan from your squad; "
+                          "showing a free rebuild that ignores transfer limits")
     if squad is None:
         raise SystemExit("No feasible squad — check your constraints.")
 
@@ -268,6 +291,7 @@ def build(
 
     return SeasonPlan(
         provider_note=provider_note,
+        start_note=start_note,
         generated=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         next_gw=next_gw,
         squad=squad,

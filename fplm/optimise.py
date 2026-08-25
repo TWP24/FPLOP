@@ -158,7 +158,13 @@ def solve(
         p
         for p in table.values()
         if p.pid not in cons.exclude
-        and (p.exp_minutes >= cons.min_expected_minutes or p.pid in cons.include)
+        # A minutes floor screens players you might buy. It must never screen players
+        # you already own: excluding a held player from the pool does not decline to
+        # buy him, it forces a transfer nobody asked for, and with five such players
+        # and one free transfer it makes the whole problem infeasible.
+        and (p.exp_minutes >= cons.min_expected_minutes
+             or p.pid in cons.include
+             or p.pid in cons.current_squad)
     ]
     if not pool:
         return None

@@ -823,6 +823,12 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     model_chip = (f'<span class="pill warn">{_esc(plan.provider_note[:46])}</span>'
                   if plan.provider_note else '<span class="pill ok">'
                   '<span class="dot"></span>model ok</span>')
+    # Which squad the plan was built on. This was silently wrong for a week — the
+    # page showed a freshly solved template fifteen while the manager owned a real
+    # team — so it now says so on the page rather than being inferred from the names.
+    warn = plan.start_note.startswith("WARNING") or "could not" in plan.start_note
+    squad_chip = (f'<span class="pill {"warn" if warn else ""}">'
+                  f'{_esc(plan.start_note[:60])}</span>') if plan.start_note else ''
     player_modals = _player_modals(squad, now_table, rates_ref or {})
     pitch_block = f'''<section class="card">
     <div class="hd"><h2>On the pitch</h2>
@@ -921,7 +927,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
       <h1>Gameweek {plan.next_gw}</h1>
       <span class="pill accent"><span class="dot"></span>{_esc(deadline_chip)}</span>
       <span class="pill">{rivals + 1} managers</span>
-      {model_chip}
+      {model_chip}{squad_chip}
       <span class="spacer"></span>
       <span class="pill mono">&pound;{squad.cost:.1f}m</span>
       <span class="pill">C: {_esc(cap.name if cap else "&mdash;")}</span>
