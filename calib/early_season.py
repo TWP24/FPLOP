@@ -7,6 +7,13 @@ for the current season only, so at the GW1 rollover every rate resets, and
 For the first weeks it reported zero and the model shrank every rate to nothing,
 forecasting 0.50 points per match for players who went on to score 3.59.
 
+Note what this does and does not measure. The prediction here is `pp90` times the
+minutes share, a proxy for the model rather than its expected points, so the level
+ratio it reports is not the model's calibration and must not be read as one. Doing
+exactly that produced a confident claim that the model runs cold in August; measured
+properly in `regime.py`, on the model's own xP, it runs slightly hot like everywhere
+else. Use this for detecting collapse, not for judging level.
+
 Run this in August. Rank correlation will not catch it — the broken arm scores a
 *higher* rho, because collapsing every rate to a common mean leaves a tidy ordering
 by position and minutes. Watch the level ratio and MAE instead.
