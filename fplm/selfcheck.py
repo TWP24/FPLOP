@@ -111,6 +111,14 @@ def run(boot, plan, rates, held: set[int] | None = None,
         out.append(Check(
             "transfers within allowance", moves <= allowed,
             f"{moves} transfer(s), {allowed} allowed"))
+        # What the page tells you to do must match the squad it shows you. These are
+        # produced by different code paths — the transfer comes from the plan, the
+        # forward view from a separate planner — and they once disagreed in public,
+        # with "no transfer, roll it" printed beside a squad that had sold Haaland.
+        stated = len(getattr(plan, "moves_now", []) or [])
+        out.append(Check(
+            "advice matches the squad", stated == moves,
+            f"panel states {stated} transfer(s), squad shows {moves}"))
         out.append(Check(
             "plan built on the squad held", moves <= allowed and len(shown & held) >= 15 - allowed,
             f"{len(shown & held)} of 15 held players retained"))

@@ -168,6 +168,21 @@ class SelfCheckHarness(unittest.TestCase):
         checks = selfcheck.run(boot, self._plan(55.0), rates, rivals=48)
         self.assertNotIn("beats the median rival", {c.name for c in checks})
 
+    def test_advice_disagreeing_with_the_squad_is_caught(self):
+        # The dashboard printed "no transfer - roll it" beside a squad that had
+        # already sold Haaland, because the advice and the squad came from
+        # different planners.
+        boot = {"elements": make_elements()}
+        rates = xpmod.build_rates(boot)
+        plan = self._plan(55.0)
+        held = {p.pid for p in plan.squad.players}
+        held.remove(next(iter(held)))
+        held.add(9999)                      # one transfer away from the squad shown
+        plan.moves_now = []                 # ...but the panel claims none
+        checks = selfcheck.run(boot, plan, rates, held=held)
+        self.assertIn("advice matches the squad",
+                      {c.name for c in checks if not c.ok})
+
     def test_illegal_squad_is_caught(self):
         boot = {"elements": make_elements()}
         rates = xpmod.build_rates(boot)

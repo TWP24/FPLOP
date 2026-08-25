@@ -491,7 +491,13 @@ def _action_panel(plan, squad, rates, gwplans, deadline: str) -> str:
 
     nxt = gwplans[0] if gwplans else None
     moves = ""
-    if nxt and nxt.moves:
+    # The plan's own move comes first. The forward planner begins from the squad this
+    # already chose and does not transfer into its first gameweek, so asking it what
+    # to do this week returns nothing however the squad was reached.
+    if getattr(plan, "moves_now", None):
+        moves = "".join(f'<span class="move"><s>{_esc(o)}</s> &rarr; '
+                        f'<b>{_esc(i)}</b></span>' for o, i in plan.moves_now)
+    elif nxt and nxt.moves:
         moves = "".join(f'<span class="move"><s>{_esc(m.out_name)}</s> &rarr; '
                         f'<b>{_esc(m.in_name)}</b></span>' for m in nxt.moves)
     elif nxt:

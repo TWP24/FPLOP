@@ -53,6 +53,11 @@ class SeasonPlan:
     sim_p_win: float = 0.0
     provider_note: str = ""
     start_note: str = ""
+    # The transfer this plan is recommending right now, as (out, in) names. The
+    # forward planner starts *from* the squad chosen here and skips transfers for its
+    # first gameweek, so it never sees this move and cannot report it. The dashboard
+    # once said "no transfer - roll it" beside a squad that had already sold Haaland.
+    moves_now: list[tuple[str, str]] = field(default_factory=list)
 
     @property
     def contested(self) -> list[MonthPlan]:
@@ -303,9 +308,19 @@ def build(
         except Exception:  # noqa: BLE001 — a chart is never worth failing the build for
             pass
 
+    moves_now: list[tuple[str, str]] = []
+    if current_squad:
+        chosen = {p.pid for p in squad.players}
+        gone = sorted(current_squad - chosen)
+        came = sorted(chosen - current_squad)
+        names = {pid: r.name for pid, r in rates.items()}
+        for o, i in zip(gone, came):
+            moves_now.append((names.get(o, str(o)), names.get(i, str(i))))
+
     return SeasonPlan(
         provider_note=provider_note,
         start_note=start_note,
+        moves_now=moves_now,
         generated=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         next_gw=next_gw,
         squad=squad,
