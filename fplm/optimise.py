@@ -68,6 +68,22 @@ BENCH_WEIGHT = 0.12
 # are a floor rather than a ceiling; the captaincy is where you want the opposite.
 CAPTAIN_REALISATION = {1: 0.97, 2: 0.84, 3: 1.03, 4: 0.96}
 
+# How much the differential tilt is amplified on the armband relative to the rest of
+# the squad. It was 3, a large multiplier on a term only ever measured against squad
+# selection, and never justified by anything.
+#
+# Measured directly on the objective the prize is paid for. Across 24 months with a
+# 48-rival field, mean P(win) is 4.25% at a multiplier of 0, 4.27% at 1 and 4.27% at
+# 3 — paired deltas of +0.01pp against a standard error of 0.03, better in 1 month of
+# 24. The amplification does nothing.
+#
+# It is not harmless, though, because it decides who wears the armband: at 3 it puts
+# it on a low-owned defender, which contradicts the measured realisation of defenders
+# at the top of the ranking (0.84 against 1.03 for midfielders). An amplification that
+# buys no win probability and produces a pick the evidence argues against is not worth
+# keeping, so the differential now applies to the captain as it does to everyone else.
+CAPTAIN_DIFF_MULT = 1.0
+
 # What an unused free transfer is worth, in expected points.
 #
 # Without a term like this the objective has no notion of a transfer you did not
@@ -238,7 +254,7 @@ def solve(
         dv = p.differential_var
         obj.append(start[i] * (p.xp + lam * dv))
         cap_xp = p.xp * CAPTAIN_REALISATION.get(p.pos, 1.0)
-        obj.append(cap[i] * (cap_xp + 3 * lam * dv))
+        obj.append(cap[i] * (cap_xp + CAPTAIN_DIFF_MULT * lam * dv))
         obj.append((squad[i] - start[i]) * (BENCH_WEIGHT * p.xp))
 
     hits = None
