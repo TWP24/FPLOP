@@ -54,6 +54,40 @@ POS_NAME = {GK: "GKP", DEF: "DEF", MID: "MID", FWD: "FWD"}
 # surface that is flat anyway.
 BENCH_WEIGHT = 0.12
 
+# What an unused free transfer is worth, in expected points.
+#
+# Without a term like this the objective has no notion of a transfer you did not
+# make, so a banked one is valued at exactly zero and the solver spends it on any
+# gain above zero — it once proposed burning one for +0.88 xP, smaller than the
+# model's own error in that regime. Since a transfer only happens when its gain
+# exceeds this value, it doubles as "do not transfer unless the gain clears X".
+#
+# Measured and left OFF. Swept through the full-season simulator under real transfer
+# rules across four seasons:
+#
+#   value   mean season pts   vs 0     transfers/season
+#   0.00           1853.2        —           36.8
+#   0.25           1853.2      +0.0          36.8      (never binds)
+#   0.50           1838.2     -15.0          36.8
+#   1.00           1808.0     -45.2          36.2
+#   1.50           1828.2     -25.0          36.0
+#   2.00           1756.2     -97.0          35.2
+#
+# Every positive value loses points. Mid-season — which is most of a season, and
+# what the simulator mostly covers — the best available weekly transfer is worth
+# more than the option value of holding one back, so hoarding is a real cost.
+#
+# This does not license spending the transfer in August. The simulator starts with
+# four gameweeks of history and never sees the opening weeks, where the model is
+# close to blind and typical transfer gains sit under its own MAE. The answer there
+# is to distrust differences smaller than the error bar, which is a judgement about
+# confidence and not a price on rolling.
+ROLL_VALUE = 0.0
+
+# FPL banks at most five. At the cap an unused transfer is genuinely worth nothing,
+# so the reward is switched off rather than paid for something you cannot keep.
+MAX_BANKED_TRANSFERS = 5
+
 
 @dataclass
 class Squad:
@@ -144,6 +178,7 @@ class Constraints:
     free_transfers: int = 1
     max_hits: int = 0
     min_expected_minutes: float = 0.0
+    roll_value: float | None = None   # None = use the module default
 
 
 def solve(
@@ -200,6 +235,13 @@ def solve(
         prob += hits >= n_transfers - cons.free_transfers
         prob += n_transfers <= cons.free_transfers + cons.max_hits
         obj.append(-4 * hits)
+
+        roll_value = cons.roll_value if cons.roll_value is not None else ROLL_VALUE
+        if roll_value > 0 and cons.free_transfers < MAX_BANKED_TRANSFERS:
+            rolled = pulp.LpVariable("rolled", lowBound=0,
+                                     upBound=cons.free_transfers, cat="Integer")
+            prob += rolled <= cons.free_transfers - n_transfers
+            obj.append(roll_value * rolled)
 
     prob += pulp.lpSum(obj)
 
