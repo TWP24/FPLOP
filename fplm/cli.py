@@ -404,11 +404,25 @@ def cmd_plan(args) -> None:
     from . import xp as _xpmod
 
     rates_for_check = _xpmod.build_rates(boot, minutes_override=overrides)
+    # Derived from what was actually spent, so banking a transfer does not have to be
+    # remembered. An explicit --free-transfers still wins.
+    free_now = getattr(args, "free_transfers", 1)
+    if args.entry and free_now == 1:
+        from . import tracking as _tr
+
+        nxt = next((e["id"] for e in boot["events"] if e.get("is_next")), 1)
+        derived = _tr.free_transfers(args.entry, nxt)
+        if derived:
+            free_now = derived
+            if derived > 1:
+                print(f"{DIM}free transfers: {derived} (from your transfer "
+                      f"history){RESET}")
+
     p = planmod.build(
         boot, fixtures, prior_weight=args.prior_weight, minutes_override=overrides,
         rivals=args.rivals, monthly_weight=args.monthly_weight,
         min_minutes=args.min_minutes, budget=args.budget, current_squad=current,
-        free_transfers=getattr(args, "free_transfers", 1),
+        free_transfers=free_now,
         max_hits=getattr(args, "max_hits", 0),
         start=args.start, model=args.model,
     )
@@ -434,7 +448,7 @@ def cmd_plan(args) -> None:
     from . import selfcheck
 
     checks = selfcheck.run(boot, p, rates_for_check, held=current,
-                           free_transfers=getattr(args, "free_transfers", 1),
+                           free_transfers=free_now,
                            max_hits=getattr(args, "max_hits", 0),
                            rivals=getattr(args, "rivals", None))
     failed = [c for c in checks if not c.ok]

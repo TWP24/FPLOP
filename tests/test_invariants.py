@@ -13,6 +13,7 @@ from __future__ import annotations
 import unittest
 
 from fplm import optimise as opt
+from fplm import tracking
 from fplm import selfcheck
 from fplm import xp as xpmod
 
@@ -95,6 +96,42 @@ class TransferRules(unittest.TestCase):
         cons = opt.Constraints(min_expected_minutes=25.0, current_squad={7})
         self.assertIn("current_squad", opt.Constraints.__dataclass_fields__)
         self.assertEqual(cons.current_squad, {7})
+
+
+class FreeTransfers(unittest.TestCase):
+    """Banked transfers are rebuilt from what was spent, since FPL will not say."""
+
+    def _derive(self, history, next_gw, chips=()):
+        payload = {"current": history, "chips": list(chips)}
+        original = tracking.api.fetch
+        tracking.api.fetch = lambda *a, **k: payload
+        try:
+            return tracking.free_transfers(1, next_gw)
+        finally:
+            tracking.api.fetch = original
+
+    def test_everyone_starts_gw2_with_one(self):
+        # GW1's squad is assembled freely before the deadline, so nothing banks
+        # out of it however many changes were made.
+        h = [{"event": 1, "event_transfers": 0}]
+        self.assertEqual(self._derive(h, 2), 1)
+
+    def test_banking_a_week_gives_two(self):
+        h = [{"event": 1, "event_transfers": 0}, {"event": 2, "event_transfers": 0}]
+        self.assertEqual(self._derive(h, 3), 2)
+
+    def test_spending_keeps_you_at_one(self):
+        h = [{"event": 1, "event_transfers": 0}, {"event": 2, "event_transfers": 1}]
+        self.assertEqual(self._derive(h, 3), 1)
+
+    def test_banking_is_capped_at_five(self):
+        h = [{"event": g, "event_transfers": 0} for g in range(1, 12)]
+        self.assertEqual(self._derive(h, 12), 5)
+
+    def test_a_wildcard_does_not_spend_the_bank(self):
+        h = [{"event": 1, "event_transfers": 0}, {"event": 2, "event_transfers": 0},
+             {"event": 3, "event_transfers": 11}]
+        self.assertEqual(self._derive(h, 4, chips=[{"name": "wildcard", "event": 3}]), 3)
 
 
 class SelfCheckHarness(unittest.TestCase):

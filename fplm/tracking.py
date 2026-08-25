@@ -105,6 +105,40 @@ def fill_actuals(entry_id: int, records: dict[int, GWRecord] | None = None) -> d
     return recs
 
 
+def free_transfers(entry_id: int, next_gw: int) -> int | None:
+    """Work out how many free transfers are banked, from what was actually spent.
+
+    FPL publishes no endpoint for this, and the plan's advice depends on it — at one
+    the recommendation is a single move, at two it reshapes the squad. Rather than
+    leaving it as a number to remember, it is rebuilt from the transfer history: one
+    a week, bankable to five, spent as they are made.
+
+    A wildcard or free hit lifts the limit for its week without consuming the bank,
+    so those gameweeks are skipped. Returns None if the history cannot be read, and
+    the caller keeps its default rather than guessing.
+    """
+    try:
+        hist = api.fetch(f"entry/{entry_id}/history", key=f"hist_{entry_id}", ttl=900)
+    except Exception:  # noqa: BLE001
+        return None
+
+    unlimited = {c.get("event") for c in hist.get("chips", [])
+                 if c.get("name") in ("wildcard", "freehit")}
+    # Counting starts at GW2. The first gameweek's squad is assembled freely before
+    # its deadline, so nothing is banked out of it and everyone begins GW2 with one.
+    free = 1
+    for row in sorted(hist.get("current", []), key=lambda r: r.get("event", 0)):
+        gw = row.get("event")
+        if gw is None or gw < 2 or gw >= next_gw:
+            continue
+        if gw in unlimited:
+            free = min(5, free + 1)
+            continue
+        used = min(int(row.get("event_transfers") or 0), free)
+        free = min(5, max(1, free - used + 1))
+    return free
+
+
 def summary(records: dict[int, GWRecord]) -> dict:
     """Headline accuracy over the gameweeks that have actually been played."""
     played = [r for r in records.values() if r.played and r.predicted > 0]
