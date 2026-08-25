@@ -138,6 +138,36 @@ class SelfCheckHarness(unittest.TestCase):
         self.assertIn("club minutes near 990", failed)
         self.assertIn("squad forecast plausible", failed)
 
+    def test_a_plan_that_cannot_win_is_caught(self):
+        # The regression this check was added for: a squad that maximises expected
+        # points, buys the template and finishes mid-table by construction. Every
+        # legality check passed while win probability fell from 9.4% to 0.2%.
+        boot = {"elements": make_elements()}
+        rates = xpmod.build_rates(boot)
+        plan = self._plan(55.0)
+        plan.sim_scores = [1, 2, 3]        # mark it as actually simulated
+        plan.sim_p_win = 0.002
+        checks = selfcheck.run(boot, plan, rates, rivals=48)
+        self.assertIn("beats the median rival", {c.name for c in checks if not c.ok})
+
+    def test_a_healthy_win_probability_passes(self):
+        boot = {"elements": make_elements()}
+        rates = xpmod.build_rates(boot)
+        plan = self._plan(55.0)
+        plan.sim_scores = [1, 2, 3]
+        plan.sim_p_win = 0.106
+        checks = selfcheck.run(boot, plan, rates, rivals=48)
+        self.assertTrue(all(c.ok for c in checks),
+                        [c.line for c in checks if not c.ok])
+
+    def test_an_unsimulated_plan_is_not_judged_on_win_probability(self):
+        # Reporting zero because nothing was simulated is not the same claim as
+        # reporting zero after simulating, and must not fail the build.
+        boot = {"elements": make_elements()}
+        rates = xpmod.build_rates(boot)
+        checks = selfcheck.run(boot, self._plan(55.0), rates, rivals=48)
+        self.assertNotIn("beats the median rival", {c.name for c in checks})
+
     def test_illegal_squad_is_caught(self):
         boot = {"elements": make_elements()}
         rates = xpmod.build_rates(boot)

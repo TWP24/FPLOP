@@ -377,9 +377,12 @@ def cmd_check(args) -> None:
             print(f"  ! could not load entry {args.entry}: {exc}", file=sys.stderr)
 
     rates = _xpmod.build_rates(boot)
-    p = planmod.build(boot, fixtures, current_squad=current, simulate=False)
-    raise SystemExit(0 if selfcheck.report(selfcheck.run(boot, p, rates, held=current))
-                     else 1)
+    p = planmod.build(boot, fixtures, current_squad=current,
+                      rivals=args.rivals or 19, simulate=bool(args.rivals))
+    raise SystemExit(
+        0 if selfcheck.report(selfcheck.run(boot, p, rates, held=current,
+                                            rivals=getattr(args, "rivals", None)))
+        else 1)
 
 
 def cmd_plan(args) -> None:
@@ -430,7 +433,8 @@ def cmd_plan(args) -> None:
 
     checks = selfcheck.run(boot, p, rates_for_check, held=current,
                            free_transfers=1, max_hits=args.max_hits
-                           if hasattr(args, "max_hits") else 0)
+                           if hasattr(args, "max_hits") else 0,
+                           rivals=getattr(args, "rivals", None))
     failed = [c for c in checks if not c.ok]
     if failed:
         print(f"\n{BOLD}self-check FAILED{RESET}", file=sys.stderr)
@@ -589,6 +593,8 @@ def main(argv: list[str] | None = None) -> None:
 
     sp = sub.add_parser("check", help="Run the model's invariants and exit non-zero on failure.")
     sp.add_argument("--entry", type=int, help="Verify the plan against this team's squad.")
+    sp.add_argument("--rivals", type=int, default=None,
+                    help="League size, so win probability can be checked too.")
     sp.set_defaults(func=cmd_check)
 
     sp = sub.add_parser("clear-cache", help="Delete cached API responses.")

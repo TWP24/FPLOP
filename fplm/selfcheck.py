@@ -36,6 +36,17 @@ CLUB_MINUTES_BAND = (700.0, 1300.0)
 # A full eleven plus captain over one gameweek. The rollover defect produced 5.7.
 SQUAD_XP_BAND = (25.0, 90.0)
 
+# A squad chosen by an optimiser should not be a worse bet than the median rival in
+# its own simulated field. That floor is 1/(rivals+1) by construction, so the check
+# asks only that the plan clears the bar anyone gets for turning up.
+#
+# It exists because of a regression these checks did not catch. A horizon planner
+# that maximised expected points bought the template, which finishes mid-table by
+# construction; win probability fell from 9.4% to 0.2% while expected points barely
+# moved, and every legality check passed, because the squad was perfectly legal and
+# merely aimed at the wrong thing. Legality is not the same as fitness for purpose.
+PWIN_FLOOR_MULTIPLE = 1.0
+
 
 @dataclass
 class Check:
@@ -49,7 +60,8 @@ class Check:
 
 
 def run(boot, plan, rates, held: set[int] | None = None,
-        free_transfers: int = 1, max_hits: int = 0) -> list[Check]:
+        free_transfers: int = 1, max_hits: int = 0,
+        rivals: int | None = None) -> list[Check]:
     """Every invariant, evaluated against one built plan."""
     out: list[Check] = []
 
@@ -79,6 +91,17 @@ def run(boot, plan, rates, held: set[int] | None = None,
     out.append(Check(
         "squad forecast plausible", lo <= per_gw <= hi,
         f"{per_gw:.1f} xP per gameweek (band {lo:.0f}-{hi:.0f})"))
+
+    # --- the plan must be aimed at winning, not merely at scoring ----------
+    # Skipped when nothing was simulated: an unsimulated plan reports zero, which is
+    # not the same claim as a simulated plan reporting zero.
+    if rivals and getattr(plan, "sim_scores", None) is not None:
+        p_win = float(getattr(plan, "sim_p_win", 0.0) or 0.0)
+        floor = PWIN_FLOOR_MULTIPLE / (rivals + 1)
+        out.append(Check(
+            "beats the median rival", p_win >= floor,
+            f"P(win) {p_win * 100:.1f}% against a floor of {floor * 100:.1f}% "
+            f"for {rivals} rivals"))
 
     # --- the plan must be reachable from the squad held -------------------
     if held:
