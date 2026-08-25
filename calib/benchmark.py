@@ -11,6 +11,20 @@ Two references are available without a subscription:
   SmartPlayFPL repository together with `ep_next` and realised points, on 18,173
   player-gameweeks from 2025-26 GW1-24.
 
+Read the ranking numbers and the squad numbers together, because they disagree and
+the disagreement is the finding. On rank correlation over every eligible row this
+model is last of the three, beaten by FPL's own free projection in 18 gameweeks of
+23. Build a squad from each set of ratings and score it, and the order inverts:
+53.3 points a gameweek here against 47.0 for OpenFPL and 35.9 for `ep_next`.
+
+Both are true. Rank correlation over all rows is mostly a test of who can spot the
+players who will not feature, and an optimiser never sees those — they are filtered
+by the minutes floor before it starts. What survives that filter is the top of the
+distribution, and there `ep_next` is exquisitely calibrated (its top sixty predict
+122.5 and return 124.3) while pointing at the wrong players: those same sixty score
+124.3 where this model's sixty score 199.7. Safe and low-ceiling wins a ranking
+metric and loses a football season.
+
 Protocol follows the one those predictions were published under, so the numbers are
 comparable rather than merely adjacent: metrics are computed inside each gameweek
 and then averaged, and every method is restricted to exactly the same eligible
