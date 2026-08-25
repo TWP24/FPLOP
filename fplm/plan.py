@@ -81,6 +81,8 @@ def build(
     min_minutes: float = 25.0,
     budget: float = 100.0,
     current_squad: set[int] | None = None,
+    free_transfers: int = 1,
+    max_hits: int = 0,
     simulate: bool = True,
     start: str = "xp",
     model: str = "fplm",
@@ -141,10 +143,15 @@ def build(
         q.xp = (monthly_weight * a + (1 - monthly_weight) * b) * max(p.n_fixtures, 1)
         blended[pid] = q
 
+    # FPL publishes no endpoint for how many free transfers you are holding, so it
+    # has to be told. Defaulting to one is safe but wrong the week after you bank
+    # one: the plan would consider a single move when two are available free.
     cons = opt.Constraints(
         budget=budget,
         min_expected_minutes=min_minutes,
         current_squad=current_squad or set(),
+        free_transfers=max(1, min(free_transfers, opt.MAX_BANKED_TRANSFERS)),
+        max_hits=max_hits,
     )
 
     # Forcing the most-owned fifteen is a pre-season device: before a ball is kicked

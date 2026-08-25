@@ -408,6 +408,8 @@ def cmd_plan(args) -> None:
         boot, fixtures, prior_weight=args.prior_weight, minutes_override=overrides,
         rivals=args.rivals, monthly_weight=args.monthly_weight,
         min_minutes=args.min_minutes, budget=args.budget, current_squad=current,
+        free_transfers=getattr(args, "free_transfers", 1),
+        max_hits=getattr(args, "max_hits", 0),
         start=args.start, model=args.model,
     )
 
@@ -432,8 +434,8 @@ def cmd_plan(args) -> None:
     from . import selfcheck
 
     checks = selfcheck.run(boot, p, rates_for_check, held=current,
-                           free_transfers=1, max_hits=args.max_hits
-                           if hasattr(args, "max_hits") else 0,
+                           free_transfers=getattr(args, "free_transfers", 1),
+                           max_hits=getattr(args, "max_hits", 0),
                            rivals=getattr(args, "rivals", None))
     failed = [c for c in checks if not c.ok]
     if failed:
@@ -555,6 +557,12 @@ def main(argv: list[str] | None = None) -> None:
     sp.set_defaults(func=cmd_frontier)
 
     sp = sub.add_parser("plan", help="Whole-season plan + HTML dashboard.")
+    # FPL publishes no endpoint for the free transfers you hold, so it has to be
+    # told. It matters the week after you bank one.
+    sp.add_argument("--free-transfers", type=int, default=1,
+                    help="Free transfers available this gameweek (1-5).")
+    sp.add_argument("--max-hits", type=int, default=0,
+                    help="Points hits the plan may take. Measured as not paying.")
     sp.add_argument("--prior-weight", type=float, default=0.5)
     sp.add_argument("--minutes-csv")
     sp.add_argument("--refresh", action="store_true")

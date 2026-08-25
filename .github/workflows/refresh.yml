@@ -55,10 +55,14 @@ jobs:
           FPL_RIVALS: ${{ vars.FPL_RIVALS || '19' }}
           # 'template' starts from the most-owned legal fifteen; 'xp' from the model's.
           FPL_START: ${{ vars.FPL_START || 'template' }}
+          # FPL has no endpoint for free transfers held, so set this as a repository
+          # variable the week after you bank one, and back to 1 once it is spent.
+          FPL_FREE_TRANSFERS: ${{ vars.FPL_FREE_TRANSFERS || '1' }}
         run: |
           python -m fplm.cli plan \
             --refresh \
             --rivals "$FPL_RIVALS" \
+            --free-transfers "${FPL_FREE_TRANSFERS:-1}" \
             --start "${FPL_START:-template}" \
             ${FPL_ENTRY:+--entry "$FPL_ENTRY"} \
             ${FPL_LEAGUE:+--league $FPL_LEAGUE} \
