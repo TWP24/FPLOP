@@ -68,7 +68,7 @@ def _tables(rows, n2i, upto, gws):
     return out or None
 
 
-def run_season(season, horizons=(1, 4)) -> dict:
+def run_season(season, horizons=(1, 4), ft_value: float = 0.0) -> dict:
     rows = bt.load_rows(Path(f"data/merged_gw_{season}.csv"))
     n2i = bt.team_ids(rows)
     actual = collections.defaultdict(dict)
@@ -96,7 +96,8 @@ def run_season(season, horizons=(1, 4)) -> dict:
 
             plan = hz.solve(tabs, squad, bank,
                             opt.Constraints(budget=BUDGET, min_expected_minutes=20),
-                            free_transfers=free, max_hits_per_gw=0, time_limit=45)
+                            free_transfers=free, max_hits_per_gw=0,
+                            ft_terminal_value=ft_value, time_limit=45)
             if plan is None:
                 continue
             out_ids, in_ids = plan.transfers[g]
@@ -144,3 +145,43 @@ def _as_squad(plan, g, table):
 
 if __name__ == "__main__":
     run()
+
+
+def run_ft(values=(0.0, 0.75, 1.5, 2.5), H: int = 4) -> None:
+    """What is it worth to end the horizon still holding a free transfer?
+
+    A finite horizon has an edge, and at that edge the model has no reason to keep
+    anything: a transfer unspent in the last modelled week is worth nothing to it,
+    so it spends everything by then. A terminal value is the correction for that,
+    and it is the same number the public solver carries as `ft_value`.
+
+    This is the question that was asked once before against a single-week solver,
+    where it could only be answered wrongly.
+    """
+    import statistics as st
+
+    print(f"terminal value on free transfers held, H={H}, GW{FIRST}-{LAST}\n")
+    print(f"  {'season':10}" + "".join(f"{'v='+str(v):>9}" for v in values))
+    rows_out = {v: [] for v in values}
+    for season in SEASONS:
+        line = f"  {season:10}"
+        for v in values:
+            try:
+                r = run_season(season, (H,), ft_value=v)
+                pts = r.get(H, float("nan"))
+            except Exception:  # noqa: BLE001
+                pts = float("nan")
+            rows_out[v].append(pts)
+            line += f"{pts:9.0f}"
+        print(line, flush=True)
+
+    base = rows_out[values[0]]
+    print("\n  paired against v=0:")
+    for v in values[1:]:
+        d = [b - a for a, b in zip(base, rows_out[v])
+             if a == a and b == b]
+        if not d:
+            continue
+        se = st.stdev(d) / (len(d) ** 0.5) if len(d) > 1 else 0.0
+        print(f"    v={v:<5}{st.mean(d):+7.1f} points over {LAST-FIRST+1} gameweeks "
+              f"(se {se:.1f}), better in {sum(1 for x in d if x > 0)}/{len(d)}")

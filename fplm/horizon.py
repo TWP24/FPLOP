@@ -40,6 +40,31 @@ HIT_COST = 4
 # it trade against a decision being taken this week overstates what it knows.
 DECAY = 0.9
 
+# What it is worth to reach the end of the horizon still holding a free transfer.
+#
+# A finite horizon has an edge, and at that edge the model has no reason to keep
+# anything: a transfer unspent in the last modelled week is worth nothing to it, so
+# it spends everything by then. This is the correction for that artefact, and the
+# same quantity a public solver carries as `ft_value`.
+#
+# Measured and left at zero. Scored on actual points, H=4, GW6-26, four seasons:
+#
+#   value    vs 0                       better in
+#   0.75    -10.0 (se  8.6)               1 of 4
+#   1.50    +10.0 (se 17.0)               3 of 4
+#   2.50     -5.5 (se 23.8)               1 of 4
+#
+# The middle setting is the one the public solver ships and it wins three seasons of
+# four, but +10 against a standard error of 17 is six tenths of an error bar, and the
+# curve turns negative either side of it. That is what noise looks like.
+#
+# The explanation is the receding horizon itself. A terminal value corrects for a
+# model spending everything by the last week it can see, and this one re-solves every
+# gameweek, so the edge it would correct is redrawn before it ever arrives. The
+# correction matters for a solver run once over a fixed window; it has little left to
+# do for one run weekly.
+FT_TERMINAL_VALUE = 0.0
+
 # Pool size per position. A joint model over eight gameweeks has a binary for every
 # player in every week, so the pool has to be cut to something a solver can chew.
 POOL_PER_POS = {GK: 12, DEF: 45, MID: 55, FWD: 30}
@@ -81,10 +106,12 @@ def solve(
     free_transfers: int = 1,
     max_hits_per_gw: int = 0,
     decay: float = DECAY,
-    ft_terminal_value: float = 0.0,
+    ft_terminal_value: float | None = None,
     time_limit: int = 120,
 ) -> HorizonPlan | None:
     """Optimise squad and transfers jointly across every gameweek in `tables`."""
+    if ft_terminal_value is None:
+        ft_terminal_value = FT_TERMINAL_VALUE
     gws = sorted(tables)
     if not gws:
         return None
