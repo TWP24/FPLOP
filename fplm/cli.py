@@ -34,6 +34,35 @@ def _load(args) -> tuple[dict, list[dict], dict, dict, monthly.Month, dict]:
     return boot, fixtures, team_ratings, rates, month, table
 
 
+def _tr_free(entry: int, boot: dict) -> int | None:
+    """Free transfers implied by the transfer history, or None if unreadable."""
+    from . import tracking as _tr
+
+    nxt = next((e["id"] for e in boot["events"] if e.get("is_next")), 1)
+    return _tr.free_transfers(entry, nxt)
+
+
+def _read_overrides() -> dict:
+    """Human corrections, from `overrides.json` beside the code.
+
+    The tool works most things out for itself, but not everything is knowable from
+    the API — how many free transfers are banked is the standing example, since FPL
+    only serves that to an authenticated session. Rather than requiring a login or a
+    remembered command-line flag, there is a file to edit.
+
+    Missing or unreadable is not an error: it means no corrections.
+    """
+    import json
+    from pathlib import Path as _P
+
+    path = _P(__file__).resolve().parent.parent / "overrides.json"
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return {}
+    return {k: v for k, v in data.items() if not k.startswith("_")}
+
+
 def _read_minutes_csv(path: str, boot: dict) -> dict[int, float]:
     """CSV of `name,minutes_per_start` (or `id,minutes_per_start`) to override the model."""
     by_name = {e["web_name"].lower(): e["id"] for e in boot["elements"]}
@@ -404,19 +433,24 @@ def cmd_plan(args) -> None:
     from . import xp as _xpmod
 
     rates_for_check = _xpmod.build_rates(boot, minutes_override=overrides)
-    # Derived from what was actually spent, so banking a transfer does not have to be
-    # remembered. An explicit --free-transfers still wins.
+    # Precedence: the command line, then overrides.json, then the transfer history.
+    # The file exists so a human can correct the tool without editing it, from a
+    # phone if need be, and have the daily rebuild pick the correction up.
+    overrides_file = _read_overrides()
     free_now = getattr(args, "free_transfers", 1)
-    if args.entry and free_now == 1:
-        from . import tracking as _tr
-
-        nxt = next((e["id"] for e in boot["events"] if e.get("is_next")), 1)
-        derived = _tr.free_transfers(args.entry, nxt)
+    ft_source = "default"
+    if free_now != 1:
+        ft_source = "the command line"
+    elif overrides_file.get("free_transfers"):
+        free_now = max(1, min(int(overrides_file["free_transfers"]), 5))
+        ft_source = "overrides.json"
+    elif args.entry:
+        derived = _tr_free(args.entry, boot)
         if derived:
             free_now = derived
-            if derived > 1:
-                print(f"{DIM}free transfers: {derived} (from your transfer "
-                      f"history){RESET}")
+            ft_source = "your transfer history"
+    if free_now != 1 or ft_source != "default":
+        print(f"{DIM}free transfers: {free_now} (from {ft_source}){RESET}")
 
     p = planmod.build(
         boot, fixtures, prior_weight=args.prior_weight, minutes_override=overrides,
@@ -424,6 +458,7 @@ def cmd_plan(args) -> None:
         min_minutes=args.min_minutes, budget=args.budget, current_squad=current,
         free_transfers=free_now,
         max_hits=getattr(args, "max_hits", 0),
+        note=str(overrides_file.get("note") or ""),
         start=args.start, model=args.model,
     )
 

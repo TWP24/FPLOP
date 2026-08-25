@@ -1,0 +1,7 @@
+{
+  "_comment": "Things you know that the model does not. Edit, commit, push — the daily rebuild picks it up. Anything left null is worked out automatically.",
+  "free_transfers": null,
+  "_free_transfers": "null works it out from your transfer history, which is right unless you have made a transfer since the last gameweek was scored. Set 1-5 to override.",
+  "note": "",
+  "_note": "Free text shown on the dashboard, for reminding yourself why something is set."
+}

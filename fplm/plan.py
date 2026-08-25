@@ -58,6 +58,9 @@ class SeasonPlan:
     # first gameweek, so it never sees this move and cannot report it. The dashboard
     # once said "no transfer - roll it" beside a squad that had already sold Haaland.
     moves_now: list[tuple[str, str]] = field(default_factory=list)
+    # Free text from overrides.json, so a manual correction is visible on the page
+    # rather than silently in force.
+    note: str = ""
 
     @property
     def contested(self) -> list[MonthPlan]:
@@ -86,6 +89,7 @@ def build(
     simulate: bool = True,
     start: str = "xp",
     model: str = "fplm",
+    note: str = "",
 ) -> SeasonPlan:
     """Build a whole-season plan from today's data."""
     team_ratings = rt.build(boot, fixtures, prior_weight=prior_weight)
@@ -328,6 +332,7 @@ def build(
         provider_note=provider_note,
         start_note=start_note,
         moves_now=moves_now,
+        note=note,
         generated=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         next_gw=next_gw,
         squad=squad,
