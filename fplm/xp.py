@@ -314,7 +314,8 @@ def build_rates(boot: dict, minutes_override: dict[int, float] | None = None) ->
     #
     # The most-started player has started every gameweek played, which makes this
     # self-calibrating and works identically for the live API and the backtest.
-    games_played = float(max((e.get("starts") or 0) for e in elements) or 1)
+    games_played = float(
+        max((e.get("starts") or 0 for e in elements), default=0) or 1)
 
     means = _positional_means(elements)
     pctl = _price_percentile(elements)

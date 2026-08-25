@@ -1,0 +1,33 @@
+name: Tests
+
+# Runs on every push and pull request, separately from the daily rebuild. The point
+# is that a change which breaks an invariant is caught here, before it has a chance
+# to publish a plausible-looking but wrong dashboard.
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["README.md", "predictions.json", "plan.html"]
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # No network: the tests build a synthetic bootstrap rather than calling FPL,
+      # so a failure here is always the model and never the weather.
+      - name: Run the invariant tests
+        run: python -m unittest discover -s tests -v
