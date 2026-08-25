@@ -32,6 +32,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Full history. The default shallow clone cannot rebase onto origin, which
+          # is exactly what the prediction-log commit below needs to do.
+          fetch-depth: 0
 
       - uses: actions/setup-python@v7
         with:
