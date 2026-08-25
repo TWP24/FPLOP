@@ -54,6 +54,32 @@ POS_NAME = {GK: "GKP", DEF: "DEF", MID: "MID", FWD: "FWD"}
 # surface that is flat anyway.
 BENCH_WEIGHT = 0.12
 
+# What the vice-captaincy is worth, as a fraction of that player's expected points.
+#
+# The armband moves to the vice when the captain does not play, and the squad has
+# always chosen a vice without ever valuing one: it was picked after the fact as the
+# best remaining starter, so the optimiser never traded anything to have a good one.
+#
+# Measured and left off. At weights of 0.05, 0.1 and 0.2 the result is identical —
+# +0.19 points a month against a standard error of 0.19, better in one month of
+# thirty-two. Identical across weights because the term is nearly inert: the vice is
+# almost always the best remaining starter anyway, so pricing it changes the squad
+# about once a season. A live variable that decides nothing is not worth its weight.
+VICE_WEIGHT = 0.0
+
+# Per-slot bench weights, keeper first then the three outfield substitutes in the
+# order they would be listed. A flat weight says every bench player is equally likely
+# to matter, which is plainly false — the first substitute comes on far more often
+# than the third, and a bench keeper almost never does.
+#
+# Slot weights were tried once before at measured firing rates (0.65/0.31/0.11,
+# keeper 0.07) and lost 2 to 7 points a month; see the note on BENCH_WEIGHT. The
+# vector [0.03, 0.21, 0.06, 0.002] from a public solver is much flatter, so it got
+# its own measurement rather than inheriting that verdict — and came to +1.16 points
+# a month against a standard error of 2.63, better in fifteen months of thirty-two.
+# Not a repeat of the earlier loss, but not a gain either.
+BENCH_SLOT_WEIGHTS: list[float] | None = None
+
 # What the top of each position actually realises, applied to the armband only.
 #
 # Measured over 24 months: taking the twenty highest predictions each month, GKP
@@ -241,6 +267,10 @@ def solve(
     squad = pulp.LpVariable.dicts("squad", ids, cat="Binary")
     start = pulp.LpVariable.dicts("start", ids, cat="Binary")
     cap = pulp.LpVariable.dicts("cap", ids, cat="Binary")
+    vc = pulp.LpVariable.dicts("vc", ids, cat="Binary") if VICE_WEIGHT > 0 else None
+    slots = list(range(3))
+    bslot = (pulp.LpVariable.dicts("bslot", (ids, slots), cat="Binary")
+             if BENCH_SLOT_WEIGHTS else None)
 
     # --- Objective ---------------------------------------------------------
     obj = []
@@ -255,7 +285,15 @@ def solve(
         obj.append(start[i] * (p.xp + lam * dv))
         cap_xp = p.xp * CAPTAIN_REALISATION.get(p.pos, 1.0)
         obj.append(cap[i] * (cap_xp + CAPTAIN_DIFF_MULT * lam * dv))
-        obj.append((squad[i] - start[i]) * (BENCH_WEIGHT * p.xp))
+        if bslot is None:
+            obj.append((squad[i] - start[i]) * (BENCH_WEIGHT * p.xp))
+        elif p.pos == GK:
+            obj.append((squad[i] - start[i]) * (BENCH_SLOT_WEIGHTS[0] * p.xp))
+        else:
+            for s_ in slots:
+                obj.append(bslot[i][s_] * (BENCH_SLOT_WEIGHTS[s_ + 1] * p.xp))
+        if vc is not None:
+            obj.append(vc[i] * (VICE_WEIGHT * p.xp))
 
     hits = None
     if cons.current_squad:
@@ -304,6 +342,28 @@ def solve(
     prob += pulp.lpSum(cap[i] for i in ids) == 1
     for i in ids:
         prob += cap[i] <= start[i]
+
+    # --- Vice-captain ------------------------------------------------------
+    if vc is not None:
+        prob += pulp.lpSum(vc[i] for i in ids) == 1
+        for i in ids:
+            prob += vc[i] <= start[i]
+            prob += vc[i] + cap[i] <= 1
+
+    # --- Bench order -------------------------------------------------------
+    # One outfield substitute per slot, each benched outfielder in exactly one slot.
+    # The weights decrease down the bench, so the solver puts its best substitute
+    # first without needing to be told to.
+    if bslot is not None:
+        outfield = [i for i in ids if P[i].pos != GK]
+        for s_ in slots:
+            prob += pulp.lpSum(bslot[i][s_] for i in outfield) == 1
+        for i in ids:
+            if P[i].pos == GK:
+                for s_ in slots:
+                    prob += bslot[i][s_] == 0
+            else:
+                prob += pulp.lpSum(bslot[i][s_] for s_ in slots) == squad[i] - start[i]
 
     # Forbid squads we have already produced, so the lam sweep returns distinct teams.
     for sig in seed_exclude or set():
