@@ -359,6 +359,29 @@ def cmd_frontier(args) -> None:
     _print_squad(best[0], best[1], label=f"Highest win probability — {month}")
 
 
+def cmd_check(args) -> None:
+    """Build a plan and assert the model's invariants against it."""
+    from . import plan as planmod
+    from . import selfcheck
+    from . import xp as _xpmod
+
+    boot = api.bootstrap()
+    fixtures = api.fixtures()
+    current: set[int] = set()
+    if args.entry:
+        nxt = next((e["id"] for e in boot["events"] if e.get("is_next")), 1)
+        try:
+            current = {x["element"]
+                       for x in api.entry_picks(args.entry, max(nxt - 1, 1))["picks"]}
+        except Exception as exc:  # noqa: BLE001
+            print(f"  ! could not load entry {args.entry}: {exc}", file=sys.stderr)
+
+    rates = _xpmod.build_rates(boot)
+    p = planmod.build(boot, fixtures, current_squad=current, simulate=False)
+    raise SystemExit(0 if selfcheck.report(selfcheck.run(boot, p, rates, held=current))
+                     else 1)
+
+
 def cmd_plan(args) -> None:
     from . import dashboard, plan as planmod
 
@@ -375,6 +398,9 @@ def cmd_plan(args) -> None:
         except Exception as exc:  # noqa: BLE001
             print(f"  ! could not load entry {args.entry}: {exc}", file=sys.stderr)
 
+    from . import xp as _xpmod
+
+    rates_for_check = _xpmod.build_rates(boot, minutes_override=overrides)
     p = planmod.build(
         boot, fixtures, prior_weight=args.prior_weight, minutes_override=overrides,
         rivals=args.rivals, monthly_weight=args.monthly_weight,
@@ -397,6 +423,23 @@ def cmd_plan(args) -> None:
         gw_xp = p.months[0].squad_xp / max(p.months[0].n_gws, 1)
         cap = next((x.name for x in p.squad.players if x.pid == p.squad.captain), "")
         tracking.record_prediction(p.next_gw, gw_xp, captain=cap, model=args.model)
+    # Invariants, on every build. The point is that a broken model stops rather than
+    # publishing something plausible — every defect this project has had produced
+    # believable output and was found by a person, not by the code.
+    from . import selfcheck
+
+    checks = selfcheck.run(boot, p, rates_for_check, held=current,
+                           free_transfers=1, max_hits=args.max_hits
+                           if hasattr(args, "max_hits") else 0)
+    failed = [c for c in checks if not c.ok]
+    if failed:
+        print(f"\n{BOLD}self-check FAILED{RESET}", file=sys.stderr)
+        for c in checks:
+            print(c.line, file=sys.stderr)
+        if not getattr(args, "force", False):
+            raise SystemExit(
+                "\nRefusing to write a dashboard that fails its own invariants. "
+                "Pass --force to override.")
     if p.provider_note:
         print(f"{DIM}model: {p.provider_note}{RESET}")
     if args.entry:
@@ -523,6 +566,8 @@ def main(argv: list[str] | None = None) -> None:
                     help="Which expected-points model to use. 'dastan' is measurably "
                          "better where its data reaches (starters rho 0.414 vs 0.356) "
                          "but falls back to fplm, saying why, when it cannot run.")
+    sp.add_argument("--force", action="store_true",
+                    help="Write the dashboard even if the self-check fails.")
     sp.add_argument("--start", choices=["template", "xp"], default="template",
                     help="How to pick the starting squad. 'template' takes the "
                          "most-owned legal fifteen, which beat pure expected points by "
@@ -541,6 +586,10 @@ def main(argv: list[str] | None = None) -> None:
     sp.add_argument("--rivals", type=int, default=19)
     sp.add_argument("--sims", type=int, default=2000)
     sp.set_defaults(func=cmd_backtest)
+
+    sp = sub.add_parser("check", help="Run the model's invariants and exit non-zero on failure.")
+    sp.add_argument("--entry", type=int, help="Verify the plan against this team's squad.")
+    sp.set_defaults(func=cmd_check)
 
     sp = sub.add_parser("clear-cache", help="Delete cached API responses.")
     sp.set_defaults(func=lambda a: print(f"removed {api.clear_cache()} cached files"))
