@@ -194,7 +194,11 @@ def build(
                     lam=0.0, cost=cost,
                 )
     else:
-        squad = opt.solve(blended, lam=opt.suggested_lam(rivals), cons=cons)
+        squad = _solve_for_win(boot, fixtures, tables[current_month.name], rates,
+                               team_ratings, current_month, blended, cons, rivals,
+                               simulate)
+        if squad is None:
+            squad = opt.solve(blended, lam=opt.suggested_lam(rivals), cons=cons)
 
     start_note = ("most-owned fifteen (no squad held yet)"
                   if start == "template" and not current_squad
@@ -302,6 +306,44 @@ def build(
         sim_target=sim_target,
         sim_p_win=sim_p_win,
     )
+
+
+def _solve_for_win(boot, fixtures, now_tbl, rates, team_ratings, month, blended,
+                   cons, rivals: int, simulate: bool):
+    """Choose the risk level by simulated win probability rather than by rule.
+
+    `suggested_lam` maps a rival count to a risk appetite from a sweep run once,
+    across simulated fields, for a squad built from scratch. None of those
+    conditions necessarily hold now: the field is this league, the fixtures are
+    this month, and the squad is usually one transfer away from what is already
+    owned. Measuring beats interpolating when the machinery to measure is already
+    here — the frontier command has done exactly this for months.
+
+    Falls back to the rule when simulation is off or anything goes wrong, because
+    a plan that fails to build is worse than one built from a heuristic.
+    """
+    if not simulate:
+        return None
+    try:
+        from .simulate import MonthSimulator
+
+        sim = MonthSimulator(boot, fixtures, now_tbl, rates, team_ratings, month,
+                             n_sims=4000)
+        field = sim.build_field(rivals, cons)
+        # Price differential risk against what this field actually owns. Optimising
+        # against published ownership while being scored against this field would
+        # leave the objective and the evaluation measuring different things.
+        priced = sim.apply_field_ownership(blended)
+        lams = [0.0, 0.05, 0.1, 0.2, 0.3]
+        squads = opt.frontier(priced, lams, cons)
+        if not squads:
+            return None
+        best = max(squads, key=lambda s: sim.evaluate(s, field).p_win)
+        return opt.Squad(players=[blended[p.pid] for p in best.players],
+                         starters=best.starters, captain=best.captain,
+                         vice=best.vice, lam=best.lam, cost=best.cost)
+    except Exception:  # noqa: BLE001 — never fail a plan for want of a simulation
+        return None
 
 
 def _per_gameweek_xp(boot, fixtures, rates, team_ratings) -> dict[int, dict[int, float]]:
