@@ -53,6 +53,42 @@ EMPIRICAL_SHRINK_MINUTES = 5000.0
 # Games of observation before the price-implied start-rate prior is outweighed.
 START_SHRINK_GAMES = 5.0
 
+# What to shrink a start rate toward once the player has actually been seen starting.
+#
+# The prior was the price-implied one, which is defensible for a player never seen
+# and wrong for one who has. Measured over three seasons: of players who started
+# GW1, the share reaching 60 minutes in GW2-5 is 79/70/73% for the cheapest bracket,
+# 72/72/70% at mid price and 79/88/68% for premiums — n around 800 a season. Price
+# carries almost no information once a start has been observed.
+#
+# Leaving price as the target meant a 4.0m defender who had just played 90 minutes
+# was given a 16.8% chance of starting, against a measured rate near 72%.
+STARTED_BEFORE_PRIOR = 0.72
+
+# How much of that measured prior to use in place of price.
+#
+# Set to 0.75 by measurement, and the first change in this project to improve every
+# metric at once. Predicting from GW1 alone and scoring GW2-6, averaged over three
+# seasons and consistent in each:
+#
+#   blend   level    MAE     rho
+#    0.00    0.68   1.40   0.364
+#    0.50    0.76   1.29   0.385
+#    0.75    0.79   1.28   0.386      <- shipped
+#    1.00    0.83   1.29   0.367
+#
+# Past 0.75 it starts flattening genuine differences: at 1.0 every player seen
+# starting once collapses to the same number, so a nailed premium and a promoted
+# club's cheapest defender become indistinguishable.
+#
+# The main harness is neutral on this, which is the point rather than a caveat. It
+# begins three months into a season, where ten games of observation leave the prior
+# almost no weight; the whole effect lives in the opening weeks it never scores.
+# There: opt 201.25 against 202.31 baseline, inside a standard error of 4-5, with
+# ratio improving 1.060 -> 1.008 and slope 0.809 -> 0.823.
+START_PRIOR_BLEND = 0.75
+
+
 # How much of the way to pull each team's player rates toward the team model's own
 # expected goals. 0.0 leaves them inconsistent, 1.0 forces exact agreement.
 #
@@ -354,7 +390,11 @@ def build_rates(boot: dict, minutes_override: dict[int, float] | None = None) ->
             w_own = 0.0
             flags.append("no-PL-history")
 
-        start_rate = w_own * raw_start_rate + (1 - w_own) * prior_start
+        # Once a start has been observed, shrink toward the measured base rate for
+        # players in that position rather than toward what the player costs.
+        target = STARTED_BEFORE_PRIOR if (m > 0 and e["starts"] > 0) else prior_start
+        target = START_PRIOR_BLEND * target + (1 - START_PRIOR_BLEND) * prior_start
+        start_rate = w_own * raw_start_rate + (1 - w_own) * target
         p_start = start_rate * _availability(e)
 
         if pid in minutes_override:
