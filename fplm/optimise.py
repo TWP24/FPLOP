@@ -54,6 +54,20 @@ POS_NAME = {GK: "GKP", DEF: "DEF", MID: "MID", FWD: "FWD"}
 # surface that is flat anyway.
 BENCH_WEIGHT = 0.12
 
+# What the top of each position actually realises, applied to the armband only.
+#
+# Measured over 24 months: taking the twenty highest predictions each month, GKP
+# realise 0.97 of their expected points, DEF 0.84, MID 1.03 and FWD 0.96. Over the
+# whole pool the same positions come to 1.01/1.00/1.10/1.10, so defenders are not
+# over-rated in general — they are over-rated at the top, which is the only place a
+# captain is ever chosen from.
+#
+# It matters here and not in squad selection because the armband doubles one
+# player's return, so the level has to be right rather than merely the order. A
+# defender's expected points are also built from clean sheets and appearance, which
+# are a floor rather than a ceiling; the captaincy is where you want the opposite.
+CAPTAIN_REALISATION = {1: 0.97, 2: 0.84, 3: 1.03, 4: 0.96}
+
 # What an unused free transfer is worth, in expected points.
 #
 # Without a term like this the objective has no notion of a transfer you did not
@@ -223,7 +237,8 @@ def solve(
         # who the field does *not* own, so it barely costs expected points at all.
         dv = p.differential_var
         obj.append(start[i] * (p.xp + lam * dv))
-        obj.append(cap[i] * (p.xp + 3 * lam * dv))
+        cap_xp = p.xp * CAPTAIN_REALISATION.get(p.pos, 1.0)
+        obj.append(cap[i] * (cap_xp + 3 * lam * dv))
         obj.append((squad[i] - start[i]) * (BENCH_WEIGHT * p.xp))
 
     hits = None
