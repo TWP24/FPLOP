@@ -104,11 +104,12 @@ def solve(
     bank: float,
     cons: Constraints,
     free_transfers: int = 1,
-    max_hits_per_gw: int = 0,
+    max_hits_per_gw: int = 0,   # measured as costing points; see calib/horizon_test
     decay: float = DECAY,
     lam: float = 0.0,
     ft_terminal_value: float | None = None,
     time_limit: int = 120,
+    shuffle_seed: int | None = None,
 ) -> HorizonPlan | None:
     """Optimise squad and transfers jointly across every gameweek in `tables`."""
     if ft_terminal_value is None:
@@ -119,6 +120,18 @@ def solve(
     ids = _prune(tables, held)
     if len(ids) < 30:
         return None
+    jitter = {}
+    if shuffle_seed is not None:
+        # Break ties differently without changing the problem. Reordering the pool
+        # does not work — PuLP canonicalises variable order before the solver sees
+        # it — so this perturbs objective coefficients by a millionth, far below any
+        # difference that could matter, purely to change which of several equally
+        # good answers is reached first. Used to measure how much of a result is
+        # real and how much is the solver's arbitrary choice among ties.
+        import random as _r
+
+        rnd = _r.Random(shuffle_seed)
+        jitter = {pid: 1.0 + rnd.uniform(-1e-6, 1e-6) for pid in ids}
 
     any_tbl = tables[gws[0]]
     ref = {pid: next((tables[g][pid] for g in gws if pid in tables[g]), None)
@@ -153,8 +166,9 @@ def solve(
     for gi, g in enumerate(gws):
         w = decay ** gi
         for pid in ids:
-            obj.append(w * s[pid][g] * (xp[(pid, g)] + lam * dvar[pid]))
-            obj.append(w * c[pid][g] * (xp[(pid, g)] + lam * dvar[pid]))
+            j = jitter.get(pid, 1.0)
+            obj.append(w * s[pid][g] * (xp[(pid, g)] + lam * dvar[pid]) * j)
+            obj.append(w * c[pid][g] * (xp[(pid, g)] + lam * dvar[pid]) * j)
             obj.append(w * (x[pid][g] - s[pid][g]) * (BENCH_WEIGHT * xp[(pid, g)]))
         obj.append(-w * HIT_COST * h[g])
     if ft_terminal_value:

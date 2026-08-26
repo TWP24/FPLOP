@@ -68,7 +68,8 @@ def _tables(rows, n2i, upto, gws):
     return out or None
 
 
-def run_season(season, horizons=(1, 4), ft_value: float = 0.0) -> dict:
+def run_season(season, horizons=(1, 4), ft_value: float = 0.0,
+               max_hits: int = 0, shuffle_seed: int | None = None) -> dict:
     rows = bt.load_rows(Path(f"data/merged_gw_{season}.csv"))
     n2i = bt.team_ids(rows)
     actual = collections.defaultdict(dict)
@@ -96,8 +97,9 @@ def run_season(season, horizons=(1, 4), ft_value: float = 0.0) -> dict:
 
             plan = hz.solve(tabs, squad, bank,
                             opt.Constraints(budget=BUDGET, min_expected_minutes=20),
-                            free_transfers=free, max_hits_per_gw=0,
-                            ft_terminal_value=ft_value, time_limit=45)
+                            free_transfers=free, max_hits_per_gw=max_hits,
+                            ft_terminal_value=ft_value, time_limit=45,
+                            shuffle_seed=shuffle_seed)
             if plan is None:
                 continue
             out_ids, in_ids = plan.transfers[g]
@@ -106,8 +108,12 @@ def run_season(season, horizons=(1, 4), ft_value: float = 0.0) -> dict:
             free = min(hz.MAX_FREE, max(1, free - n + 1))
             total += bt._actual_squad_points(
                 _as_squad(plan, g, tabs[g]), actual[g], {g: actual[g]}, {g: played[g]})
+            # Charge the hits. Counting them without subtracting them is how a
+            # previous version of this project flattered aggressive strategies.
+            total -= 4 * plan.hits[g]
             hits_taken += plan.hits[g]
         results[H] = total
+        results[f'hits{H}'] = hits_taken
     return results
 
 
@@ -184,4 +190,71 @@ def run_ft(values=(0.0, 0.75, 1.5, 2.5), H: int = 4) -> None:
             continue
         se = st.stdev(d) / (len(d) ** 0.5) if len(d) > 1 else 0.0
         print(f"    v={v:<5}{st.mean(d):+7.1f} points over {LAST-FIRST+1} gameweeks "
+              f"(se {se:.1f}), better in {sum(1 for x in d if x > 0)}/{len(d)}")
+
+
+def run_hits(levels=(0, 1, 2), H: int = 4) -> None:
+    """Do points hits pay once the model can plan several gameweeks ahead?
+
+    The recorded verdict is that they do not: +45 points a season on average, one
+    season carrying the whole result, and an oracle control showing +259 with perfect
+    foresight against +30 with this model. That was measured against a planner that
+    solved one gameweek at a time, and a hit is a bet that pays back over several —
+    the same reason banking a transfer measured as worthless until the horizon model
+    could express it.
+
+    Hits are charged at four points here, which the earlier version of this harness
+    did not do — counting them without subtracting them is how this project once
+    flattered aggressive strategies.
+
+    Measured over four seasons, GW6-26, H=4:
+
+        season      max 0     max 1      max 2
+        2022-23      966      875/4h     815/6h
+        2023-24     1082     1082/0h    1082/0h
+        2024-25     1158     1135/0h    1158/0h
+        2025-26     1181     1181/0h    1181/0h
+
+        max 1: -28.5 points (se 21.5), better in 0/4
+        max 2: -37.8 points (se 37.8), better in 0/4
+
+    The shape says more than the total. Given the option, the model declines to take
+    a single hit in three seasons of four; where it did take them it lost 91 points
+    and then 151. Four gameweeks of foresight do not make a -4 easier to justify,
+    which is what the oracle control said years of evidence ago: hits pay when your
+    predictions are good enough to warrant one, and these are not.
+
+    2024-25 differs by 23 points between the first two columns while taking no hits
+    in either, which is not noise. Allowing hits lets the model *plan* one in the
+    second, third or fourth week of its window; that changes what it does this week,
+    and then the window slides and the hit is never taken. The option is not free
+    even when unused. Solver tie-breaking was ruled out: every solve returns Optimal,
+    and perturbing the objective by one part in a million leaves the answer identical.
+    """
+    import statistics as st
+
+    print(f"points hits inside a {H}-gameweek horizon, GW{FIRST}-{LAST}\n")
+    print(f"  {'season':10}" + "".join(f"{'max '+str(v):>10}" for v in levels))
+    got = {v: [] for v in levels}
+    for season in SEASONS:
+        line = f"  {season:10}"
+        for v in levels:
+            try:
+                r = run_season(season, (H,), max_hits=v)
+                pts, hits = r.get(H, float("nan")), r.get(f"hits{H}", 0)
+            except Exception:  # noqa: BLE001
+                pts, hits = float("nan"), 0
+            got[v].append(pts)
+            line += f"{pts:8.0f}/{hits:<2}"
+        print(line, flush=True)
+    print("  (points after hits / hits taken)")
+
+    base = got[levels[0]]
+    print("\n  paired against no hits:")
+    for v in levels[1:]:
+        d = [b - a for a, b in zip(base, got[v]) if a == a and b == b]
+        if not d:
+            continue
+        se = st.stdev(d) / (len(d) ** 0.5) if len(d) > 1 else 0.0
+        print(f"    max {v}: {st.mean(d):+7.1f} points over {LAST-FIRST+1} gameweeks "
               f"(se {se:.1f}), better in {sum(1 for x in d if x > 0)}/{len(d)}")
