@@ -19,6 +19,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from . import chips as chipmod
+from . import horizon as hzmod
 from . import monthly as mo
 from . import optimise as opt
 from . import ratings as rt
@@ -79,6 +80,8 @@ def build(
     fixtures: list[dict],
     season_plan,
     horizon_weight: float = 0.8,
+    use_horizon: bool = True,
+    span: int = 4,
     hold_gws: int = 0,
     # Zero, and measured. Allowing hits scores +45 a season on average across four
     # seasons, but the average is one season: +19, -42, +214, -11. Two of four go
@@ -175,7 +178,33 @@ def build(
                 max_hits=0 if unlimited else max_hits,
                 min_expected_minutes=min_minutes,
             )
-            new = opt.solve(view, lam=0.0, cons=cons)
+            # Plan several gameweeks jointly and execute only this one, which is
+            # the policy `plan.build` follows every week. Rolling forward greedily
+            # here would project a season played by a method measured at -22.5
+            # points against the one that will actually be used, so the forward view
+            # would be a picture of a worse manager than the tool intends to be.
+            #
+            # Not worth it under a chip that lifts the transfer limit — there is no
+            # transfer timing left to plan — nor once the horizon runs off the end.
+            new = None
+            if use_horizon and not unlimited:
+                ahead = {x: tables[x] for x in gws if g <= x < g + span and x in tables}
+                if len(ahead) >= 2:
+                    hp = hzmod.solve(ahead, set(squad), bank, cons,
+                                     free_transfers=free, max_hits_per_gw=max_hits,
+                                     time_limit=20)
+                    if hp is not None and g in hp.squads:
+                        fifteen = hp.squads[g]
+                        if all(pid in view for pid in fifteen):
+                            new = opt.solve(
+                                {pid: v for pid, v in view.items() if pid in fifteen},
+                                lam=0.0,
+                                cons=opt.Constraints(budget=999.0,
+                                                     min_expected_minutes=0.0,
+                                                     include=set(fifteen)),
+                            )
+            if new is None:
+                new = opt.solve(view, lam=0.0, cons=cons)
             if new is not None:
                 chosen = {p.pid for p in new.players}
                 out_ids = squad - chosen
