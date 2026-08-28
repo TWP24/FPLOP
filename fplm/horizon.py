@@ -82,7 +82,8 @@ class HorizonPlan:
     objective: float = 0.0
 
 
-def _prune(tables: dict[int, dict[int, PlayerMonth]], held: set[int]) -> list[int]:
+def _prune(tables: dict[int, dict[int, PlayerMonth]], held: set[int],
+           always: set[int] | None = None) -> list[int]:
     """Players worth considering across the horizon, plus everyone already owned."""
     total: dict[int, float] = {}
     pos: dict[int, int] = {}
@@ -90,7 +91,7 @@ def _prune(tables: dict[int, dict[int, PlayerMonth]], held: set[int]) -> list[in
         for pid, p in tbl.items():
             total[pid] = total.get(pid, 0.0) + p.xp
             pos[pid] = p.pos
-    keep = set(held)
+    keep = set(held) | set(always or ())
     for want_pos, n in POOL_PER_POS.items():
         ranked = sorted((pid for pid in total if pos.get(pid) == want_pos),
                         key=lambda pid: -total[pid])
@@ -117,7 +118,7 @@ def solve(
     gws = sorted(tables)
     if not gws:
         return None
-    ids = _prune(tables, held)
+    ids = _prune(tables, held, cons.include)
     if len(ids) < 30:
         return None
     jitter = {}
@@ -191,6 +192,16 @@ def solve(
         for pid in ids:
             prob += s[pid][g] <= x[pid][g]
             prob += c[pid][g] <= s[pid][g]
+
+    # --- players you have said you are keeping -----------------------------
+    # Held in every gameweek of the window, not merely the first, so the plan cannot
+    # decide to sell them in three weeks either. `opt.solve` has always honoured this;
+    # this solver did not, which meant the constraint quietly stopped applying the day
+    # the horizon started making the decision.
+    for pid in cons.include:
+        if pid in set(ids):
+            for g in gws:
+                prob += x[pid][g] == 1
 
     # --- squad continuity and the transfer ledger --------------------------
     for gi, g in enumerate(gws):

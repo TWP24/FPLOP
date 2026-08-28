@@ -53,6 +53,7 @@ class SeasonPlan:
     sim_p_win: float = 0.0
     provider_note: str = ""
     start_note: str = ""
+    kept: set[int] = field(default_factory=set)
     # The transfer this plan is recommending right now, as (out, in) names. The
     # forward planner starts *from* the squad chosen here and skips transfers for its
     # first gameweek, so it never sees this move and cannot report it. The dashboard
@@ -90,6 +91,7 @@ def build(
     start: str = "xp",
     model: str = "fplm",
     note: str = "",
+    keep: set[int] | None = None,
 ) -> SeasonPlan:
     """Build a whole-season plan from today's data."""
     team_ratings = rt.build(boot, fixtures, prior_weight=prior_weight)
@@ -156,6 +158,7 @@ def build(
         current_squad=current_squad or set(),
         free_transfers=max(1, min(free_transfers, opt.MAX_BANKED_TRANSFERS)),
         max_hits=max_hits,
+        include=set(keep or ()),
     )
 
     # Forcing the most-owned fifteen is a pre-season device: before a ball is kicked
@@ -331,6 +334,7 @@ def build(
     return SeasonPlan(
         provider_note=provider_note,
         start_note=start_note,
+        kept=set(keep or ()),
         moves_now=moves_now,
         note=note,
         generated=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),

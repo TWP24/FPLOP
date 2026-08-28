@@ -220,6 +220,26 @@ class SelfCheckHarness(unittest.TestCase):
         self.assertIn("advice matches the squad",
                       {c.name for c in checks if not c.ok})
 
+    def test_selling_a_kept_player_is_caught(self):
+        # A setting that silently fails to protect a player is worse than not
+        # offering it — you would believe a decision had been made for you.
+        boot = {"elements": make_elements()}
+        rates = xpmod.build_rates(boot)
+        plan = self._plan(55.0)
+        plan.kept = {9999}                  # asked to keep someone not in the squad
+        checks = selfcheck.run(boot, plan, rates)
+        self.assertIn("kept players are still there",
+                      {c.name for c in checks if not c.ok})
+
+    def test_keeping_a_player_who_is_there_passes(self):
+        boot = {"elements": make_elements()}
+        rates = xpmod.build_rates(boot)
+        plan = self._plan(55.0)
+        plan.kept = {plan.squad.players[0].pid}
+        checks = selfcheck.run(boot, plan, rates)
+        self.assertTrue(all(c.ok for c in checks),
+                        [c.line for c in checks if not c.ok])
+
     def test_illegal_squad_is_caught(self):
         boot = {"elements": make_elements()}
         rates = xpmod.build_rates(boot)

@@ -406,7 +406,13 @@ def cmd_check(args) -> None:
             print(f"  ! could not load entry {args.entry}: {exc}", file=sys.stderr)
 
     rates = _xpmod.build_rates(boot)
-    p = planmod.build(boot, fixtures, current_squad=current,
+    # Read the same overrides the real build reads, or the check would verify a plan
+    # nobody is going to see.
+    ov = _read_overrides()
+    by_name = {e["web_name"].lower(): e["id"] for e in boot["elements"]}
+    keep_ids = {by_name[str(w).strip().lower()] for w in (ov.get("keep") or [])
+                if str(w).strip().lower() in by_name}
+    p = planmod.build(boot, fixtures, current_squad=current, keep=keep_ids,
                       rivals=args.rivals or 19, simulate=bool(args.rivals))
     raise SystemExit(
         0 if selfcheck.report(selfcheck.run(boot, p, rates, held=current,
@@ -452,6 +458,22 @@ def cmd_plan(args) -> None:
     if free_now != 1 or ft_source != "default":
         print(f"{DIM}free transfers: {free_now} (from {ft_source}){RESET}")
 
+    # Players you have said you are keeping, resolved from names. An unmatched name
+    # is reported rather than ignored: silently failing to protect a player is worse
+    # than not offering the setting.
+    keep_ids: set[int] = set()
+    by_name = {e["web_name"].lower(): e["id"] for e in boot["elements"]}
+    for want in overrides_file.get("keep") or []:
+        pid = by_name.get(str(want).strip().lower())
+        if pid is None:
+            print(f"  ! overrides.json: no player matching {want!r}", file=sys.stderr)
+        else:
+            keep_ids.add(pid)
+    if keep_ids:
+        names = ", ".join(sorted(e["web_name"] for e in boot["elements"]
+                                 if e["id"] in keep_ids))
+        print(f"{DIM}keeping: {names}{RESET}")
+
     p = planmod.build(
         boot, fixtures, prior_weight=args.prior_weight, minutes_override=overrides,
         rivals=args.rivals, monthly_weight=args.monthly_weight,
@@ -459,6 +481,7 @@ def cmd_plan(args) -> None:
         free_transfers=free_now,
         max_hits=getattr(args, "max_hits", 0),
         note=str(overrides_file.get("note") or ""),
+        keep=keep_ids,
         start=args.start, model=args.model,
     )
 

@@ -834,6 +834,11 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     # team — so it now says so on the page rather than being inferred from the names.
     note_chip = (f'<span class="pill accent">{_esc(plan.note[:60])}</span>'
                  if getattr(plan, "note", "") else "")
+    kept = getattr(plan, "kept", set())
+    if kept:
+        names = ", ".join(sorted(p.name for p in squad.players if p.pid in kept))
+        note_chip += f'<span class="pill">keeping {_esc(names[:40])}</span>'
+
     warn = plan.start_note.startswith("WARNING") or "could not" in plan.start_note
     squad_chip = (f'<span class="pill {"warn" if warn else ""}">'
                   f'{_esc(plan.start_note[:60])}</span>') if plan.start_note else ''

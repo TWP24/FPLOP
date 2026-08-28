@@ -123,6 +123,18 @@ def run(boot, plan, rates, held: set[int] | None = None,
             "plan built on the squad held", moves <= allowed and len(shown & held) >= 15 - allowed,
             f"{len(shown & held)} of 15 held players retained"))
 
+    # --- players you said to keep must actually be kept --------------------
+    # A setting that silently fails to protect a player is worse than not offering
+    # it: you would believe a decision had been made for you that had not.
+    kept = set(getattr(plan, "kept", ()) or ())
+    if kept:
+        shown = {p.pid for p in plan.squad.players}
+        missing = kept - shown
+        out.append(Check(
+            "kept players are still there", not missing,
+            f"{len(kept)} kept, {len(missing)} sold" if missing
+            else f"all {len(kept)} still in the squad"))
+
     # --- the squad itself must be legal ----------------------------------
     players = plan.squad.players
     per_club: dict[int, int] = {}
