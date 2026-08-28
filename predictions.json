@@ -12,11 +12,21 @@
  "2": {
   "gw": 2,
   "predicted": 44.7,
-  "actual": null,
-  "rank": null,
+  "actual": 0,
+  "rank": 3208418,
   "captain": "B.Fernandes",
   "chip": null,
   "model": "fplm",
   "note": "corrected 18.8 -> 44.7 before the deadline: the original was produced while start rates and per-90 means had collapsed at the GW1 rollover (see xp.py _positional_means and games_played)"
+ },
+ "3": {
+  "gw": 3,
+  "predicted": 45.4,
+  "actual": null,
+  "rank": null,
+  "captain": "A\u00eft-Nouri",
+  "chip": null,
+  "model": "fplm",
+  "note": ""
  }
 }
