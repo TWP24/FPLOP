@@ -3,9 +3,10 @@
   "free_transfers": null,
   "_keep": "Players the plan may never sell, by name as shown in FPL. Use it for a decision you have already made — a premium you will not move on a marginal signal, or a player you are holding through a bad run. Empty means the model decides.",
   "keep": [
-    "Haaland"
+    "Haaland",
+    "B.Fernandes"
   ],
   "_free_transfers": "null works it out from your transfer history, which is right unless you have made a transfer since the last gameweek was scored. Set 1-5 to override.",
-  "note": "",
+  "note": "holding Fernandes for Everton (GW3)",
   "_note": "Free text shown on the dashboard, for reminding yourself why something is set."
 }
