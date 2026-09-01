@@ -6,7 +6,9 @@
     "Haaland",
     "B.Fernandes"
   ],
+  "_captain": "Force the armband onto a player of your choosing. The optimiser's pick is a recommendation; once you have made your own call the page should show the team you are fielding. Null lets the model choose.",
+  "captain": "Haaland",
   "_free_transfers": "null works it out from your transfer history, which is right unless you have made a transfer since the last gameweek was scored. Set 1-5 to override.",
-  "note": "holding Fernandes for Everton (GW3)",
+  "note": "GW3: Fernandes held for Everton, Haaland captained vs Coventry",
   "_note": "Free text shown on the dashboard, for reminding yourself why something is set."
 }

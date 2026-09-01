@@ -92,6 +92,7 @@ def build(
     model: str = "fplm",
     note: str = "",
     keep: set[int] | None = None,
+    captain: int | None = None,
 ) -> SeasonPlan:
     """Build a whole-season plan from today's data."""
     team_ratings = rt.build(boot, fixtures, prior_weight=prior_weight)
@@ -321,6 +322,14 @@ def build(
             sim_scores, sim_target, sim_p_win = res.scores, res.target, res.p_win
         except Exception:  # noqa: BLE001 — a chart is never worth failing the build for
             pass
+
+    # An armband you have already chosen. The optimiser's pick is a recommendation,
+    # and once it has been declined the page should show the team you are actually
+    # fielding rather than keep arguing for a different one.
+    if captain and captain in {p.pid for p in squad.xi}:
+        vice = squad.vice if squad.vice != captain else squad.captain
+        squad = opt.Squad(players=squad.players, starters=squad.starters,
+                          captain=captain, vice=vice, lam=squad.lam, cost=squad.cost)
 
     moves_now: list[tuple[str, str]] = []
     if current_squad:

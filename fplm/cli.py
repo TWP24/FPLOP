@@ -480,6 +480,16 @@ def cmd_plan(args) -> None:
                                  if e["id"] in keep_ids))
         print(f"{DIM}keeping: {names}{RESET}")
 
+    cap_id = None
+    want_cap = overrides_file.get("captain")
+    if want_cap:
+        cap_id = by_name.get(str(want_cap).strip().lower())
+        if cap_id is None:
+            print(f"  ! overrides.json: no player matching captain {want_cap!r}",
+                  file=sys.stderr)
+        else:
+            print(f"{DIM}captain: {want_cap} (yours, not the model's){RESET}")
+
     p = planmod.build(
         boot, fixtures, prior_weight=args.prior_weight, minutes_override=overrides,
         rivals=args.rivals, monthly_weight=args.monthly_weight,
@@ -488,6 +498,7 @@ def cmd_plan(args) -> None:
         max_hits=getattr(args, "max_hits", 0),
         note=str(overrides_file.get("note") or ""),
         keep=keep_ids,
+        captain=cap_id,
         start=args.start, model=args.model,
     )
 
