@@ -393,7 +393,17 @@ class MonthSimulator:
         from . import optimise as opt
 
         rng = self.rng
-        base_cons = cons or opt.Constraints()
+        # Rivals build their own teams. Passing this manager's constraints through
+        # would force all forty-eight of them to sit within a transfer or two of his
+        # squad, and to keep whoever he has said he is keeping — a field made of near
+        # copies of yourself, which you beat far too often. Only the rules everyone
+        # plays under carry over: the budget, the club limit and the minutes floor.
+        src = cons or opt.Constraints()
+        base_cons = opt.Constraints(
+            budget=src.budget,
+            max_per_team=src.max_per_team,
+            min_expected_minutes=src.min_expected_minutes,
+        )
 
         own = np.array([self.table[p].selected_by for p in self.pids], dtype=np.float64)
         own_z = (own - own.mean()) / (own.std() or 1.0)
