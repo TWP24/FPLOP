@@ -12,8 +12,8 @@
  "2": {
   "gw": 2,
   "predicted": 44.7,
-  "actual": 96,
-  "rank": 751030,
+  "actual": 113,
+  "rank": 618053,
   "captain": "B.Fernandes",
   "chip": null,
   "model": "fplm",
