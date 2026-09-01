@@ -412,10 +412,16 @@ def cmd_check(args) -> None:
     by_name = {e["web_name"].lower(): e["id"] for e in boot["elements"]}
     keep_ids = {by_name[str(w).strip().lower()] for w in (ov.get("keep") or [])
                 if str(w).strip().lower() in by_name}
+    # Same free-transfer figure the real build uses, or the check verifies a plan
+    # with a different allowance from the one that will be published.
+    free = int(ov.get("free_transfers") or 0) or (
+        _tr_free(args.entry, boot) if args.entry else 1) or 1
     p = planmod.build(boot, fixtures, current_squad=current, keep=keep_ids,
+                      free_transfers=free,
                       rivals=args.rivals or 19, simulate=bool(args.rivals))
     raise SystemExit(
         0 if selfcheck.report(selfcheck.run(boot, p, rates, held=current,
+                                            free_transfers=free,
                                             rivals=getattr(args, "rivals", None)))
         else 1)
 
