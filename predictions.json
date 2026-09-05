@@ -22,9 +22,19 @@
  "3": {
   "gw": 3,
   "predicted": 45.4,
+  "actual": 3,
+  "rank": 850631,
+  "captain": "A\u00eft-Nouri",
+  "chip": null,
+  "model": "fplm",
+  "note": ""
+ },
+ "4": {
+  "gw": 4,
+  "predicted": 52.0,
   "actual": null,
   "rank": null,
-  "captain": "A\u00eft-Nouri",
+  "captain": "Haaland",
   "chip": null,
   "model": "fplm",
   "note": ""
