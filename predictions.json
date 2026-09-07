@@ -22,8 +22,8 @@
  "3": {
   "gw": 3,
   "predicted": 45.4,
-  "actual": 27,
-  "rank": 1518591,
+  "actual": 52,
+  "rank": 717233,
   "captain": "A\u00eft-Nouri",
   "chip": null,
   "model": "fplm",
