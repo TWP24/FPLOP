@@ -304,6 +304,22 @@
   .icon:hover{border-color:var(--ink-3);color:var(--ink)}
   .icon[disabled]{opacity:.3;cursor:not-allowed}
   .icon.kill{font-size:15px}
+  .layer-palette{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(24px,1fr));
+    gap:5px;margin-top:11px;
+  }
+  .swatch.sm{border-radius:2px}
+  .swatch.sm[aria-pressed="true"]{
+    box-shadow:0 0 0 2px var(--accent-soft),0 0 0 3px var(--accent);
+  }
+  .layer-custom{
+    display:flex;align-items:center;gap:9px;margin-top:9px;
+    font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
+  }
+  .layer-custom input[type="color"]{
+    width:34px;height:24px;padding:2px;background:var(--surface);
+    border:1px solid var(--rule);border-radius:3px;cursor:pointer;
+  }
   .layer-field{
     display:grid;grid-template-columns:86px 1fr;gap:10px;align-items:center;margin-top:8px;
   }
@@ -405,9 +421,9 @@
 
       <section class="step">
         <div class="step-head"><span class="step-num">01</span><h2>Club colours</h2></div>
-        <p class="step-note">Body, trim and lettering are set here. To recolour a layer, tap its
-          colour dot in step 02 and it becomes the target. The sixteen are a starting point, not a
-          limit — everything is sublimated, so any colour you can name we can print.</p>
+        <p class="step-note">Body, trim and lettering are set here; every design layer carries its
+          own colour dot in step 02. The sixteen are a starting point, not a limit — everything is
+          sublimated, so any colour you can name we can print.</p>
 
         <div class="field">
           <span class="label">Colouring</span>
@@ -695,6 +711,7 @@
     var e = SHAPES[type].make();
     e.type = type;
     e.colour = colour || state.secondary;
+    e.opacity = 1;
     e.seed = 7;
     return e;
   }
@@ -743,6 +760,7 @@
     font: "block",
     chestV: 0.35,
     chestSize: 1,
+    pickerFor: null,
     crest: "left",
     crestSize: 1,
     back: "name",
@@ -1267,6 +1285,13 @@
   }
 
   function paintElement(ctx, el) {
+    var prevAlpha = ctx.globalAlpha;
+    ctx.globalAlpha = prevAlpha * (el.opacity == null ? 1 : el.opacity);
+    paintLayer(ctx, el);
+    ctx.globalAlpha = prevAlpha;
+  }
+
+  function paintLayer(ctx, el) {
     var def = SHAPES[el.type];
     if (def && def.group === "print") { paintEffect(ctx, el); return; }
     var c = el.colour, o;
@@ -1769,6 +1794,18 @@
       }).join("");
   }
 
+  function layerPalette(el) {
+    return '<div class="layer-palette">' + PALETTE.map(function (p) {
+      var sel = p[1].toLowerCase() === String(el.colour).toLowerCase();
+      return '<button type="button" class="swatch sm" data-hex="' + p[1] + '" title="' +
+             esc(p[0]) + '" aria-label="' + esc(p[0]) + '" aria-pressed="' + sel +
+             '" style="background:' + p[1] + '"></button>';
+    }).join("") + '</div>' +
+    '<div class="layer-custom"><label for="elc' + el.id + '">Any other colour</label>' +
+      '<input type="color" id="elc' + el.id + '" data-elcolour="' + el.id + '" value="' +
+      (/^#[0-9a-f]{6}$/i.test(el.colour) ? el.colour : "#F5C518") + '"></div>';
+  }
+
   function renderElements() {
     var host = $("#elementList");
     if (!state.elements.length) {
@@ -1782,7 +1819,8 @@
       return '<div class="layer' + (sel ? " sel" : "") + '">' +
         '<div class="layer-top">' +
           '<button type="button" class="layer-sw" data-layer="el:' + el.id + '" ' +
-            'style="background:' + el.colour + '" aria-pressed="' + sel + '" ' +
+            'style="background:' + el.colour + '" aria-pressed="' +
+            (state.pickerFor === el.id) + '" aria-expanded="' + (state.pickerFor === el.id) + '" ' +
             'aria-label="Colour this ' + esc(def.label.toLowerCase()) + '"></button>' +
           '<span class="layer-name">' + esc(def.label) + '</span>' +
           '<button type="button" class="icon" data-move="up:' + el.id + '" aria-label="Move up"' +
@@ -1792,12 +1830,17 @@
           '<button type="button" class="icon kill" data-remove="' + el.id + '" ' +
             'aria-label="Remove this ' + esc(def.label.toLowerCase()) + '">&times;</button>' +
         '</div>' +
+        (state.pickerFor === el.id ? layerPalette(el) : "") +
         def.fields.map(function (f) {
           var id = "el" + el.id + f[0];
           return '<div class="layer-field"><label for="' + id + '">' + esc(f[1]) + '</label>' +
             '<input type="range" id="' + id + '" data-el="' + el.id + ':' + f[0] + '" min="' +
             f[2] + '" max="' + f[3] + '" value="' + Math.round(el[f[0]] * 100) + '"></div>';
         }).join("") +
+        '<div class="layer-field"><label for="el' + el.id + 'opacity">Opacity</label>' +
+          '<input type="range" id="el' + el.id + 'opacity" data-el="' + el.id + ':opacity" ' +
+          'min="5" max="100" value="' + Math.round((el.opacity == null ? 1 : el.opacity) * 100) +
+          '"></div>' +
       '</div>';
     }).join("");
   }
@@ -1862,7 +1905,8 @@
       },
       design: state.elements.map(function (el) {
         var out = { shape: el.type, label: SHAPES[el.type].label,
-                    colour: { hex: el.colour, name: colourName(el.colour) } };
+                    colour: { hex: el.colour, name: colourName(el.colour) },
+                    opacity: Math.round((el.opacity == null ? 1 : el.opacity) * 100) + "%" };
         SHAPES[el.type].fields.forEach(function (f) {
           out[f[1].toLowerCase()] = Math.round(el[f[0]] * 100) + "%";
         });
@@ -1912,6 +1956,8 @@
       if (typeof e.id !== "number") e.id = elId++;
       if (e.id >= elId) elId = e.id + 1;
       if (!e.colour) e.colour = state.secondary;
+      if (e.opacity == null) e.opacity = 1;
+      if (e.seed == null) e.seed = Math.floor(Math.random() * 1e9);
     });
     $("#clubName").value = state.clubName;
     [["chestV", 1], ["chestSize", 1], ["backV", 1], ["crestSize", 1]].forEach(function (f) {
@@ -2007,7 +2053,15 @@
 
   onPick("view",    function (v) { turnTo(v); });
   onPick("preview", function (v) { state.preview = v; });
-  onPick("layer",   function (v) { state.layer = v; });
+  onPick("layer",   function (v) {
+    state.layer = v;
+    if (v.indexOf("el:") === 0) {
+      var id = parseInt(v.slice(3), 10);
+      state.pickerFor = state.pickerFor === id ? null : id;
+    } else {
+      state.pickerFor = null;
+    }
+  });
   onPick("font",    function (v) { state.font = v; });
   onPick("crest",   function (v) { state.crest = v; });
   onPick("back",    function (v) { state.back = v; });
@@ -2060,6 +2114,16 @@
       var el = findEl(parseInt(parts[0], 10));
       if (!el) return;
       el[parts[1]] = parseInt(t.value, 10) / 100;
+      repaint();
+    } else if (t.dataset.elcolour) {
+      var target = findEl(parseInt(t.dataset.elcolour, 10));
+      if (!target) return;
+      target.colour = t.value;
+      state.secondary = t.value;
+      /* nudge the dot directly rather than re-rendering, which would
+         close the colour input mid-pick */
+      var dot = document.querySelector('[data-layer="el:' + target.id + '"]');
+      if (dot) dot.style.background = t.value;
       repaint();
     } else if (t.dataset.print) {
       state[t.dataset.print] = parseInt(t.value, 10) / 100;

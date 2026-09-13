@@ -30,6 +30,11 @@ Published draft: https://claude.ai/code/artifact/19a809e7-c2bf-430a-be1b-bfb5f9c
   snakeskin, mosaic, warp chevron) that blend into whatever is under them. Each layer is a few numbers in texture space, so all of it moves,
   resizes, recolours and restacks. Print and crest placement are free too — height on the
   chest, print size, crest in six positions with its own size.
+- **Every layer has its own colour and opacity.** The palette is inline on the layer row
+  rather than in the colours step, because the old flow made you tap a layer's dot and then
+  scroll back up a section to act on it. Opacity is applied once in `paintElement` by scaling
+  `globalAlpha` around the draw, so it works for every layer type — including the ones that
+  composite through an offscreen canvas — without each painter knowing about it.
 - **Halftones behave like a separation.** A screen's dot radius follows a ramp across the
   panel and the screen sits 34° off the fade direction, so two screens in two colours
   interfere the way process printing does instead of sitting on top of each other.
