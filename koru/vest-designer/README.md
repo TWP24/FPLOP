@@ -23,11 +23,19 @@ Published draft: https://claude.ai/code/artifact/19a809e7-c2bf-430a-be1b-bfb5f9c
   u=0.25 and centre-back at u=0.75, so neither print lands on the side seam.
 - **Falls back** to a flat projected view built from the same profile when WebGL or the
   CDN is unavailable.
-- **Layered design.** Shapes (band, hoops, sash, side panels, chevron, shoulder yoke, hem
-  band, centre stripe) are each a few numbers in texture space, so any of them can be moved,
-  resized, recoloured and stacked. Presets just seed the layer stack; everything stays
-  editable after. Print and crest placement are free too — height on the chest, print size,
-  crest in six positions with its own size.
+- **Layered design.** Everything Koru makes is sublimated, so the design surface is a printed
+  image rather than pieces of cloth. Two kinds of layer stack in one list: hard-edged blocks
+  and stripes (band, hoops, sash, side panels, chevron, shoulder yoke, hem band, centre
+  stripe), and full-panel effects (fade, halftone, grain, ikat, geo blocks) that blend into
+  whatever is under them. Each layer is a few numbers in texture space, so all of it moves,
+  resizes, recolours and restacks. Print and crest placement are free too — height on the
+  chest, print size, crest in six positions with its own size.
+- **Halftones behave like a separation.** A screen's dot radius follows a ramp across the
+  panel and the screen sits 34° off the fade direction, so two screens in two colours
+  interfere the way process printing does instead of sitting on top of each other.
+- **Generated layers are seeded and cached.** Grain and ikat would otherwise re-randomise on
+  every pointermove, crawling under the cursor. Each layer carries a seed, and generated
+  canvases are cached by colour, parameters and seed.
 - **Nothing about the supply chain reaches the club.** Mill names and style codes are not
   shown, not copied, and not in the page source — the (fabric, cut) → mill + style mapping
   is fixed and belongs on Koru's side, resolved when a submission is processed. The club's
@@ -42,17 +50,22 @@ These are placeholders chosen to be plausible, not facts pulled from the store:
 
 | Value | Currently | Where |
 |---|---|---|
-| Stock colour card | 16 colours | `PALETTE` |
-| Shapes on offer | 8 | `SHAPES` |
+| Starting colour card | 16 colours | `PALETTE` |
+| Layer types | 13 | `SHAPES` |
 
 The page asks for no headcount, quotes no total, and offers no fabric or cut choice. The
 cut buttons over the preview only change which body the design is shown on. The race-mesh
 edge profile (`EDGE.elite`) is still in the code but unreachable, because the club no
 longer picks a fabric — it is there for when that choice comes back.
 
-There are limits the mill will have that the tool does not enforce: how many colours a
-single vest can carry, whether a sash and hoops can coexist, and the minimum thickness a
-knitted band can be. Those belong in `SHAPES` as bounds once known.
+Sublimation removes most of the limits a cut-and-sew vest would have — colour count costs
+nothing — but not all of them. Worth confirming: the smallest halftone dot the mill can hold
+without it filling in, whether fine grain survives the press, and how close a print can run
+to a seam before it distorts. Those belong in `SHAPES` as bounds once known.
+
+The texture wraps with the side seam at u=0, so a fade running across the body has a
+discontinuity there. That is how a sublimated vest actually prints — flat panels, then sewn —
+so it is left as is rather than forced to wrap seamlessly.
 
 ## Getting it onto korusports.ie
 
@@ -60,8 +73,8 @@ Three stages, each shippable on its own.
 
 **1. Page on the storefront.** Drop the markup, CSS and JS into a custom section
 (`sections/vest-designer.liquid`) and assign it to a page template at
-`/pages/vest-designer`. The section's schema exposes MOQ, prices, lead times and the
-colour card as settings so they change in the theme editor rather than in code. Keep
+`/pages/vest-designer`. The section's schema exposes the colour card and the
+layer defaults as settings, so they change in the theme editor rather than in code. Keep
 three.js on cdnjs — the store's CSP allows it, and it is the one heavy dependency.
 
 **2. Submissions.** The designer already produces a clean JSON spec — the full layer stack with each shape's
@@ -82,7 +95,7 @@ the one Koru currently does by hand for every club.
 
 ## Open questions for Koru
 
-- How many colours can one vest carry before it costs more to make?
-- Which shape combinations can the mill actually produce together?
-- Can a club mix club mesh and race mesh in one window, or is that two windows?
+- What is the smallest halftone dot the mill holds cleanly?
+- Does fine grain survive the press, or fill in?
+- How close to a seam can a print run before it distorts?
 - Do crest files need to arrive before the proof, or can a window open without one?

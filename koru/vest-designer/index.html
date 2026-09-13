@@ -277,6 +277,12 @@
   }
   .palette-target b{color:var(--ink);font-weight:500}
 
+  .add-group{display:flex;flex-direction:column;gap:7px}
+  .add-group + .add-group{margin-top:14px}
+  .add-label{
+    font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-3);
+  }
   .layers{display:flex;flex-direction:column;gap:8px}
   .layer{
     border:1px solid var(--rule);border-radius:3px;
@@ -399,9 +405,9 @@
 
       <section class="step">
         <div class="step-head"><span class="step-num">01</span><h2>Club colours</h2></div>
-        <p class="step-note">Body, trim and lettering are set here. To recolour a shape, tap its
-          colour dot in step 02 and it becomes the target. Anything outside the mill's sixteen
-          stock colours is a Pantone dye match — say so in the notes and we'll price it.</p>
+        <p class="step-note">Body, trim and lettering are set here. To recolour a layer, tap its
+          colour dot in step 02 and it becomes the target. The sixteen are a starting point, not a
+          limit — everything is sublimated, so any colour you can name we can print.</p>
 
         <div class="field">
           <span class="label">Colouring</span>
@@ -413,7 +419,7 @@
           <p class="palette-target" id="paletteTarget"></p>
           <div class="palette" id="palette"></div>
           <div class="custom-row">
-            <label for="customColour">Pantone match</label>
+            <label for="customColour">Any other colour</label>
             <input type="color" id="customColour" value="#F5C518">
             <span id="customHex">#F5C518</span>
           </div>
@@ -422,9 +428,11 @@
 
       <section class="step">
         <div class="step-head"><span class="step-num">02</span><h2>The design</h2></div>
-        <p class="step-note">Start from a shape, then move it, resize it, recolour it, or
-          stack another on top of it. Everything here is knitted or cut-and-sewn into the
-          vest, not printed on, so it won't crack or lift after a season of washing.</p>
+        <p class="step-note">Start from a look, then move it, resize it, recolour it, or stack
+          another on top of it. Fades, halftones, grain and ikat cover the whole panel
+          and blend into whatever is under them, so two halftone screens in two colours
+          behave like a print separation. It is all sublimated — the dye goes into the fibre
+          rather than sitting on top of it, so nothing cracks or lifts.</p>
 
         <div class="field">
           <span class="label">Start from</span>
@@ -432,8 +440,8 @@
         </div>
 
         <div class="field">
-          <span class="label">Add a shape</span>
-          <div class="seg" id="addShapes" role="group" aria-label="Add a shape to the design"></div>
+          <span class="label">Add a layer</span>
+          <div id="addShapes" role="group" aria-label="Add a shape or a print effect"></div>
         </div>
 
         <div class="field">
@@ -550,8 +558,10 @@
           your runners pay come back with your proof.</p>
         <p>A new club vest design has to be registered with Athletics Ireland before it can be worn
           in competition. We'll send you the artwork sheet you need for that with your proof.</p>
-        <p>Stock colours, minimum runs and lead times are set by the mill and can move
-          between seasons. We confirm all three with your proof.</p>
+        <p>Every vest is sublimated, so colour is free: a six-colour halftone costs no more to
+          make than a plain one, and nothing here is priced by the number of colours you use.
+          Minimum runs and lead times are set by the mill and can move between seasons — we
+          confirm them with your proof.</p>
       </div>
     </div>
   </main>
@@ -579,7 +589,7 @@
     for (var i = 0; i < PALETTE.length; i++) {
       if (PALETTE[i][1].toLowerCase() === String(hex).toLowerCase()) return PALETTE[i][0];
     }
-    return "Pantone match " + String(hex).toUpperCase();
+    return "Custom " + String(hex).toUpperCase();
   }
 
   /* Every shape is a few numbers in texture space, so any of them can be
@@ -601,26 +611,71 @@
     hem:     { label:"Hem band",     make:function(){ return {h:0.10}; },
                fields:[["h","Depth",3,32]] },
     stripe:  { label:"Centre stripe",make:function(){ return {w:0.07}; },
-               fields:[["w","Width",2,26]] }
-  };
-  var SHAPE_ORDER = ["band","hoops","sash","panels","chevron","yoke","hem","stripe"];
+               fields:[["w","Width",2,26]] },
 
+    /* Sublimation prints. These cover the whole panel and fade into
+       whatever is under them, so they stack rather than replace. */
+    gradient:{ label:"Fade",       group:"print",
+               make:function(){ return {v:0.55, soft:0.35, angle:0.5}; },
+               fields:[["v","Position",0,100],["soft","Softness",2,80],["angle","Angle",0,100]] },
+    halftone:{ label:"Halftone",   group:"print",
+               make:function(){ return {v:0.52, soft:0.40, size:0.26, angle:0.12}; },
+               fields:[["v","Position",0,100],["soft","Spread",4,90],
+                       ["size","Dot size",8,60],["angle","Angle",0,100]] },
+    grain:   { label:"Grain",      group:"print",
+               make:function(){ return {v:0.55, soft:0.45, density:0.28, angle:0.5}; },
+               fields:[["density","Density",4,60],["v","Position",0,100],["soft","Softness",5,100]] },
+    ikat:    { label:"Ikat",       group:"print",
+               make:function(){ return {v:0.55, soft:0.70, density:0.42}; },
+               fields:[["density","Coverage",10,80],["v","Position",0,100],["soft","Softness",5,100]] },
+    blocks:  { label:"Geo blocks", group:"print",
+               make:function(){ return {size:0.16, lean:0.30}; },
+               fields:[["size","Scale",6,40],["lean","Lean",0,60]] }
+  };
+  Object.keys(SHAPES).forEach(function (k) {
+    if (!SHAPES[k].group) SHAPES[k].group = "shape";
+  });
+  var SHAPE_ORDER = ["band","hoops","sash","panels","chevron","yoke","hem","stripe",
+                     "gradient","halftone","grain","ikat","blocks"];
+
+  /* A preset is a list of layers with optional overrides — the two
+     halftone screens need different angles or they sit on top of each
+     other instead of interfering. */
   var PRESETS = [
-    ["Solid", []], ["Chest band", ["band"]], ["Hoops", ["hoops"]],
-    ["Sash", ["sash"]], ["Side panels", ["panels"]], ["Chevron", ["chevron"]],
-    ["Yoke", ["yoke"]], ["Hoops + band", ["hoops","band"]]
+    ["Solid",       []],
+    ["Chest band",  [{ t:"band" }]],
+    ["Hoops",       [{ t:"hoops" }]],
+    ["Sash",        [{ t:"sash" }]],
+    ["Side panels", [{ t:"panels" }]],
+    ["Chevron",     [{ t:"chevron" }]],
+    ["Dip dye",     [{ t:"gradient", v:0.58, soft:0.30 }]],
+    ["Halftone",    [{ t:"halftone", c:"#CE2027", angle:0.07, v:0.46, soft:0.34, size:0.24 },
+                     { t:"halftone", c:"#4FA3D9", angle:0.21, v:0.62, soft:0.40, size:0.24 }]],
+    ["Ikat",        [{ t:"ikat", density:0.55, soft:0.85 }]],
+    ["Geo blocks",  [{ t:"blocks", c:"#1B4FA8" },
+                     { t:"grain", c:"#14284B", density:0.34, soft:0.9 }]]
   ];
 
-  var elId = 1;
-  function bareEl(type) {
-    var e = SHAPES[type].make();
-    e.type = type;
-    e.colour = state.secondary;
+  function fromPreset(spec, withId) {
+    var e = withId ? mk(spec.t, spec.c) : bareEl(spec.t, spec.c);
+    Object.keys(spec).forEach(function (k) {
+      if (k !== "t" && k !== "c") e[k] = spec[k];
+    });
     return e;
   }
-  function mk(type) {
-    var e = bareEl(type);
+
+  var elId = 1;
+  function bareEl(type, colour) {
+    var e = SHAPES[type].make();
+    e.type = type;
+    e.colour = colour || state.secondary;
+    e.seed = 7;
+    return e;
+  }
+  function mk(type, colour) {
+    var e = bareEl(type, colour);
     e.id = elId++;
+    e.seed = Math.floor(Math.random() * 1e9);
     return e;
   }
   function findEl(id) {
@@ -771,7 +826,228 @@
     ctx.fill();
   }
 
+  /* ---------------------------------------------------------------
+     Print effects. A sublimated vest is a full-bleed image dyed into
+     the cloth, so these paint the whole texture and composite in
+     layer order. Each keeps one colour and fades into whatever is
+     underneath, which is what lets two halftone screens in two
+     colours over a dark body read like a CMYK separation.
+  ----------------------------------------------------------------*/
+  function hexToRgb(hex) {
+    var h = String(hex).replace("#", "");
+    if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    var n = parseInt(h, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function rgba(hex, a) {
+    var c = hexToRgb(hex);
+    return "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a + ")";
+  }
+
+  /* Deterministic per layer, so a slider drag does not reshuffle the grain. */
+  function rng(seed) {
+    var s = (seed || 1) >>> 0;
+    return function () {
+      s = (s * 1664525 + 1013904223) >>> 0;
+      return s / 4294967296;
+    };
+  }
+
+  /* The direction a fade runs in, as a line across the texture. */
+  function rampLine(angleDeg) {
+    var a = angleDeg * Math.PI / 180;
+    var dx = Math.sin(a), dy = -Math.cos(a);
+    var half = (Math.abs(TW * dx) + Math.abs(TH * dy)) / 2;
+    return [TW / 2 - dx * half, TH / 2 - dy * half, TW / 2 + dx * half, TH / 2 + dy * half];
+  }
+
+  function rampStops(ctx, L, centre, spread, from, to) {
+    var g = ctx.createLinearGradient(L[0], L[1], L[2], L[3]);
+    var lo = Math.max(0, Math.min(1, centre - spread));
+    var hi = Math.max(0, Math.min(1, centre + spread));
+    if (hi - lo < 0.004) hi = Math.min(1, lo + 0.004);
+    g.addColorStop(0, from);
+    if (lo > 0) g.addColorStop(lo, from);
+    g.addColorStop(hi, to);
+    g.addColorStop(1, to);
+    return g;
+  }
+
+  var scratch = null, sctx = null;
+  function ensureScratch() {
+    if (!sctx) {
+      scratch = document.createElement("canvas");
+      sctx = scratch.getContext("2d");
+    }
+    if (scratch.width !== TW || scratch.height !== TH) {
+      scratch.width = TW;
+      scratch.height = TH;
+    }
+    sctx.setTransform(1, 0, 0, 1, 0, 0);
+    sctx.globalCompositeOperation = "source-over";
+    sctx.globalAlpha = 1;
+    sctx.clearRect(0, 0, TW, TH);
+    return sctx;
+  }
+
+  /* Draw something full-bleed, then fade it out along a direction. */
+  function maskedDraw(ctx, drawFn, angleDeg, centre, spread) {
+    var s = ensureScratch();
+    drawFn(s);
+    s.globalCompositeOperation = "destination-in";
+    s.fillStyle = rampStops(s, rampLine(angleDeg), centre, spread,
+                            "rgba(0,0,0,0)", "rgba(0,0,0,1)");
+    s.fillRect(0, 0, TW, TH);
+    s.globalCompositeOperation = "source-over";
+    ctx.drawImage(scratch, 0, 0);
+  }
+
+  /* Generated canvases are cached: regenerating noise on every pointermove
+     would both crawl and re-randomise under the cursor. */
+  var fxCache = {};
+  function cached(key, build) {
+    if (!fxCache[key]) {
+      var keys = Object.keys(fxCache);
+      if (keys.length > 40) delete fxCache[keys[0]];
+      fxCache[key] = build();
+    }
+    return fxCache[key];
+  }
+
+  function noiseTile(colour, density, seed) {
+    return cached("n|" + colour + "|" + density.toFixed(3) + "|" + seed, function () {
+      var n = 256, c = document.createElement("canvas");
+      c.width = c.height = n;
+      var x = c.getContext("2d"), img = x.createImageData(n, n);
+      var rgb = hexToRgb(colour), rand = rng(seed);
+      for (var i = 0; i < n * n; i++) {
+        img.data[i * 4] = rgb[0];
+        img.data[i * 4 + 1] = rgb[1];
+        img.data[i * 4 + 2] = rgb[2];
+        img.data[i * 4 + 3] = rand() < density ? 255 : 0;
+      }
+      x.putImageData(img, 0, 0);
+      return c;
+    });
+  }
+
+  /* Ikat: horizontal streaks that mirror about the centre of each panel,
+     which is what gives the woven-warp look. Drawn small and scaled up
+     with smoothing off so the streaks stay hard-edged. */
+  function ikatHalf(colour, coverage, seed) {
+    return cached("i|" + colour + "|" + coverage.toFixed(3) + "|" + seed, function () {
+      var w = 150, h = 420, c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      var x = c.getContext("2d"), rand = rng(seed);
+      x.fillStyle = colour;
+      for (var y = 0; y < h; y++) {
+        var px = 0;
+        while (px < w) {
+          var run = 1 + Math.floor(rand() * 9);
+          /* denser towards the mirror axis at the right-hand edge */
+          var bias = Math.pow(px / w, 0.7);
+          if (rand() < coverage * (0.25 + 1.5 * bias)) x.fillRect(px, y, run, 1);
+          px += run;
+        }
+      }
+      return c;
+    });
+  }
+
+  function polyPx(ctx, colour, pts) {
+    ctx.fillStyle = colour;
+    ctx.beginPath();
+    pts.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); });
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function paintEffect(ctx, el) {
+    var c = el.colour;
+    switch (el.type) {
+
+      case "gradient":
+        ctx.fillStyle = rampStops(ctx, rampLine(el.angle * 360), el.v, el.soft,
+                                  rgba(c, 0), rgba(c, 1));
+        ctx.fillRect(0, 0, TW, TH);
+        break;
+
+      case "halftone": {
+        var deg = el.angle * 360;
+        var L = rampLine(deg);
+        var vx = L[2] - L[0], vy = L[3] - L[1];
+        var len2 = (vx * vx + vy * vy) || 1;
+        var lo = el.v - el.soft, span = (2 * el.soft) || 1e-6;
+        /* Screen sits off the fade direction so two stacked screens
+           interfere the way a real separation does. */
+        var sa = (deg + 34) * Math.PI / 180;
+        var cos = Math.cos(sa), sin = Math.sin(sa);
+        var cell = Math.max(3, el.size * TW * 0.052);
+        var reach = Math.sqrt(TW * TW + TH * TH) / 2 + cell;
+        ctx.fillStyle = c;
+        for (var gy = -reach; gy < reach; gy += cell) {
+          for (var gx = -reach; gx < reach; gx += cell) {
+            var px = TW / 2 + gx * cos - gy * sin;
+            var py = TH / 2 + gx * sin + gy * cos;
+            if (px < -cell || px > TW + cell || py < -cell || py > TH + cell) continue;
+            var t = ((px - L[0]) * vx + (py - L[1]) * vy) / len2;
+            var k = (t - lo) / span;
+            if (k <= 0) continue;
+            var r = cell * 0.72 * (k > 1 ? 1 : k);
+            if (r < 0.4) continue;
+            ctx.beginPath();
+            ctx.arc(px, py, r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        break;
+      }
+
+      case "grain":
+        maskedDraw(ctx, function (s) {
+          s.fillStyle = s.createPattern(noiseTile(c, el.density, el.seed), "repeat");
+          s.fillRect(0, 0, TW, TH);
+        }, el.angle === undefined ? 180 : el.angle * 360, el.v, el.soft);
+        break;
+
+      case "ikat":
+        maskedDraw(ctx, function (s) {
+          var half = ikatHalf(c, el.density, el.seed);
+          s.imageSmoothingEnabled = false;
+          [FRONT_U, BACK_U].forEach(function (u) {
+            var x0 = (u - 0.25) * TW, w = 0.25 * TW;
+            s.drawImage(half, x0 + w, 0, w, TH);
+            s.save();
+            s.translate(x0 + w, 0);
+            s.scale(-1, 1);
+            s.drawImage(half, 0, 0, w, TH);
+            s.restore();
+          });
+          s.imageSmoothingEnabled = true;
+        }, 180, el.v, el.soft);
+        break;
+
+      case "blocks": {
+        var sz = Math.max(12, el.size * TW * 0.5);
+        var lean = el.lean * sz;
+        var bar = sz * 0.42;
+        for (var row = -1; row * sz < TH + sz; row++) {
+          var yy = row * sz;
+          var off = (row % 2) ? sz * 0.5 : 0;
+          for (var col = -2; col * sz < TW + 2 * sz; col++) {
+            var xx = col * sz + off;
+            polyPx(ctx, c, [[xx, yy + sz], [xx + lean, yy],
+                            [xx + lean + bar, yy], [xx + bar, yy + sz]]);
+          }
+        }
+        break;
+      }
+    }
+  }
+
   function paintElement(ctx, el) {
+    var def = SHAPES[el.type];
+    if (def && def.group === "print") { paintEffect(ctx, el); return; }
     var c = el.colour, o;
     switch (el.type) {
       case "band":
@@ -1192,7 +1468,7 @@
   /* ---------------------------------------------------------------
      Pattern chips reuse the texture painter, cropped to the front half
   ----------------------------------------------------------------*/
-  function patternThumb(types) {
+  function patternThumb(specs) {
     var c = document.createElement("canvas");
     c.width = 288; c.height = 144;
     var x = c.getContext("2d");
@@ -1200,7 +1476,7 @@
     TW = 288; TH = 144;
     x.fillStyle = state.base;
     x.fillRect(0, 0, TW, TH);
-    types.forEach(function (t) { paintElement(x, bareEl(t)); });
+    specs.forEach(function (spec) { paintElement(x, fromPreset(spec, false)); });
     TW = keepW; TH = keepH;
     var t = document.createElement("canvas");
     t.width = 176; t.height = 92;
@@ -1246,7 +1522,9 @@
     $("#customHex").textContent = String(current).toUpperCase();
   }
 
-  function typeKey(types) { return types.join("+"); }
+  function typeKey(specs) {
+    return specs.map(function (x) { return x.t || x; }).join("+");
+  }
 
   function renderPresets() {
     var current = typeKey(state.elements.map(function (e) { return e.type; }));
@@ -1259,9 +1537,15 @@
   }
 
   function renderAddShapes() {
-    $("#addShapes").innerHTML = SHAPE_ORDER.map(function (t) {
-      return '<button type="button" data-add="' + t + '">+ ' + esc(SHAPES[t].label) + '</button>';
-    }).join("");
+    $("#addShapes").innerHTML = [["shape","Blocks and stripes"], ["print","Fades and textures"]]
+      .map(function (g) {
+        return '<div class="add-group"><span class="add-label">' + g[1] + '</span>' +
+          '<div class="seg">' + SHAPE_ORDER.filter(function (t) {
+            return SHAPES[t].group === g[0];
+          }).map(function (t) {
+            return '<button type="button" data-add="' + t + '">+ ' + esc(SHAPES[t].label) + '</button>';
+          }).join("") + '</div></div>';
+      }).join("");
   }
 
   function renderElements() {
@@ -1507,7 +1791,9 @@
   onPick("crest",   function (v) { state.crest = v; });
   onPick("back",    function (v) { state.back = v; });
   onPick("preset",  function (v) {
-    state.elements = PRESETS[parseInt(v, 10)][1].map(mk);
+    state.elements = PRESETS[parseInt(v, 10)][1].map(function (spec) {
+      return fromPreset(spec, true);
+    });
     var last = state.elements[state.elements.length - 1];
     state.layer = last ? "el:" + last.id : "base";
   });
