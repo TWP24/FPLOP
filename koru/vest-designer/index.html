@@ -4,435 +4,201 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap">
 <style>
   :root{
-    --paper:#E6E8E4;
-    --surface:#FBFBFA;
-    --surface-2:#F1F2EF;
-    --ink:#171A19;
-    --ink-2:#4A524F;
-    --ink-3:#78807C;
-    --rule:#D2D5D0;
-    --rule-2:#E0E2DE;
-    --accent:#2E5E5A;
-    --accent-soft:#DCE8E5;
-    --accent-ink:#F4F7F5;
-    --warn:#8C5410;
-    --warn-soft:#F6EBDA;
-    --good:#2F6B3C;
-    --good-soft:#E2EEE4;
-    --stage:#DEE1DC;
-    --stage-2:#EFF1ED;
+    --paper:#E6E8E4; --surface:#FBFBFA; --surface-2:#F1F2EF;
+    --ink:#171A19; --ink-2:#4A524F; --ink-3:#78807C;
+    --rule:#D2D5D0; --rule-2:#E0E2DE;
+    --accent:#2E5E5A; --accent-soft:#DCE8E5; --accent-ink:#F4F7F5;
+    --warn:#8C5410; --warn-soft:#F6EBDA;
+    --stage:#DCDEDA; --stage-2:#EFF0ED;
     --sans:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
     --display:"Archivo",var(--sans);
     --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
-    --shadow:0 1px 2px rgba(23,26,25,.05), 0 8px 24px -16px rgba(23,26,25,.28);
   }
   @media (prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
-      --paper:#141716;
-      --surface:#1C201E;
-      --surface-2:#232825;
-      --ink:#E8EAE7;
-      --ink-2:#A7B0AB;
-      --ink-3:#7C857F;
-      --rule:#2E3432;
-      --rule-2:#272C2A;
-      --accent:#5FB3A6;
-      --accent-soft:#1E2E2C;
-      --accent-ink:#0E1413;
-      --warn:#D9A25C;
-      --warn-soft:#2A231A;
-      --good:#7FC08C;
-      --good-soft:#1B2A1E;
-      --stage:#1A1E1C;
-      --stage-2:#222725;
-      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.9);
+      --paper:#141716; --surface:#1C201E; --surface-2:#232825;
+      --ink:#E8EAE7; --ink-2:#A7B0AB; --ink-3:#7C857F;
+      --rule:#2E3432; --rule-2:#272C2A;
+      --accent:#5FB3A6; --accent-soft:#1E2E2C; --accent-ink:#0E1413;
+      --warn:#D9A25C; --warn-soft:#2A231A;
+      --stage:#202523; --stage-2:#171B1A;
     }
   }
   :root[data-theme="dark"]{
-    --paper:#141716;
-    --surface:#1C201E;
-    --surface-2:#232825;
-    --ink:#E8EAE7;
-    --ink-2:#A7B0AB;
-    --ink-3:#7C857F;
-    --rule:#2E3432;
-    --rule-2:#272C2A;
-    --accent:#5FB3A6;
-    --accent-soft:#1E2E2C;
-    --accent-ink:#0E1413;
-    --warn:#D9A25C;
-    --warn-soft:#2A231A;
-    --good:#7FC08C;
-    --good-soft:#1B2A1E;
-    --stage:#1A1E1C;
-    --stage-2:#222725;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.9);
+    --paper:#141716; --surface:#1C201E; --surface-2:#232825;
+    --ink:#E8EAE7; --ink-2:#A7B0AB; --ink-3:#7C857F;
+    --rule:#2E3432; --rule-2:#272C2A;
+    --accent:#5FB3A6; --accent-soft:#1E2E2C; --accent-ink:#0E1413;
+    --warn:#D9A25C; --warn-soft:#2A231A;
+    --stage:#202523; --stage-2:#171B1A;
   }
 
   *{box-sizing:border-box}
   body{
-    margin:0;
-    background:var(--paper);
-    color:var(--ink);
-    font-family:var(--sans);
-    font-size:15px;
-    line-height:1.55;
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:15px;line-height:1.55;
     -webkit-font-smoothing:antialiased;
   }
-  h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.015em}
+  h1,h2{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.015em}
   p{margin:0}
-  button,input,select,textarea{font:inherit;color:inherit}
+  button,input,textarea{font:inherit;color:inherit}
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .wrap{max-width:1180px;margin-inline:auto;padding-inline:20px}
 
-  .wrap{max-width:1260px;margin-inline:auto;padding-inline:20px}
-
-  /* ---------- masthead ---------- */
-  .masthead{
-    border-bottom:1px solid var(--rule);
-    background:var(--surface);
-  }
-  .masthead .wrap{
-    display:flex;flex-wrap:wrap;gap:16px 28px;align-items:baseline;
-    padding-block:18px 16px;
-  }
-  .mark{
-    font-family:var(--display);font-weight:700;font-size:17px;
-    letter-spacing:.14em;text-transform:uppercase;
-  }
+  .masthead{border-bottom:1px solid var(--rule);background:var(--surface)}
+  .masthead .wrap{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:baseline;padding-block:18px 16px}
+  .mark{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.14em;text-transform:uppercase}
   .mark span{color:var(--accent)}
   .masthead-title{font-size:14px;color:var(--ink-2);margin-right:auto}
-  .window-flag{
-    display:inline-flex;align-items:center;gap:8px;
-    font-family:var(--mono);font-size:12px;letter-spacing:.02em;
-    color:var(--ink-2);
-  }
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--good);flex:none}
+  .window-flag{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
 
-  /* ---------- intro ---------- */
-  .intro{padding-block:36px 28px;border-bottom:1px solid var(--rule)}
-  .intro h1{font-size:clamp(30px,4.6vw,44px);font-weight:700;line-height:1.03;max-width:15ch}
-  .intro p{margin-top:14px;max-width:62ch;color:var(--ink-2);font-size:16px}
-  .intro .lede-note{
-    margin-top:18px;font-family:var(--mono);font-size:12.5px;color:var(--ink-3);
-    display:flex;flex-wrap:wrap;gap:6px 18px;
-  }
+  .intro{padding-block:34px 26px;border-bottom:1px solid var(--rule)}
+  .intro h1{font-size:clamp(29px,4.4vw,42px);font-weight:700;line-height:1.04;max-width:15ch}
+  .intro p{margin-top:13px;max-width:60ch;color:var(--ink-2);font-size:16px}
 
-  /* ---------- workbench ---------- */
   .workbench{
-    display:grid;
-    grid-template-columns:minmax(0,0.95fr) minmax(0,1.05fr);
-    gap:44px;
-    align-items:start;
-    padding-block:32px 56px;
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:40px;align-items:start;padding-block:30px 54px;
   }
-
-  /* ---------- stage ---------- */
   .stage-col{position:sticky;top:16px}
   .stage{
-    background:radial-gradient(86% 66% at 50% 24%, #363C3F 0%, #232829 48%, #16191B 100%);
-    border:1px solid var(--rule);
-    border-radius:4px;
-    position:relative;
-    overflow:hidden;
-    aspect-ratio:4/5;
-    touch-action:pan-y;
-    cursor:grab;
+    background:linear-gradient(180deg,var(--stage-2),var(--stage));
+    border:1px solid var(--rule);border-radius:4px;
+    position:relative;overflow:hidden;aspect-ratio:3/2;
   }
-  .stage.dragging{cursor:grabbing}
-  .stage:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   #stageHost{position:absolute;inset:0}
   #stageHost canvas{display:block;width:100%;height:100%}
-  .stage-caption{
-    position:absolute;left:14px;top:12px;pointer-events:none;
-    font-family:var(--mono);font-size:11px;letter-spacing:.12em;
-    color:rgba(255,255,255,.44);
-  }
-  .stage-hint{
-    position:absolute;left:0;right:0;bottom:14px;text-align:center;pointer-events:none;
-    font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
-    color:rgba(255,255,255,.42);transition:opacity .5s;
-  }
-  .stage-hint.gone{opacity:0}
   .stage-toolbar{
     display:flex;flex-wrap:wrap;gap:10px;align-items:center;
-    padding:12px 10px;border-top:1px solid var(--rule);
-    background:var(--surface);
+    padding:12px 10px;border-top:1px solid var(--rule);background:var(--surface);
+    border:1px solid var(--rule);border-top:0;border-radius:0 0 4px 4px;
   }
-  .stage-toolbar .grow{margin-left:auto}
 
-  /* ---------- steps ---------- */
   .steps{display:flex;flex-direction:column;gap:14px}
-  .step{
-    background:var(--surface);
-    border:1px solid var(--rule);
-    border-radius:4px;
-    padding:18px 20px 20px;
-  }
+  .step{background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:18px 20px 20px}
   .step-head{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
-  .step-num{
-    font-family:var(--mono);font-size:12px;color:var(--accent);
-    letter-spacing:.06em;flex:none;
-  }
+  .step-num{font-family:var(--mono);font-size:12px;color:var(--accent);flex:none}
   .step-head h2{font-size:19px;font-weight:600}
-  .step-note{
-    color:var(--ink-2);font-size:13.5px;margin-bottom:16px;margin-left:30px;max-width:56ch;
-  }
+  .step-note{color:var(--ink-2);font-size:13.5px;margin:0 0 16px 30px;max-width:54ch}
   .field{margin-top:16px}
   .field:first-of-type{margin-top:0}
-  .label{
-    display:block;font-size:11px;font-weight:600;text-transform:uppercase;
-    letter-spacing:.14em;color:var(--ink-3);margin-bottom:8px;
-  }
+  .label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;
+    letter-spacing:.14em;color:var(--ink-3);margin-bottom:8px}
 
-  /* segmented + chips */
   .seg{display:flex;flex-wrap:wrap;gap:6px}
-  .seg button, .chip{
-    font-family:var(--sans);font-size:13.5px;font-weight:500;
-    background:var(--surface-2);color:var(--ink-2);
-    border:1px solid var(--rule);border-radius:3px;
-    padding:7px 13px;cursor:pointer;
+  .seg button{
+    font-size:13.5px;font-weight:500;background:var(--surface-2);color:var(--ink-2);
+    border:1px solid var(--rule);border-radius:3px;padding:7px 13px;cursor:pointer;
     transition:background .14s,border-color .14s,color .14s;
   }
-  .seg button:hover,.chip:hover{border-color:var(--ink-3);color:var(--ink)}
-  .seg button[aria-pressed="true"],.chip[aria-pressed="true"]{
-    background:var(--accent);border-color:var(--accent);color:var(--accent-ink);
-  }
-  .seg button[disabled]{opacity:.38;cursor:not-allowed}
-  .seg button[disabled]:hover{border-color:var(--rule);color:var(--ink-2)}
+  .seg button:hover{border-color:var(--ink-3);color:var(--ink)}
+  .seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 
-  /* cut cards */
-  .cuts{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px}
-  .cut{
-    display:flex;flex-direction:column;gap:2px;align-items:flex-start;
-    text-align:left;padding:11px 13px;cursor:pointer;
-    background:var(--surface-2);border:1px solid var(--rule);border-radius:3px;
-    transition:background .14s,border-color .14s;
-  }
-  .cut:hover{border-color:var(--ink-3)}
-  .cut[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
-  .cut[disabled]{opacity:.36;cursor:not-allowed}
-  .cut .cut-name{font-weight:600;font-size:14px;color:var(--ink)}
-  .cut .cut-meta{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
-  .cut .cut-price{font-family:var(--mono);font-size:12.5px;color:var(--accent);font-weight:500}
-  .cut[disabled] .cut-price{color:var(--ink-3)}
-
-  /* palette */
-  .layer-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-  .palette{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:7px}
+  .palette{display:grid;grid-template-columns:repeat(auto-fill,minmax(32px,1fr));gap:7px;margin-top:11px}
   .swatch{
     aspect-ratio:1;border-radius:3px;cursor:pointer;padding:0;
-    border:1px solid rgba(128,128,128,.4);
-    position:relative;transition:transform .1s;
+    border:1px solid rgba(128,128,128,.4);transition:transform .1s;
   }
   .swatch:hover{transform:translateY(-1px)}
-  .swatch[aria-pressed="true"]{
-    box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent);
-  }
-  .custom-row{
-    display:flex;align-items:center;gap:10px;margin-top:12px;
-    font-family:var(--mono);font-size:12px;color:var(--ink-3);
-  }
-  .custom-row input[type="color"]{
-    width:38px;height:28px;padding:2px;background:var(--surface-2);
-    border:1px solid var(--rule);border-radius:3px;cursor:pointer;
-  }
+  .swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent)}
+  .custom-row{display:flex;align-items:center;gap:10px;margin-top:12px;
+    font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+  .custom-row input[type="color"]{width:38px;height:28px;padding:2px;background:var(--surface-2);
+    border:1px solid var(--rule);border-radius:3px;cursor:pointer}
+  .target-note{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin:0}
+  .target-note b{color:var(--ink);font-weight:500}
 
-  /* pattern grid */
-  .patterns{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px}
-  .pattern{
+  .styles{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+  .style{
     padding:8px 8px 7px;cursor:pointer;background:var(--surface-2);
     border:1px solid var(--rule);border-radius:3px;
     display:flex;flex-direction:column;gap:6px;align-items:center;
     transition:border-color .14s,background .14s;
   }
-  .pattern:hover{border-color:var(--ink-3)}
-  .pattern[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
-  .pattern .pat-img{display:block;width:100%;aspect-ratio:176/92;border-radius:2px;
+  .style:hover{border-color:var(--ink-3)}
+  .style[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+  .style span.sw{display:block;width:100%;aspect-ratio:176/92;border-radius:2px;
     background-size:cover;background-position:center}
-  .pattern span{font-size:11.5px;font-weight:500;color:var(--ink-2)}
+  .style span.nm{font-size:11.5px;font-weight:500;color:var(--ink-2);text-align:center}
 
-  /* text inputs */
-  .text-input,.select-input{
-    width:100%;padding:9px 11px;
-    background:var(--surface-2);border:1px solid var(--rule);border-radius:3px;
-    font-size:14px;
-  }
+  input[type="range"]{width:100%;accent-color:var(--accent);cursor:pointer;height:22px;margin:0}
+  .slider-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+  .slider-val{font-family:var(--mono);font-size:12.5px;color:var(--ink-3);min-width:4ch;text-align:right}
+
+  .text-input{width:100%;padding:9px 11px;background:var(--surface-2);
+    border:1px solid var(--rule);border-radius:3px;font-size:14px}
   .text-input::placeholder{color:var(--ink-3)}
-  .chest-input{
-    font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-  }
-  .counter{
-    font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
-    margin-top:6px;display:block;
-  }
+  .chest-input{font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+  .counter{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:6px;display:block}
   .two-up{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
-  /* sliders + layer stack */
-  input[type="range"]{
-    width:100%;accent-color:var(--accent);cursor:pointer;
-    height:22px;margin:0;
-  }
-  .palette-target{
-    font-family:var(--mono);font-size:12px;color:var(--ink-3);margin:0 0 10px;
-  }
-  .palette-target b{color:var(--ink);font-weight:500}
-
-  .add-group{display:flex;flex-direction:column;gap:7px}
-  .add-group + .add-group{margin-top:14px}
-  .add-label{
-    font-family:var(--mono);font-size:11px;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--ink-3);
-  }
-  .layers{display:flex;flex-direction:column;gap:8px}
-  .layer{
-    border:1px solid var(--rule);border-radius:3px;
-    background:var(--surface-2);padding:10px 12px 12px;
-  }
-  .layer.sel{border-color:var(--accent);background:var(--accent-soft)}
-  .layer-top{display:flex;align-items:center;gap:10px}
-  .layer-sw{
-    width:22px;height:22px;border-radius:3px;flex:none;cursor:pointer;padding:0;
-    border:1px solid rgba(128,128,128,.45);
-  }
-  .layer.sel .layer-sw{box-shadow:0 0 0 2px var(--accent-soft),0 0 0 3px var(--accent)}
-  .layer-name{font-weight:600;font-size:14px;margin-right:auto}
-  .icon{
-    width:26px;height:26px;flex:none;cursor:pointer;padding:0;line-height:1;
-    font-size:11px;color:var(--ink-2);
-    background:var(--surface);border:1px solid var(--rule);border-radius:3px;
-  }
-  .icon:hover{border-color:var(--ink-3);color:var(--ink)}
-  .icon[disabled]{opacity:.3;cursor:not-allowed}
-  .icon.kill{font-size:15px}
-  .layer-palette{
-    display:grid;grid-template-columns:repeat(auto-fill,minmax(24px,1fr));
-    gap:5px;margin-top:11px;
-  }
-  .swatch.sm{border-radius:2px}
-  .swatch.sm[aria-pressed="true"]{
-    box-shadow:0 0 0 2px var(--accent-soft),0 0 0 3px var(--accent);
-  }
-  .layer-custom{
-    display:flex;align-items:center;gap:9px;margin-top:9px;
-    font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
-  }
-  .layer-custom input[type="color"]{
-    width:34px;height:24px;padding:2px;background:var(--surface);
-    border:1px solid var(--rule);border-radius:3px;cursor:pointer;
-  }
-  .layer-field{
-    display:grid;grid-template-columns:86px 1fr;gap:10px;align-items:center;margin-top:8px;
-  }
-  .layer-field label{
-    font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
-  }
-  .empty{
-    font-size:13.5px;color:var(--ink-2);padding:12px 14px;
-    border:1px dashed var(--rule);border-radius:3px;
-  }
-
-  /* submit */
   .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
-  .btn{
-    font-family:var(--sans);font-size:14px;font-weight:600;
-    padding:11px 20px;border-radius:3px;cursor:pointer;
-    border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);
-    transition:opacity .14s;
-  }
+  .btn{font-size:14px;font-weight:600;padding:11px 20px;border-radius:3px;cursor:pointer;
+    border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);transition:opacity .14s}
   .btn:hover{opacity:.88}
   .btn.ghost{background:transparent;color:var(--ink);border-color:var(--rule)}
   .btn.ghost:hover{border-color:var(--ink-3);opacity:1}
-  .btn[disabled]{opacity:.45;cursor:not-allowed}
   .status{font-family:var(--mono);font-size:12.5px;color:var(--ink-2);min-height:1.4em}
   .status.err{color:var(--warn)}
 
-  .fineprint{
-    margin-top:36px;padding-top:20px;border-top:1px solid var(--rule);
-    color:var(--ink-3);font-size:12.5px;max-width:70ch;
-  }
+  .fineprint{margin-top:34px;padding-top:20px;border-top:1px solid var(--rule);
+    color:var(--ink-3);font-size:12.5px;max-width:68ch}
   .fineprint p + p{margin-top:8px}
-  .visually-hidden{
-    position:absolute;width:1px;height:1px;padding:0;margin:-1px;
-    overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
-  }
 
   @media (max-width:960px){
-    .workbench{grid-template-columns:minmax(0,1fr);gap:28px;padding-block:24px 44px}
+    .workbench{grid-template-columns:minmax(0,1fr);gap:26px;padding-block:22px 42px}
     .stage-col{position:static}
-    .stage{aspect-ratio:1/1}
   }
   @media (max-width:520px){
     .wrap{padding-inline:16px}
     .two-up{grid-template-columns:1fr}
-    .intro{padding-block:26px 22px}
   }
-  @media (prefers-reduced-motion:reduce){
-    *{transition:none !important;animation:none !important}
-  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
 <header class="masthead">
   <div class="wrap">
     <div class="mark">Koru<span>.</span></div>
     <div class="masthead-title">Club Vest Designer</div>
-    <div class="window-flag"><span class="dot"></span><span id="flagText">Autumn 2026 window — open</span></div>
+    <div class="window-flag"><span class="dot"></span><span>Autumn 2026 window — open</span></div>
   </div>
 </header>
 
 <div class="wrap">
   <section class="intro">
     <h1>Design the vest your club races in.</h1>
-    <p>Build it here, send it to us, and we open a pre-order window on korusports.ie. Your runners
-      buy their own size directly — the club carries no stock and pays nothing up front.</p>
-    <div class="lede-note">
-      <span>Made in club mesh or race mesh</span>
-      <span>Men's · Women's · Kids · Crop</span>
-      <span>Pre-order window, then one delivery</span>
-    </div>
+    <p>Pick your colours, pick a style, put your club across the chest. Send it to us and we
+      come back with a proof on the real garment. It costs nothing and commits you to nothing.</p>
   </section>
 
   <main class="workbench">
-    <!-- ================= STAGE ================= -->
     <div class="stage-col">
-      <div class="stage" tabindex="0" role="img"
-           aria-label="Vest preview. Drag, or use the left and right arrow keys, to turn it.">
-        <div id="stageHost"></div>
-        <span class="stage-caption" id="stageCaption">MEN'S · FRONT</span>
-        <span class="stage-hint" id="stageHint">Drag to turn</span>
-      </div>
-
+      <div class="stage"><div id="stageHost"></div></div>
       <div class="stage-toolbar">
-        <div class="seg" role="group" aria-label="View side">
-          <button type="button" data-view="front" aria-pressed="true">Turn to front</button>
-          <button type="button" data-view="back" aria-pressed="false">Turn to back</button>
-        </div>
-        <div class="seg grow" role="group" aria-label="Preview which cut">
+        <div class="seg" role="group" aria-label="Show the design on a different cut">
           <button type="button" data-preview="mens" aria-pressed="true">Men's</button>
           <button type="button" data-preview="womens" aria-pressed="false">Women's</button>
           <button type="button" data-preview="kids" aria-pressed="false">Kids</button>
           <button type="button" data-preview="crop" aria-pressed="false">Crop</button>
         </div>
       </div>
-
     </div>
 
-    <!-- ================= STEPS ================= -->
     <div class="steps">
-
       <section class="step">
-        <div class="step-head"><span class="step-num">01</span><h2>Club colours</h2></div>
-        <p class="step-note">Body, trim and lettering are set here; every design layer carries its
-          own colour dot in step 02. The sixteen are a starting point, not a limit — everything is
-          sublimated, so any colour you can name we can print.</p>
-
+        <div class="step-head"><span class="step-num">01</span><h2>Your colours</h2></div>
+        <p class="step-note">Everything is sublimated, so colour is free — a five-colour vest
+          costs the same as a plain one, and any colour you can name we can print.</p>
         <div class="field">
           <span class="label">Colouring</span>
-          <div class="layer-row seg" role="group" aria-label="Which layer to colour">
-            <button type="button" data-layer="base" aria-pressed="true">Body</button>
-            <button type="button" data-layer="trim" aria-pressed="false">Trim</button>
-            <button type="button" data-layer="text" aria-pressed="false">Lettering</button>
+          <div class="seg" role="group" aria-label="Which colour to change">
+            <button type="button" data-role="base" aria-pressed="true">Body</button>
+            <button type="button" data-role="design" aria-pressed="false">Design</button>
+            <button type="button" data-role="accent" aria-pressed="false">Accent</button>
+            <button type="button" data-role="trim" aria-pressed="false">Trim</button>
+            <button type="button" data-role="text" aria-pressed="false">Lettering</button>
           </div>
-          <p class="palette-target" id="paletteTarget"></p>
           <div class="palette" id="palette"></div>
           <div class="custom-row">
             <label for="customColour">Any other colour</label>
@@ -443,42 +209,27 @@
       </section>
 
       <section class="step">
-        <div class="step-head"><span class="step-num">02</span><h2>The design</h2></div>
-        <p class="step-note">Start from a look, then move it, resize it, recolour it, or stack
-          another on top of it. Fades, halftones, grain and ikat cover the whole panel
-          and blend into whatever is under them, so two halftone screens in two colours
-          behave like a print separation. It is all sublimated — the dye goes into the fibre
-          rather than sitting on top of it, so nothing cracks or lifts.</p>
-
+        <div class="step-head"><span class="step-num">02</span><h2>Your style</h2></div>
+        <p class="step-note">Each one uses the colours you picked above, so change a colour and
+          they all change with it.</p>
+        <div class="styles" id="styles"></div>
         <div class="field">
-          <span class="label">Start from</span>
-          <div class="patterns" id="patterns"></div>
-        </div>
-
-        <div class="field">
-          <span class="label">Add a layer</span>
-          <div id="addShapes" role="group" aria-label="Add a shape or a print effect"></div>
-        </div>
-
-        <div class="field">
-          <span class="label">Layers, bottom to top</span>
-          <div class="layers" id="elementList"></div>
+          <label class="label" for="opacity">Strength</label>
+          <div class="slider-row">
+            <input type="range" id="opacity" min="10" max="100" value="100">
+            <span class="slider-val" id="opacityVal">100%</span>
+          </div>
         </div>
       </section>
 
       <section class="step">
-        <div class="step-head"><span class="step-num">03</span><h2>Print and crest</h2></div>
-        <p class="step-note">Club name across the chest is the standard, but none of it is
-          fixed — move the print up onto the chest or down towards the hem, size it to fill
-          the width, and put the crest wherever your club puts it.</p>
-
+        <div class="step-head"><span class="step-num">03</span><h2>Club name and crest</h2></div>
         <div class="field">
           <label class="label" for="clubName">Name across the chest</label>
           <input type="text" id="clubName" class="text-input chest-input" maxlength="20"
                  value="KORU AC" placeholder="YOUR CLUB">
           <span class="counter" id="nameCount"></span>
         </div>
-
         <div class="field">
           <span class="label">Lettering</span>
           <div class="seg" role="group" aria-label="Lettering style">
@@ -486,115 +237,68 @@
             <button type="button" data-font="wide" aria-pressed="false">Wide</button>
           </div>
         </div>
-
-        <div class="field two-up">
-          <div>
-            <label class="label" for="chestV">Height on the chest</label>
-            <input type="range" id="chestV" data-print="chestV" min="16" max="62" value="35">
-          </div>
-          <div>
-            <label class="label" for="chestSize">Print size</label>
-            <input type="range" id="chestSize" data-print="chestSize" min="55" max="150" value="100">
-          </div>
-        </div>
-
         <div class="field">
           <span class="label">Club crest</span>
           <div class="seg" role="group" aria-label="Crest placement">
             <button type="button" data-crest="none" aria-pressed="false">None</button>
             <button type="button" data-crest="left" aria-pressed="true">Left chest</button>
-            <button type="button" data-crest="right" aria-pressed="false">Right chest</button>
             <button type="button" data-crest="chest" aria-pressed="false">Centre chest</button>
-            <button type="button" data-crest="upper-back" aria-pressed="false">Upper back</button>
             <button type="button" data-crest="back" aria-pressed="false">Centre back</button>
           </div>
-        </div>
-
-        <div class="field" id="crestSizeField">
-          <label class="label" for="crestSize">Crest size</label>
-          <input type="range" id="crestSize" data-print="crestSize" min="55" max="170" value="100">
-        </div>
-
-        <div class="field">
-          <span class="label">Back of vest</span>
-          <div class="seg" role="group" aria-label="Back treatment">
-            <button type="button" data-back="name" aria-pressed="true">Club name</button>
-            <button type="button" data-back="plain" aria-pressed="false">Plain</button>
-          </div>
-        </div>
-
-        <div class="field" id="backVField">
-          <label class="label" for="backV">Height on the back</label>
-          <input type="range" id="backV" data-print="backV" min="14" max="62" value="30">
         </div>
       </section>
 
       <section class="step">
         <div class="step-head"><span class="step-num">04</span><h2>Send it to Koru</h2></div>
-        <p class="step-note">We come back within two working days with a proof on the real garment,
-          the cuts and sizes we'd run, and a date for your window. Nothing is charged until your
-          runners order.</p>
-
+        <p class="step-note">We come back within two working days with a proof, the cuts and
+          sizes we'd run, and a date for your window.</p>
         <div class="field two-up">
-          <div>
-            <label class="label" for="fClub">Club</label>
-            <input type="text" id="fClub" class="text-input" placeholder="Bandon AC" autocomplete="organization">
-          </div>
-          <div>
-            <label class="label" for="fName">Your name</label>
-            <input type="text" id="fName" class="text-input" placeholder="Gear officer" autocomplete="name">
-          </div>
+          <div><label class="label" for="fClub">Club</label>
+            <input type="text" id="fClub" class="text-input" placeholder="Bandon AC" autocomplete="organization"></div>
+          <div><label class="label" for="fName">Your name</label>
+            <input type="text" id="fName" class="text-input" placeholder="Gear officer" autocomplete="name"></div>
         </div>
         <div class="field two-up">
-          <div>
-            <label class="label" for="fEmail">Email</label>
-            <input type="email" id="fEmail" class="text-input" placeholder="you@club.ie" autocomplete="email">
-          </div>
-          <div>
-            <label class="label" for="fPhone">Phone</label>
-            <input type="tel" id="fPhone" class="text-input" placeholder="08x xxx xxxx" autocomplete="tel">
-          </div>
+          <div><label class="label" for="fEmail">Email</label>
+            <input type="email" id="fEmail" class="text-input" placeholder="you@club.ie" autocomplete="email"></div>
+          <div><label class="label" for="fPhone">Phone</label>
+            <input type="tel" id="fPhone" class="text-input" placeholder="08x xxx xxxx" autocomplete="tel"></div>
         </div>
         <div class="field">
           <label class="label" for="fNotes">Anything we should know</label>
           <textarea id="fNotes" class="text-input" rows="3"
-            placeholder="Pantone references, crest file, a race you need these for…"></textarea>
+            placeholder="Colour references, your crest file, a race you need these for…"></textarea>
         </div>
-
         <div class="actions">
           <button type="button" class="btn" id="submitBtn">Send design to Koru</button>
-          <button type="button" class="btn ghost" id="saveBtn">Save &amp; get a share link</button>
-          <button type="button" class="btn ghost" id="copyBtn">Copy spec</button>
+          <button type="button" class="btn ghost" id="saveBtn">Save &amp; get a link</button>
         </div>
         <p class="status" id="status" role="status" aria-live="polite"></p>
       </section>
 
       <div class="fineprint">
-        <p>Designing here costs nothing and commits you to nothing. Cuts, sizes and the price
-          your runners pay come back with your proof.</p>
-        <p>A new club vest design has to be registered with Athletics Ireland before it can be worn
-          in competition. We'll send you the artwork sheet you need for that with your proof.</p>
-        <p>Every vest is sublimated, so colour is free: a six-colour halftone costs no more to
-          make than a plain one, and nothing here is priced by the number of colours you use.
-          Minimum runs and lead times are set by the mill and can move between seasons — we
-          confirm them with your proof.</p>
+        <p>A new club vest design has to be registered with Athletics Ireland before it can be
+          worn in competition. We send you the artwork sheet you need for that with your proof.</p>
+        <p>Your runners buy their own size on korusports.ie during the window, so the club holds
+          no stock and pays nothing up front.</p>
       </div>
     </div>
   </main>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function () {
   "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
 
-  /* ---------------------------------------------------------------
-     Garment data. Geometry is in the preview's own 320x440 space.
-     Style codes and prices mirror what is live on korusports.ie.
-  ----------------------------------------------------------------*/
-  var SHOULDER_Y = 56, CX = 160;
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+    });
+  }
+  function smooth(a) { return a * a * (3 - 2 * a); }
 
-  /* Mill stock colour card. Anything else is a Pantone dye match. */
   var PALETTE = [
     ["Chalk","#F2F1EC"], ["Silver","#C7CCC9"], ["Steel","#6E7A80"], ["Jet","#15161A"],
     ["Sky","#4FA3D9"],   ["Royal","#1B4FA8"],  ["Navy","#14284B"],  ["Bottle","#0C3B2B"],
@@ -608,230 +312,76 @@
     return "Custom " + String(hex).toUpperCase();
   }
 
-  /* Every shape is a few numbers in texture space, so any of them can be
-     moved, resized, recoloured and stacked. Slider values are percentages. */
   var LEAN = 0.25;
+
+  /* A layer is a handful of numbers in texture space. Clubs never see
+     these — they pick a style below and the numbers come with it. */
   var SHAPES = {
-    band:    { label:"Band",         make:function(){ return {v:0.35, h:0.14}; },
-               fields:[["v","Position",10,88],["h","Thickness",3,36]] },
-    hoops:   { label:"Hoops",        make:function(){ return {v:0.08, h:0.075, gap:0.075}; },
-               fields:[["v","Start",0,44],["h","Thickness",2,22],["gap","Spacing",2,32]] },
-    sash:    { label:"Sash",         make:function(){ return {u:0.075, w:0.12}; },
-               fields:[["u","Position",0,34],["w","Width",4,28]] },
-    panels:  { label:"Side panels",  make:function(){ return {w:0.064}; },
-               fields:[["w","Width",2,22]] },
-    chevron: { label:"Chevron",      make:function(){ return {v:0.235, h:0.10}; },
-               fields:[["v","Position",4,72],["h","Thickness",3,24]] },
-    yoke:    { label:"Shoulder yoke",make:function(){ return {v:0.17}; },
-               fields:[["v","Depth",5,48]] },
-    hem:     { label:"Hem band",     make:function(){ return {h:0.10}; },
-               fields:[["h","Depth",3,32]] },
-    stripe:  { label:"Centre stripe",make:function(){ return {w:0.07}; },
-               fields:[["w","Width",2,26]] },
-
-    /* Sublimation prints. These cover the whole panel and fade into
-       whatever is under them, so they stack rather than replace. */
-    gradient:{ label:"Fade",       group:"print",
-               make:function(){ return {v:0.55, soft:0.35, angle:0.5}; },
-               fields:[["v","Position",0,100],["soft","Softness",2,80],["angle","Angle",0,100]] },
-    halftone:{ label:"Halftone",   group:"print",
-               make:function(){ return {v:0.52, soft:0.40, size:0.26, angle:0.12}; },
-               fields:[["v","Position",0,100],["soft","Spread",4,90],
-                       ["size","Dot size",8,60],["angle","Angle",0,100]] },
-    grain:   { label:"Grain",      group:"print",
-               make:function(){ return {v:0.55, soft:0.45, density:0.28, angle:0.5}; },
-               fields:[["density","Density",4,60],["v","Position",0,100],["soft","Softness",5,100]] },
-    ikat:    { label:"Ikat",       group:"print",
-               make:function(){ return {v:0.55, soft:0.70, density:0.42}; },
-               fields:[["density","Coverage",10,80],["v","Position",0,100],["soft","Softness",5,100]] },
-    blocks:  { label:"Geo blocks", group:"print",
-               make:function(){ return {size:0.16, lean:0.30}; },
-               fields:[["size","Scale",6,40],["lean","Lean",0,60]] },
-    camo:    { label:"Camo",       group:"print",
-               make:function(){ return {size:0.14, coverage:0.50, stretch:0.55}; },
-               fields:[["size","Scale",4,40],["coverage","Coverage",20,80],
-                       ["stretch","Stretch",5,95]] },
-    smear:   { label:"Smear",      group:"print",
-               make:function(){ return {size:0.12, soft:0.28, grain:0.30}; },
-               fields:[["size","Bands",4,40],["soft","Softness",4,60],["grain","Grain",0,60]] },
-    snake:   { label:"Snakeskin",  group:"print",
-               make:function(){ return {size:0.12, coverage:0.55}; },
-               fields:[["size","Scale",4,30],["coverage","Coverage",20,100]] },
-    mosaic:  { label:"Mosaic",     group:"print",
-               make:function(){ return {size:0.16, coverage:0.40, v:0.55}; },
-               fields:[["size","Scale",6,40],["coverage","Coverage",10,70],
-                       ["v","Position",0,100]] },
-    warp:    { label:"Warp chevron", group:"print",
-               make:function(){ return {w:0.20, lean:0.30, density:0.60}; },
-               fields:[["w","Width",5,50],["lean","Lean",5,60],["density","Density",20,90]] }
+    band:    { group:"shape", make:function(){ return {v:0.35, h:0.14}; } },
+    hoops:   { group:"shape", make:function(){ return {v:0.08, h:0.075, gap:0.075}; } },
+    sash:    { group:"shape", make:function(){ return {u:0.075, w:0.12}; } },
+    panels:  { group:"shape", make:function(){ return {w:0.064}; } },
+    chevron: { group:"shape", make:function(){ return {v:0.235, h:0.10}; } },
+    yoke:    { group:"shape", make:function(){ return {v:0.17}; } },
+    hem:     { group:"shape", make:function(){ return {h:0.10}; } },
+    stripe:  { group:"shape", make:function(){ return {w:0.07}; } },
+    gradient:{ group:"print", make:function(){ return {v:0.55, soft:0.35, angle:0.5}; } },
+    halftone:{ group:"print", make:function(){ return {v:0.52, soft:0.40, size:0.26, angle:0.12}; } },
+    grain:   { group:"print", make:function(){ return {v:0.55, soft:0.45, density:0.28, angle:0.5}; } },
+    ikat:    { group:"print", make:function(){ return {v:0.55, soft:0.70, density:0.42}; } },
+    blocks:  { group:"print", make:function(){ return {size:0.16, lean:0.30}; } },
+    camo:    { group:"print", make:function(){ return {size:0.14, coverage:0.50, stretch:0.55}; } },
+    smear:   { group:"print", make:function(){ return {size:0.12, soft:0.28, grain:0.30}; } },
+    snake:   { group:"print", make:function(){ return {size:0.12, coverage:0.55}; } },
+    mosaic:  { group:"print", make:function(){ return {size:0.16, coverage:0.40, v:0.55}; } },
+    warp:    { group:"print", make:function(){ return {w:0.20, lean:0.30, density:0.60}; } }
   };
-  Object.keys(SHAPES).forEach(function (k) {
-    if (!SHAPES[k].group) SHAPES[k].group = "shape";
-  });
-  var SHAPE_ORDER = ["band","hoops","sash","panels","chevron","yoke","hem","stripe",
-                     "gradient","halftone","grain","ikat","blocks",
-                     "camo","smear","snake","mosaic","warp"];
 
-  /* A preset is a list of layers with optional overrides — the two
-     halftone screens need different angles or they sit on top of each
-     other instead of interfering. */
-  var PRESETS = [
-    ["Solid",       []],
-    ["Chest band",  [{ t:"band" }]],
-    ["Hoops",       [{ t:"hoops" }]],
-    ["Sash",        [{ t:"sash" }]],
-    ["Side panels", [{ t:"panels" }]],
-    ["Chevron",     [{ t:"chevron" }]],
-    ["Dip dye",     [{ t:"gradient", v:0.58, soft:0.30 }]],
-    ["Halftone",    [{ t:"halftone", c:"#CE2027", angle:0.07, v:0.46, soft:0.34, size:0.24 },
-                     { t:"halftone", c:"#4FA3D9", angle:0.21, v:0.62, soft:0.40, size:0.24 }]],
-    ["Ikat",        [{ t:"ikat", density:0.55, soft:0.85 }]],
-    ["Geo blocks",  [{ t:"blocks", c:"#1B4FA8" },
-                     { t:"grain", c:"#14284B", density:0.34, soft:0.9 }]],
-    ["Tiger camo",  [{ t:"camo", c:"#14284B", stretch:0.72, coverage:0.52 }]],
-    ["Smear",       [{ t:"smear", c:"#15161A", size:0.14, soft:0.22 }]],
-    ["Snakeskin",   [{ t:"snake", c:"#14284B", coverage:1 },
-                     { t:"snake", c:"#4FA3D9", coverage:0.42 }]],
-    ["Mosaic V",    [{ t:"mosaic", c:"#14284B", coverage:0.5 },
-                     { t:"mosaic", c:"#CE2027", coverage:0.3 },
-                     { t:"mosaic", c:"#1B4FA8", coverage:0.28 }]],
-    ["Warp chevron",[{ t:"warp", c:"#15161A" }]]
+  /* Styles name a colour ROLE rather than a hex, so changing one of the
+     club's colours restyles the whole gallery at once. */
+  var STYLES = [
+    ["Solid",        []],
+    ["Chest band",   [{ t:"band", r:"design" }]],
+    ["Hoops",        [{ t:"hoops", r:"design" }]],
+    ["Sash",         [{ t:"sash", r:"design" }]],
+    ["Side panels",  [{ t:"panels", r:"design" }]],
+    ["Chevron",      [{ t:"chevron", r:"design" }]],
+    ["Shoulder yoke",[{ t:"yoke", r:"design" }]],
+    ["Hem band",     [{ t:"hem", r:"design" }, { t:"stripe", r:"accent", w:0.05 }]],
+    ["Dip dye",      [{ t:"gradient", r:"design", v:0.58, soft:0.30 }]],
+    ["Halftone",     [{ t:"halftone", r:"design", angle:0.07, v:0.46, soft:0.34 },
+                      { t:"halftone", r:"accent", angle:0.21, v:0.62, soft:0.40 }]],
+    ["Ikat",         [{ t:"ikat", r:"design", density:0.55, soft:0.85 }]],
+    ["Geo blocks",   [{ t:"blocks", r:"design" },
+                      { t:"grain", r:"accent", density:0.34, soft:0.9 }]],
+    ["Tiger camo",   [{ t:"camo", r:"design", stretch:0.72, coverage:0.52 }]],
+    ["Smear",        [{ t:"smear", r:"design", size:0.14, soft:0.22 }]],
+    ["Snakeskin",    [{ t:"snake", r:"design", coverage:1 },
+                      { t:"snake", r:"accent", coverage:0.42 }]],
+    ["Mosaic",       [{ t:"mosaic", r:"design", coverage:0.5 },
+                      { t:"mosaic", r:"accent", coverage:0.3 },
+                      { t:"mosaic", r:"trim", coverage:0.28 }]],
+    ["Warp chevron", [{ t:"warp", r:"design" }]]
   ];
 
-  function fromPreset(spec, withId) {
-    var e = withId ? mk(spec.t, spec.c) : bareEl(spec.t, spec.c);
-    Object.keys(spec).forEach(function (k) {
-      if (k !== "t" && k !== "c") e[k] = spec[k];
-    });
-    return e;
-  }
-
-  var elId = 1;
-  function bareEl(type, colour) {
-    var e = SHAPES[type].make();
-    e.type = type;
-    e.colour = colour || state.secondary;
-    e.opacity = 1;
-    e.seed = 7;
-    return e;
-  }
-  function mk(type, colour) {
-    var e = bareEl(type, colour);
-    e.id = elId++;
-    e.seed = Math.floor(Math.random() * 1e9);
-    return e;
-  }
-  function findEl(id) {
-    for (var i = 0; i < state.elements.length; i++) {
-      if (state.elements[i].id === id) return state.elements[i];
-    }
-    return null;
-  }
-  function layerEl() {
-    return state.layer.indexOf("el:") === 0
-      ? findEl(parseInt(state.layer.slice(3), 10)) : null;
-  }
-  function activeColour() {
-    var el = layerEl();
-    return el ? el.colour : (state[state.layer] || state.base);
-  }
-  function setActiveColour(hex) {
-    var el = layerEl();
-    if (el) { el.colour = hex; state.secondary = hex; }
-    else if (state.layer === "base" || state.layer === "trim" || state.layer === "text") {
-      state[state.layer] = hex;
-    }
-  }
-
-  /* ---------------------------------------------------------------
-     State
-  ----------------------------------------------------------------*/
   var state = {
-    view: "front",
     preview: "mens",
-    tier: "club",   /* no fabric choice on this page — see README */
-    layer: "base",
-    base: "#F5C518",
-    secondary: "#14284B",
-    trim: "#14284B",
-    text: "#F2F1EC",
-    elements: [],
+    role: "base",
+    base:   "#F5C518",
+    design: "#14284B",
+    accent: "#CE2027",
+    trim:   "#14284B",
+    text:   "#F2F1EC",
+    style: 1,
+    opacity: 1,
     clubName: "KORU AC",
     font: "block",
-    chestV: 0.35,
-    chestSize: 1,
-    pickerFor: null,
     crest: "left",
-    crestSize: 1,
-    back: "name",
-    backV: 0.30,
     contact: { club:"", name:"", email:"", phone:"", notes:"" }
   };
-  state.elements = [mk("band")];
 
-  var $ = function (sel) { return document.querySelector(sel); };
-  var $$ = function (sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); };
-
-  /* ---------------------------------------------------------------
-     The vest is a tube of elliptical cross-sections whose TOP EDGE is
-     a function of the angle around the body: high over the shoulders,
-     scooped at the neck, cut away at the sides for the armholes. One
-     profile gives neckline, straps and armholes at once — and painting
-     the binding against that same profile makes the trim follow the
-     real edge all the way round.
-  ----------------------------------------------------------------*/
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
-    });
-  }
-
-  /* height, half-width at hem / waist / chest, front-to-back depth. The cut
-     is a way to see the design on a different body, not an order line —
-     which cuts a club actually wants is settled with the proof. */
-  var SHAPE = {
-    mens:   { label:"Men's",    H:0.62, hem:0.192, waist:0.184, chest:0.196, depth:0.56 },
-    womens: { label:"Women's",  H:0.56, hem:0.176, waist:0.156, chest:0.178, depth:0.57 },
-    kids:   { label:"Kids",     H:0.47, hem:0.156, waist:0.150, chest:0.158, depth:0.56 },
-    crop:   { label:"Crop top", H:0.34, hem:0.172, waist:0.166, chest:0.178, depth:0.57 }
-  };
-
-  /* degrees from centre-front -> height fraction of the garment's top edge */
-  var EDGE = {
-    club:  [[0,0.900],[9,0.907],[20,0.952],[31,0.993],[46,1.0],[60,0.963],
-            [73,0.80],[90,0.585],[107,0.80],[120,0.963],[134,1.0],[149,0.993],
-            [160,0.975],[180,0.955]],
-    elite: [[0,0.848],[8,0.856],[18,0.918],[29,0.984],[44,1.0],[56,0.947],
-            [70,0.74],[90,0.455],[110,0.74],[124,0.947],[136,1.0],[151,0.984],
-            [162,0.958],[180,0.928]]
-  };
-
-  function smooth(a) { return a * a * (3 - 2 * a); }
-
-  function topAt(theta, tier) {
-    var keys = EDGE[tier] || EDGE.club;
-    var deg = ((theta * 180 / Math.PI) % 360 + 360) % 360;
-    if (deg > 180) deg = 360 - deg;
-    for (var i = 1; i < keys.length; i++) {
-      if (deg <= keys[i][0]) {
-        var a = keys[i - 1], b = keys[i];
-        var k = smooth((deg - a[0]) / ((b[0] - a[0]) || 1));
-        return a[1] + (b[1] - a[1]) * k;
-      }
-    }
-    return keys[keys.length - 1][1];
-  }
-
-  function radiusAt(t, sh) {
-    if (t < 0.42) return sh.hem + (sh.waist - sh.hem) * smooth(t / 0.42);
-    if (t < 0.85) return sh.waist + (sh.chest - sh.waist) * smooth((t - 0.42) / 0.43);
-    return sh.chest * (1 - 0.09 * smooth((t - 0.85) / 0.15));
-  }
-
-  /* ---------------------------------------------------------------
-     Fabric texture. u wraps the body with centre-front at 0.25 and
-     centre-back at 0.75, so neither print lands on the side seam.
-  ----------------------------------------------------------------*/
+  /* Texture: the two printed panels laid end to end, front centred at
+     u=0.25 and back at u=0.75 so neither print lands on a side seam. */
   var TW = 2048, TH = 1024, FRONT_U = 0.25, BACK_U = 0.75;
   var texCanvas = null, texCtx = null, meshPattern = null;
 
@@ -1284,13 +834,6 @@
     }
   }
 
-  function paintElement(ctx, el) {
-    var prevAlpha = ctx.globalAlpha;
-    ctx.globalAlpha = prevAlpha * (el.opacity == null ? 1 : el.opacity);
-    paintLayer(ctx, el);
-    ctx.globalAlpha = prevAlpha;
-  }
-
   function paintLayer(ctx, el) {
     var def = SHAPES[el.type];
     if (def && def.group === "print") { paintEffect(ctx, el); return; }
@@ -1339,18 +882,6 @@
     }
   }
 
-  /* Binding follows the garment's own top edge, so one pass gives neck,
-     shoulder and armhole trim. */
-  function paintBinding(ctx, colour, tier) {
-    ctx.fillStyle = colour;
-    var band = 0.022 * TH, step = 2;
-    for (var px = 0; px <= TW; px += step) {
-      var theta = (px / TW - FRONT_U) * Math.PI * 2;
-      ctx.fillRect(px, (1 - topAt(theta, tier)) * TH, step, band);
-    }
-    ctx.fillRect(0, TH - band, TW, band);
-  }
-
   function trackedText(ctx, text, cxPx, cyPx, maxPx, tracking, colour, baseSize) {
     if (!text) return;
     var face = "Archivo, 'Arial Narrow', 'Helvetica Neue', sans-serif";
@@ -1378,9 +909,9 @@
   }
 
   var CREST_POS = {
-    "left":       [FRONT_U - 0.060, 0.255, 58],
+    "left":       [FRONT_U - 0.066, 0.222, 54],
     "right":      [FRONT_U + 0.060, 0.255, 58],
-    "chest":      [FRONT_U, 0.215, 66],
+    "chest":      [FRONT_U, 0.200, 64],
     "upper-back": [BACK_U, 0.265, 70],
     "back":       [BACK_U, 0.50, 86]
   };
@@ -1404,7 +935,32 @@
     ctx.restore();
   }
 
-  function paintTexture() {
+
+  function paintElement(ctx, el) {
+    var prev = ctx.globalAlpha;
+    ctx.globalAlpha = prev * (el.opacity == null ? 1 : el.opacity);
+    paintLayer(ctx, el);
+    ctx.globalAlpha = prev;
+  }
+
+  /* Materialise the chosen style: roles become the club's actual colours,
+     and seeds come from the style index so noise never reshuffles. */
+  function activeLayers() {
+    var spec = (STYLES[state.style] || STYLES[0])[1];
+    return spec.map(function (s, i) {
+      var el = SHAPES[s.t].make();
+      el.type = s.t;
+      el.colour = state[s.r] || state.design;
+      el.opacity = state.opacity;
+      el.seed = state.style * 977 + i * 31 + 7;
+      Object.keys(s).forEach(function (k) {
+        if (k !== "t" && k !== "r") el[k] = s[k];
+      });
+      return el;
+    });
+  }
+
+  function paintTexture(layers) {
     ensureTexCanvas();
     var ctx = texCtx;
     var name = (state.clubName || "").trim().toUpperCase();
@@ -1414,519 +970,256 @@
     ctx.globalAlpha = 1;
     ctx.fillStyle = state.base;
     ctx.fillRect(0, 0, TW, TH);
-    state.elements.forEach(function (el) { paintElement(ctx, el); });
+
+    (layers || activeLayers()).forEach(function (el) { paintElement(ctx, el); });
 
     if (!meshPattern) meshPattern = makeMeshPattern(ctx);
     ctx.fillStyle = meshPattern;
     ctx.fillRect(0, 0, TW, TH);
 
-    paintBinding(ctx, state.trim, state.tier);
-
-    trackedText(ctx, name, FRONT_U * TW, state.chestV * TH, TW * 0.34,
-                tracking, state.text, 160 * state.chestSize);
-    if (state.back === "name") {
-      trackedText(ctx, name, BACK_U * TW, state.backV * TH, TW * 0.30,
-                  tracking, state.text, 140 * state.chestSize);
-    }
+    trackedText(ctx, name, FRONT_U * TW, 0.345 * TH, TW * 0.34, tracking, state.text, 160);
+    trackedText(ctx, name, BACK_U * TW, 0.30 * TH, TW * 0.30, tracking, state.text, 140);
     var cp = CREST_POS[state.crest];
-    if (cp) paintCrest(ctx, cp[0], cp[1], cp[2] * state.crestSize, state.text);
-
-    if (three.texture) three.texture.needsUpdate = true;
+    if (cp) paintCrest(ctx, cp[0], cp[1], cp[2], state.text);
   }
 
   /* ---------------------------------------------------------------
-     Scene
+     Flat mockup. Front and back, drawn the way a kit supplier presents
+     them, rather than a garment turned in space.
   ----------------------------------------------------------------*/
-  var three = {
-    ok:false, renderer:null, scene:null, camera:null, group:null, mesh:null,
-    material:null, texture:null, host:null, shapeKey:"",
-    rotY:0, rotX:0, vel:0, target:null, raf:0
+  var CUTS = {
+    mens:   { label:"Men's",    ratio:1.30, neckW:0.26, neckD:0.150, shoulder:0.600,
+              armIn:0.600, uaX:0.950, uaY:0.420, waist:0.930, hemX:0.945 },
+    womens: { label:"Women's",  ratio:1.28, neckW:0.25, neckD:0.170, shoulder:0.545,
+              armIn:0.545, uaX:0.910, uaY:0.400, waist:0.855, hemX:0.915 },
+    kids:   { label:"Kids",     ratio:1.20, neckW:0.25, neckD:0.130, shoulder:0.575,
+              armIn:0.575, uaX:0.930, uaY:0.400, waist:0.915, hemX:0.935 },
+    crop:   { label:"Crop top", ratio:0.84, neckW:0.25, neckD:0.240, shoulder:0.545,
+              armIn:0.545, uaX:0.920, uaY:0.550, waist:0.890, hemX:0.920 }
   };
 
-  function buildGeometry(cutKey, tier) {
-    var sh = SHAPE[cutKey], AN = 168, VN = 88;
-    var pos = [], uv = [], idx = [];
-    for (var i = 0; i <= AN; i++) {
-      var f = i / AN, theta = f * Math.PI * 2, tTop = topAt(theta, tier);
-      for (var j = 0; j <= VN; j++) {
-        var t = (j / VN) * tTop, r = radiusAt(t, sh);
-        pos.push(Math.sin(theta) * r, t * sh.H, Math.cos(theta) * r * sh.depth);
-        uv.push(f + FRONT_U, 1 - t);
-      }
-    }
-    for (var a = 0; a < AN; a++) {
-      for (var b = 0; b < VN; b++) {
-        var p0 = a * (VN + 1) + b, p1 = p0 + VN + 1;
-        idx.push(p0, p1, p0 + 1, p1, p1 + 1, p0 + 1);
-      }
-    }
-    var g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-    g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
-    g.setIndex(idx);
-    g.computeVertexNormals();
-    return g;
+  function vestPath(cut, x, y, w, h, back) {
+    var cx = x + w / 2, hw = w / 2;
+    var nd = y + (back ? cut.neckD * 0.42 : cut.neckD) * h;
+    var X = function (f) { return cx + f * hw; };
+    var Y = function (f) { return y + f * h; };
+    var p = new Path2D();
+    p.moveTo(X(-cut.shoulder), Y(0.048));
+    p.lineTo(X(-cut.neckW), Y(0.012));
+    p.bezierCurveTo(X(-cut.neckW * 0.80), nd * 0.55 + Y(0.012) * 0.45, X(-cut.neckW * 0.44), nd, cx, nd);
+    p.bezierCurveTo(X(cut.neckW * 0.44), nd, X(cut.neckW * 0.80), nd * 0.55 + Y(0.012) * 0.45, X(cut.neckW), Y(0.012));
+    p.lineTo(X(cut.shoulder), Y(0.048));
+    p.bezierCurveTo(X(cut.armIn * 0.97), Y(cut.uaY * 0.36), X(cut.armIn * 1.24), Y(cut.uaY * 0.78),
+                    X(cut.uaX), Y(cut.uaY));
+    p.bezierCurveTo(X(cut.waist), Y(0.63), X(cut.hemX), Y(0.87), X(cut.hemX), Y(0.982));
+    p.bezierCurveTo(X(cut.hemX * 0.42), Y(1.0), X(-cut.hemX * 0.42), Y(1.0), X(-cut.hemX), Y(0.982));
+    p.bezierCurveTo(X(-cut.hemX), Y(0.87), X(-cut.waist), Y(0.63), X(-cut.uaX), Y(cut.uaY));
+    p.bezierCurveTo(X(-cut.armIn * 1.24), Y(cut.uaY * 0.78), X(-cut.armIn * 0.97), Y(cut.uaY * 0.36),
+                    X(-cut.shoulder), Y(0.048));
+    p.closePath();
+    return p;
   }
 
-  function shadowTexture() {
-    var c = document.createElement("canvas");
-    c.width = c.height = 256;
-    var x = c.getContext("2d");
-    var grd = x.createRadialGradient(128, 128, 6, 128, 128, 126);
-    grd.addColorStop(0, "rgba(0,0,0,.5)");
-    grd.addColorStop(0.5, "rgba(0,0,0,.2)");
-    grd.addColorStop(1, "rgba(0,0,0,0)");
-    x.fillStyle = grd;
-    x.fillRect(0, 0, 256, 256);
-    return new THREE.CanvasTexture(c);
+  function drawVest(ctx, cut, x, y, w, h, back) {
+    var p = vestPath(cut, x, y, w, h, back);
+
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.22)";
+    ctx.shadowBlur = w * 0.06;
+    ctx.shadowOffsetY = w * 0.022;
+    ctx.fillStyle = state.base;
+    ctx.fill(p);
+    ctx.restore();
+
+    ctx.save();
+    ctx.clip(p);
+    ctx.drawImage(texCanvas, back ? TW * 0.5 : 0, 0, TW * 0.5, TH, x, y, w, h);
+    /* Binding follows the outline itself, so neck, armhole and hem all
+       get it from one stroke. */
+    ctx.strokeStyle = state.trim;
+    ctx.lineWidth = w * 0.036;
+    ctx.stroke(p);
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(0,0,0,.28)";
+    ctx.lineWidth = Math.max(1, w * 0.004);
+    ctx.stroke(p);
+    ctx.restore();
   }
 
-  function init3D(host) {
-    if (!window.THREE) return false;
-    try {
-      ensureTexCanvas();
-      var renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-      renderer.outputEncoding = THREE.sRGBEncoding;
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.05;
-      host.appendChild(renderer.domElement);
+  var stageCanvas = null, stageCtx = null;
 
-      var texture = new THREE.CanvasTexture(texCanvas);
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.encoding = THREE.sRGBEncoding;
-      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-
-      var scene = new THREE.Scene();
-      scene.add(new THREE.HemisphereLight(0xffffff, 0x2b3033, 0.7));
-      var key = new THREE.DirectionalLight(0xfff6e8, 1.2);
-      key.position.set(1.1, 1.6, 1.5); scene.add(key);
-      var fill = new THREE.DirectionalLight(0xd8e6ff, 0.42);
-      fill.position.set(-1.6, 0.4, 0.9); scene.add(fill);
-      var rim = new THREE.DirectionalLight(0xffffff, 0.8);
-      rim.position.set(-0.4, 0.9, -1.8); scene.add(rim);
-
-      var group = new THREE.Group();
-      scene.add(group);
-
-      var shadow = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.66, 0.66),
-        new THREE.MeshBasicMaterial({ map:shadowTexture(), transparent:true, depthWrite:false })
-      );
-      shadow.rotation.x = -Math.PI / 2;
-      shadow.position.y = -0.014;
-      scene.add(shadow);
-
-      three.renderer = renderer;
-      three.scene = scene;
-      three.camera = new THREE.PerspectiveCamera(30, 1, 0.1, 20);
-      three.group = group;
-      three.texture = texture;
-      three.material = new THREE.MeshStandardMaterial({
-        map: texture, roughness: 0.85, metalness: 0.02, side: THREE.DoubleSide
-      });
-      three.host = host;
-      three.ok = true;
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function ensureMesh() {
-    var key = state.preview + "|" + state.tier;
-    if (three.shapeKey === key) return;
-    three.shapeKey = key;
-    if (three.mesh) {
-      three.group.remove(three.mesh);
-      three.mesh.geometry.dispose();
-    }
-    three.mesh = new THREE.Mesh(buildGeometry(state.preview, state.tier), three.material);
-    three.group.add(three.mesh);
-    var sh = SHAPE[state.preview];
-    three.camera.position.set(0, sh.H * 0.52, sh.H * 2.5 + 0.5);
-    three.camera.lookAt(0, sh.H * 0.5, 0);
-  }
-
-  function resize() {
-    if (!three.ok || !three.host) return;
-    var w = three.host.clientWidth || 460, h = three.host.clientHeight || 560;
-    three.renderer.setSize(w, h, false);
-    three.camera.aspect = w / h;
-    three.camera.updateProjectionMatrix();
-    draw();
-  }
-
-  function draw() {
-    if (!three.ok || !three.mesh) return;
-    three.group.rotation.y = three.rotY;
-    three.group.rotation.x = three.rotX;
-    three.renderer.render(three.scene, three.camera);
-  }
-
-  function facing() {
-    return three.ok ? (Math.cos(three.rotY) >= 0 ? "front" : "back") : state.view;
-  }
-
-  function syncFacing() {
-    var f = facing();
-    if (f !== state.view) state.view = f;
-    $$("[data-view]").forEach(function (b) {
-      b.setAttribute("aria-pressed", String(b.dataset.view === f));
-    });
-    var cap = document.getElementById("stageCaption");
-    if (cap) cap.textContent = SHAPE[state.preview].label.toUpperCase() + " · " + f.toUpperCase();
-  }
-
-  function tick() {
-    three.raf = 0;
-    var moving = false;
-    if (three.target !== null) {
-      var d = three.target - three.rotY;
-      if (Math.abs(d) < 0.003) { three.rotY = three.target; three.target = null; }
-      else { three.rotY += d * 0.16; moving = true; }
-    } else if (Math.abs(three.vel) > 0.0008) {
-      three.rotY += three.vel;
-      three.vel *= 0.94;
-      moving = true;
-    } else {
-      three.vel = 0;
-    }
-    draw();
-    syncFacing();
-    if (moving) three.raf = requestAnimationFrame(tick);
-  }
-
-  function kick() { if (!three.raf) three.raf = requestAnimationFrame(tick); }
-
-  function turnTo(view) {
-    if (!three.ok) { state.view = view; renderPreview(); return; }
-    var want = view === "front" ? 0 : Math.PI;
-    var turns = Math.round((three.rotY - want) / (Math.PI * 2));
-    three.target = want + turns * Math.PI * 2;
-    three.vel = 0;
-    kick();
-  }
-
-  function hideHint() {
-    var hint = document.getElementById("stageHint");
-    if (hint) hint.classList.add("gone");
-  }
-
-  function bindDrag(stage) {
-    var dragging = false, lastX = 0, lastY = 0, moved = 0;
-    stage.addEventListener("pointerdown", function (e) {
-      if (!three.ok) return;
-      dragging = true; moved = 0;
-      lastX = e.clientX; lastY = e.clientY;
-      three.target = null; three.vel = 0;
-      stage.classList.add("dragging");
-      try { stage.setPointerCapture(e.pointerId); } catch (err) { /* no capture */ }
-    });
-    stage.addEventListener("pointermove", function (e) {
-      if (!dragging) return;
-      var dx = e.clientX - lastX, dy = e.clientY - lastY;
-      lastX = e.clientX; lastY = e.clientY;
-      moved += Math.abs(dx) + Math.abs(dy);
-      three.rotY += dx * 0.0095;
-      three.rotX = Math.max(-0.16, Math.min(0.16, three.rotX + dy * 0.0024));
-      three.vel = dx * 0.0095;
-      draw();
-      syncFacing();
-      if (moved > 24) hideHint();
-    });
-    function end(e) {
-      if (!dragging) return;
-      dragging = false;
-      stage.classList.remove("dragging");
-      try { stage.releasePointerCapture(e.pointerId); } catch (err) { /* already released */ }
-      kick();
-    }
-    stage.addEventListener("pointerup", end);
-    stage.addEventListener("pointercancel", end);
-    stage.addEventListener("keydown", function (e) {
-      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-      e.preventDefault();
-      three.rotY += (e.key === "ArrowLeft" ? -1 : 1) * 0.32;
-      three.vel = 0; three.target = null;
-      draw(); syncFacing(); hideHint();
-    });
-  }
-
-  /* ---------------------------------------------------------------
-     Flat fallback, for a viewer with no WebGL. Same texture, same
-     edge profile — projected instead of turned.
-  ----------------------------------------------------------------*/
-  var flat = null;
-
-  function renderFlat() {
-    var host = document.getElementById("stageHost");
+  function renderStage() {
+    var host = $("#stageHost");
     if (!host) return;
-    if (!flat) {
-      flat = document.createElement("canvas");
-      host.appendChild(flat);
+    if (!stageCanvas) {
+      stageCanvas = document.createElement("canvas");
+      host.appendChild(stageCanvas);
+      stageCtx = stageCanvas.getContext("2d");
     }
-    var w = host.clientWidth || 460, h = host.clientHeight || 560;
+    var w = host.clientWidth || 520, h = host.clientHeight || 350;
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    flat.width = w * dpr; flat.height = h * dpr;
-    flat.style.width = "100%"; flat.style.height = "100%";
-    var ctx = flat.getContext("2d");
+    if (stageCanvas.width !== Math.round(w * dpr) || stageCanvas.height !== Math.round(h * dpr)) {
+      stageCanvas.width = Math.round(w * dpr);
+      stageCanvas.height = Math.round(h * dpr);
+    }
+    var ctx = stageCtx;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
-    var sh = SHAPE[state.preview], tier = state.tier;
-    var back = state.view === "back";
-    var theta0 = back ? Math.PI : 0;
-    var scale = (h * 0.82) / sh.H;
-    var originX = w / 2, originY = h * 0.90;
+    var cut = CUTS[state.preview];
+    var gap = w * 0.05, side = w * 0.06, labelBand = 26;
+    var boxW = (w - gap - side * 2) / 2;
+    var boxH = boxW * cut.ratio;
+    var avail = h - labelBand - 22;
+    if (boxH > avail) { boxH = avail; boxW = boxH / cut.ratio; }
+    var totalW = boxW * 2 + gap;
+    var x0 = (w - totalW) / 2;
+    var y0 = (h - labelBand - boxH) / 2 + 4;
 
-    var edge = [];
-    for (var i = 0; i <= 120; i++) {
-      var phi = -Math.PI / 2 + (i / 120) * Math.PI;
-      var t = topAt(theta0 + phi, tier);
-      edge.push([Math.sin(phi) * radiusAt(t, sh), t]);
-    }
-    ctx.beginPath();
-    edge.forEach(function (p, i) {
-      var x = originX + p[0] * scale, y = originY - p[1] * sh.H * scale;
-      if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
-    });
-    var tRight = topAt(theta0 + Math.PI / 2, tier);
-    for (var s = tRight; s >= 0; s -= 0.02) {
-      ctx.lineTo(originX + radiusAt(s, sh) * scale, originY - s * sh.H * scale);
-    }
-    for (var s2 = 0; s2 <= tRight; s2 += 0.02) {
-      ctx.lineTo(originX - radiusAt(s2, sh) * scale, originY - s2 * sh.H * scale);
-    }
-    ctx.closePath();
-    ctx.save();
-    ctx.clip();
-    var rmax = radiusAt(1, sh) > radiusAt(0, sh) ? radiusAt(1, sh) : radiusAt(0, sh);
-    ctx.drawImage(texCanvas,
-      back ? TW * 0.5 : 0, 0, TW * 0.5, TH,
-      originX - rmax * scale, originY - sh.H * scale, rmax * 2 * scale, sh.H * scale);
-    ctx.restore();
-    ctx.strokeStyle = "rgba(0,0,0,.35)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    drawVest(ctx, cut, x0, y0, boxW, boxH, false);
+    drawVest(ctx, cut, x0 + boxW + gap, y0, boxW, boxH, true);
+
+    ctx.fillStyle = "rgba(128,136,132,.95)";
+    ctx.font = "500 11px 'IBM Plex Mono', monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("FRONT", x0 + boxW / 2, y0 + boxH + 18);
+    ctx.fillText("BACK", x0 + boxW + gap + boxW / 2, y0 + boxH + 18);
+    ctx.textAlign = "left";
   }
 
-  /* ---------------------------------------------------------------
-     Pattern chips reuse the texture painter, cropped to the front half
-  ----------------------------------------------------------------*/
-  function patternThumb(specs) {
+  function styleThumb(spec) {
     var c = document.createElement("canvas");
     c.width = 288; c.height = 144;
     var x = c.getContext("2d");
-    var keepW = TW, keepH = TH;
+    var kw = TW, kh = TH;
     TW = 288; TH = 144;
     x.fillStyle = state.base;
     x.fillRect(0, 0, TW, TH);
-    specs.forEach(function (spec) { paintElement(x, fromPreset(spec, false)); });
-    TW = keepW; TH = keepH;
+    spec.forEach(function (s, i) {
+      var el = SHAPES[s.t].make();
+      el.type = s.t;
+      el.colour = state[s.r] || state.design;
+      el.opacity = state.opacity;
+      el.seed = i * 31 + 7;
+      Object.keys(s).forEach(function (k) { if (k !== "t" && k !== "r") el[k] = s[k]; });
+      paintElement(x, el);
+    });
+    TW = kw; TH = kh;
     var t = document.createElement("canvas");
     t.width = 176; t.height = 92;
     t.getContext("2d").drawImage(c, 0, 14, 144, 75, 0, 0, 176, 92);
     return t.toDataURL();
   }
 
-  function renderPreview() {
-    if (three.ok) ensureMesh();
+  /* ---------------------------------------------------------------
+     Controls
+  ----------------------------------------------------------------*/
+  var ROLE_NAMES = { base:"the body", design:"the design", accent:"the accent",
+                     trim:"the trim", text:"the lettering" };
+
+  function renderPalette() {
+    var current = state[state.role];
+    $("#palette").innerHTML = PALETTE.map(function (p) {
+      var sel = p[1].toLowerCase() === String(current).toLowerCase();
+      return '<button type="button" class="swatch" data-hex="' + p[1] + '" title="' + esc(p[0]) +
+             '" aria-label="' + esc(p[0]) + '" aria-pressed="' + sel +
+             '" style="background:' + p[1] + '"></button>';
+    }).join("");
+    $("#customColour").value = /^#[0-9a-f]{6}$/i.test(current) ? current : "#F5C518";
+    $("#customHex").textContent = String(current).toUpperCase();
+  }
+
+  function renderStyles() {
+    $("#styles").innerHTML = STYLES.map(function (st, i) {
+      return '<button type="button" class="style" data-style="' + i + '" aria-pressed="' +
+             (state.style === i) + '">' +
+             '<span class="sw" style="background-image:url(' + styleThumb(st[1]) + ')"></span>' +
+             '<span class="nm">' + esc(st[0]) + '</span></button>';
+    }).join("");
+  }
+
+  function syncToggles() {
+    [["preview","preview"],["role","role"],["font","font"],["crest","crest"]].forEach(function (m) {
+      $$("[data-" + m[0] + "]").forEach(function (b) {
+        b.setAttribute("aria-pressed", String(b.dataset[m[0]] === state[m[1]]));
+      });
+    });
+    var n = (state.clubName || "").trim().length;
+    $("#nameCount").textContent = n + " of 20 characters" +
+      (n > 13 ? " · set smaller to fit the print area" : "");
+    $("#opacityVal").textContent = Math.round(state.opacity * 100) + "%";
+  }
+
+  function repaint() {
     paintTexture();
-    if (three.ok) draw(); else renderFlat();
-    syncFacing();
+    renderStage();
+    save();
+  }
+
+  function renderAll() {
+    renderPalette();
+    renderStyles();
+    paintTexture();
+    renderStage();
+    syncToggles();
+    save();
   }
 
   /* ---------------------------------------------------------------
-     Spec sheet, quote and dates
+     Spec, memory and sending
   ----------------------------------------------------------------*/
+  var STORE_KEY = "koru-vest-design-v2";
+
   function clubCode() {
     var src = (state.contact.club || state.clubName || "KORU").toUpperCase();
     var letters = src.replace(/[^A-Z ]/g, "").trim().split(/\s+/)[0] || "KORU";
     return (letters + "XXX").slice(0, 3);
   }
 
-  /* ---------------------------------------------------------------
-     Controls
-  ----------------------------------------------------------------*/
-
-  var LAYER_NAMES = { base:"the body", trim:"the trim", text:"the lettering" };
-
-  function renderPalette() {
-    if (state.layer.indexOf("el:") === 0 && !layerEl()) state.layer = "base";
-    var current = activeColour();
-    var el = layerEl();
-    $("#paletteTarget").innerHTML = "Colouring <b>" +
-      esc(el ? SHAPES[el.type].label.toLowerCase() : LAYER_NAMES[state.layer]) + "</b>";
-    $("#palette").innerHTML = PALETTE.map(function (p) {
-      var sel = p[1].toLowerCase() === String(current).toLowerCase();
-      return '<button type="button" class="swatch" data-hex="' + p[1] + '" title="' + esc(p[0]) +
-             '" aria-label="' + esc(p[0]) + '" aria-pressed="' + sel + '" ' +
-             'style="background:' + p[1] + '"></button>';
-    }).join("");
-    $("#customColour").value = /^#[0-9a-f]{6}$/i.test(current) ? current : "#F5C518";
-    $("#customHex").textContent = String(current).toUpperCase();
-  }
-
-  function typeKey(specs) {
-    return specs.map(function (x) { return x.t || x; }).join("+");
-  }
-
-  function renderPresets() {
-    var current = typeKey(state.elements.map(function (e) { return e.type; }));
-    $("#patterns").innerHTML = PRESETS.map(function (p, i) {
-      return '<button type="button" class="pattern" data-preset="' + i + '" aria-pressed="' +
-             (typeKey(p[1]) === current) + '">' +
-             '<span class="pat-img" style="background-image:url(' + patternThumb(p[1]) + ')"></span>' +
-             '<span>' + esc(p[0]) + '</span></button>';
-    }).join("");
-  }
-
-  function renderAddShapes() {
-    $("#addShapes").innerHTML = [["shape","Blocks and stripes"], ["print","Fades and textures"]]
-      .map(function (g) {
-        return '<div class="add-group"><span class="add-label">' + g[1] + '</span>' +
-          '<div class="seg">' + SHAPE_ORDER.filter(function (t) {
-            return SHAPES[t].group === g[0];
-          }).map(function (t) {
-            return '<button type="button" data-add="' + t + '">+ ' + esc(SHAPES[t].label) + '</button>';
-          }).join("") + '</div></div>';
-      }).join("");
-  }
-
-  function layerPalette(el) {
-    return '<div class="layer-palette">' + PALETTE.map(function (p) {
-      var sel = p[1].toLowerCase() === String(el.colour).toLowerCase();
-      return '<button type="button" class="swatch sm" data-hex="' + p[1] + '" title="' +
-             esc(p[0]) + '" aria-label="' + esc(p[0]) + '" aria-pressed="' + sel +
-             '" style="background:' + p[1] + '"></button>';
-    }).join("") + '</div>' +
-    '<div class="layer-custom"><label for="elc' + el.id + '">Any other colour</label>' +
-      '<input type="color" id="elc' + el.id + '" data-elcolour="' + el.id + '" value="' +
-      (/^#[0-9a-f]{6}$/i.test(el.colour) ? el.colour : "#F5C518") + '"></div>';
-  }
-
-  function renderElements() {
-    var host = $("#elementList");
-    if (!state.elements.length) {
-      host.innerHTML = '<p class="empty">No shapes — a plain vest in your body colour. ' +
-                       'Add one above, or start from a shape.</p>';
-      return;
-    }
-    host.innerHTML = state.elements.map(function (el, i) {
-      var def = SHAPES[el.type];
-      var sel = state.layer === "el:" + el.id;
-      return '<div class="layer' + (sel ? " sel" : "") + '">' +
-        '<div class="layer-top">' +
-          '<button type="button" class="layer-sw" data-layer="el:' + el.id + '" ' +
-            'style="background:' + el.colour + '" aria-pressed="' +
-            (state.pickerFor === el.id) + '" aria-expanded="' + (state.pickerFor === el.id) + '" ' +
-            'aria-label="Colour this ' + esc(def.label.toLowerCase()) + '"></button>' +
-          '<span class="layer-name">' + esc(def.label) + '</span>' +
-          '<button type="button" class="icon" data-move="up:' + el.id + '" aria-label="Move up"' +
-            (i === state.elements.length - 1 ? " disabled" : "") + '>&#9650;</button>' +
-          '<button type="button" class="icon" data-move="down:' + el.id + '" aria-label="Move down"' +
-            (i === 0 ? " disabled" : "") + '>&#9660;</button>' +
-          '<button type="button" class="icon kill" data-remove="' + el.id + '" ' +
-            'aria-label="Remove this ' + esc(def.label.toLowerCase()) + '">&times;</button>' +
-        '</div>' +
-        (state.pickerFor === el.id ? layerPalette(el) : "") +
-        def.fields.map(function (f) {
-          var id = "el" + el.id + f[0];
-          return '<div class="layer-field"><label for="' + id + '">' + esc(f[1]) + '</label>' +
-            '<input type="range" id="' + id + '" data-el="' + el.id + ':' + f[0] + '" min="' +
-            f[2] + '" max="' + f[3] + '" value="' + Math.round(el[f[0]] * 100) + '"></div>';
-        }).join("") +
-        '<div class="layer-field"><label for="el' + el.id + 'opacity">Opacity</label>' +
-          '<input type="range" id="el' + el.id + 'opacity" data-el="' + el.id + ':opacity" ' +
-          'min="5" max="100" value="' + Math.round((el.opacity == null ? 1 : el.opacity) * 100) +
-          '"></div>' +
-      '</div>';
-    }).join("");
-  }
-
-  function syncToggles() {
-    $$("[data-view]").forEach(function (b) {
-      b.setAttribute("aria-pressed", String(b.dataset.view === state.view));
-    });
-    $$("[data-preview]").forEach(function (b) {
-      b.setAttribute("aria-pressed", String(b.dataset.preview === state.preview));
-    });
-    $$("[data-layer]").forEach(function (b) {
-      b.setAttribute("aria-pressed", String(b.dataset.layer === state.layer));
-    });
-    $$("[data-font]").forEach(function (b) {
-      b.setAttribute("aria-pressed", String(b.dataset.font === state.font));
-    });
-    $$("[data-crest]").forEach(function (b) {
-      b.setAttribute("aria-pressed", String(b.dataset.crest === state.crest));
-    });
-    $$("[data-back]").forEach(function (b) {
-      b.setAttribute("aria-pressed", String(b.dataset.back === state.back));
-    });
-    var crestField = document.getElementById("crestSizeField");
-    if (crestField) crestField.hidden = state.crest === "none";
-    var backField = document.getElementById("backVField");
-    if (backField) backField.hidden = state.back !== "name";
-    var n = (state.clubName || "").trim().length;
-    $("#nameCount").textContent = n + " of 20 characters" +
-      (n > 13 ? " · set smaller to fit the print area" : "");
-  }
-
-  function repaint() {
-    paintTexture();
-    if (three.ok) draw(); else renderFlat();
-    save();
-  }
-
-  function renderAll() {
-    renderPresets();
-    renderAddShapes();
-    renderElements();
-    renderPalette();
-    renderPreview();
-    syncToggles();
-    save();
-  }
-
-  /* ---------------------------------------------------------------
-     Spec export, local memory, and saving to Koru
-  ----------------------------------------------------------------*/
-  var STORE_KEY = "koru-vest-design-v1";
-
   function spec() {
     return {
-      version: 1,
+      version: 2,
+      style: STYLES[state.style][0],
+      strength: Math.round(state.opacity * 100) + "%",
       colours: {
         body: { hex: state.base, name: colourName(state.base) },
-        pattern: { hex: state.secondary, name: colourName(state.secondary) },
+        design: { hex: state.design, name: colourName(state.design) },
+        accent: { hex: state.accent, name: colourName(state.accent) },
         trim: { hex: state.trim, name: colourName(state.trim) },
         lettering: { hex: state.text, name: colourName(state.text) }
       },
-      design: state.elements.map(function (el) {
-        var out = { shape: el.type, label: SHAPES[el.type].label,
-                    colour: { hex: el.colour, name: colourName(el.colour) },
-                    opacity: Math.round((el.opacity == null ? 1 : el.opacity) * 100) + "%" };
-        SHAPES[el.type].fields.forEach(function (f) {
-          out[f[1].toLowerCase()] = Math.round(el[f[0]] * 100) + "%";
-        });
-        return out;
-      }),
-      print: {
-        chest: state.clubName.trim().toUpperCase(),
-        lettering: state.font,
-        heightOnChest: Math.round(state.chestV * 100) + "%",
-        size: Math.round(state.chestSize * 100) + "%",
-        back: state.back,
-        heightOnBack: Math.round(state.backV * 100) + "%"
-      },
-      crest: { position: state.crest, size: Math.round(state.crestSize * 100) + "%" },
+      chestPrint: state.clubName.trim().toUpperCase(),
+      lettering: state.font,
+      crest: state.crest,
       contact: state.contact
     };
   }
 
   function save() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* private mode */ }
+  }
+
+  function applyState(next) {
+    if (!next || typeof next !== "object") return;
+    Object.keys(state).forEach(function (k) {
+      if (next[k] === undefined) return;
+      if (k === "contact") {
+        Object.keys(state.contact).forEach(function (f) {
+          if (next.contact && next.contact[f] !== undefined) state.contact[f] = next.contact[f];
+        });
+      } else {
+        state[k] = next[k];
+      }
+    });
+    if (!STYLES[state.style]) state.style = 1;
+    $("#clubName").value = state.clubName;
+    $("#opacity").value = Math.round(state.opacity * 100);
+    ["club","name","email","phone","notes"].forEach(function (f) {
+      var el = document.getElementById("f" + f.charAt(0).toUpperCase() + f.slice(1));
+      if (el) el.value = state.contact[f] || "";
+    });
   }
 
   function restore() {
@@ -1938,46 +1231,11 @@
     } catch (e) { return false; }
   }
 
-  function applyState(next) {
-    if (!next || typeof next !== "object") return;
-    Object.keys(state).forEach(function (k) {
-      if (next[k] === undefined) return;
-      if (k === "contact") {
-        Object.keys(state[k]).forEach(function (sub) {
-          if (next[k] && next[k][sub] !== undefined) state[k][sub] = next[k][sub];
-        });
-      } else {
-        state[k] = next[k];
-      }
-    });
-    if (!Array.isArray(state.elements)) state.elements = [];
-    state.elements = state.elements.filter(function (e) { return e && SHAPES[e.type]; });
-    state.elements.forEach(function (e) {
-      if (typeof e.id !== "number") e.id = elId++;
-      if (e.id >= elId) elId = e.id + 1;
-      if (!e.colour) e.colour = state.secondary;
-      if (e.opacity == null) e.opacity = 1;
-      if (e.seed == null) e.seed = Math.floor(Math.random() * 1e9);
-    });
-    $("#clubName").value = state.clubName;
-    [["chestV", 1], ["chestSize", 1], ["backV", 1], ["crestSize", 1]].forEach(function (f) {
-      var el = document.getElementById(f[0]);
-      if (el) el.value = Math.round(state[f[0]] * 100);
-    });
-    ["club","name","email","phone","notes"].forEach(function (f) {
-      var el = document.getElementById("f" + f.charAt(0).toUpperCase() + f.slice(1));
-      if (el) el.value = state.contact[f] || "";
-    });
-  }
-
-  var dbApi = null, dbReady = false;
+  var dbApi = null;
 
   function newCode() {
-    var alphabet = "ACDEFGHJKLMNPQRTUVWXY3479";
-    var out = "";
-    for (var i = 0; i < 6; i++) {
-      out += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-    }
+    var alphabet = "ACDEFGHJKLMNPQRTUVWXY3479", out = "";
+    for (var i = 0; i < 6; i++) out += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
     return out;
   }
 
@@ -1987,38 +1245,25 @@
     el.className = "status" + (isError ? " err" : "");
   }
 
-  function shareUrl(code) {
-    return location.origin + location.pathname + location.search + "#d=" + code;
-  }
-
   function persist(status) {
     if (!dbApi) {
-      setStatus("Saving isn't available in this preview — use Copy spec and email it to " +
-                "koruathletic@gmail.com instead.", true);
+      setStatus("Saving isn't available in this preview — email koruathletic@gmail.com and " +
+                "we'll pick it up from there.", true);
       return Promise.resolve(null);
     }
     var code = newCode();
-    var body = {
+    return dbApi.doc("designs/" + code).set({
       code: code,
       status: status,
       spec: spec(),
-      production: { clubCode: clubCode() },
       state: JSON.parse(JSON.stringify(state)),
+      production: { clubCode: clubCode() },
       createdAt: new Date().toISOString()
-    };
-    return dbApi.doc("designs/" + code).set(body).then(function () {
-      try {
-        var mine = JSON.parse(localStorage.getItem(STORE_KEY + "-codes") || "[]");
-        mine.unshift(code);
-        localStorage.setItem(STORE_KEY + "-codes", JSON.stringify(mine.slice(0, 20)));
-      } catch (e) { /* ignore */ }
+    }).then(function () {
       history.replaceState(null, "", "#d=" + code);
       return code;
-    }).catch(function (err) {
-      var msg = err && err.code === "rate_limited"
-        ? "Too many saves just now — give it a few seconds and try again."
-        : "That didn't save. Copy the spec and send it to koruathletic@gmail.com and we'll pick it up.";
-      setStatus(msg, true);
+    }).catch(function () {
+      setStatus("That didn't save. Email koruathletic@gmail.com and we'll pick it up.", true);
       return null;
     });
   }
@@ -2026,17 +1271,12 @@
   function loadCode(code) {
     if (!dbApi || !code) return;
     dbApi.doc("designs/" + code).get().then(function (snap) {
-      if (!snap.exists) {
-        setStatus("No design found for " + code + ".", true);
-        return;
-      }
+      if (!snap.exists) { setStatus("No design found for " + code + ".", true); return; }
       var body = snap.data();
       applyState(body && body.state);
       renderAll();
       setStatus("Loaded design " + code + ".");
-    }).catch(function () {
-      setStatus("Couldn't open that design link.", true);
-    });
+    }).catch(function () { setStatus("Couldn't open that design link.", true); });
   }
 
   /* ---------------------------------------------------------------
@@ -2050,109 +1290,39 @@
       renderAll();
     });
   }
-
-  onPick("view",    function (v) { turnTo(v); });
   onPick("preview", function (v) { state.preview = v; });
-  onPick("layer",   function (v) {
-    state.layer = v;
-    if (v.indexOf("el:") === 0) {
-      var id = parseInt(v.slice(3), 10);
-      state.pickerFor = state.pickerFor === id ? null : id;
-    } else {
-      state.pickerFor = null;
-    }
-  });
+  onPick("role",    function (v) { state.role = v; });
   onPick("font",    function (v) { state.font = v; });
   onPick("crest",   function (v) { state.crest = v; });
-  onPick("back",    function (v) { state.back = v; });
-  onPick("preset",  function (v) {
-    state.elements = PRESETS[parseInt(v, 10)][1].map(function (spec) {
-      return fromPreset(spec, true);
-    });
-    var last = state.elements[state.elements.length - 1];
-    state.layer = last ? "el:" + last.id : "base";
-  });
-  onPick("add",     function (v) {
-    var el = mk(v);
-    state.elements.push(el);
-    state.layer = "el:" + el.id;
-  });
-  onPick("remove",  function (v) {
-    var id = parseInt(v, 10);
-    state.elements = state.elements.filter(function (e) { return e.id !== id; });
-    if (state.layer === "el:" + id) state.layer = "base";
-  });
-  onPick("move",    function (v) {
-    var parts = v.split(":"), id = parseInt(parts[1], 10);
-    var i = state.elements.map(function (e) { return e.id; }).indexOf(id);
-    var j = parts[0] === "up" ? i + 1 : i - 1;
-    if (i < 0 || j < 0 || j >= state.elements.length) return;
-    var moved = state.elements.splice(i, 1)[0];
-    state.elements.splice(j, 0, moved);
-  });
-  onPick("hex",     function (v) { setActiveColour(v); });
-
+  onPick("style",   function (v) { state.style = parseInt(v, 10); });
+  onPick("hex",     function (v) { state[state.role] = v; });
 
   $("#clubName").addEventListener("input", function (e) {
     state.clubName = e.target.value;
-    renderAll();
-  });
-  $("#customColour").addEventListener("input", function (e) {
-    setActiveColour(e.target.value);
-    renderElements();
-    renderPalette();
+    syncToggles();
     repaint();
   });
-
-  /* Sliders repaint without rebuilding their own markup, so a drag is
-     never interrupted by the control being replaced underneath it. */
-  document.addEventListener("input", function (e) {
-    var t = e.target;
-    if (!t || !t.dataset) return;
-    if (t.dataset.el) {
-      var parts = t.dataset.el.split(":");
-      var el = findEl(parseInt(parts[0], 10));
-      if (!el) return;
-      el[parts[1]] = parseInt(t.value, 10) / 100;
-      repaint();
-    } else if (t.dataset.elcolour) {
-      var target = findEl(parseInt(t.dataset.elcolour, 10));
-      if (!target) return;
-      target.colour = t.value;
-      state.secondary = t.value;
-      /* nudge the dot directly rather than re-rendering, which would
-         close the colour input mid-pick */
-      var dot = document.querySelector('[data-layer="el:' + target.id + '"]');
-      if (dot) dot.style.background = t.value;
-      repaint();
-    } else if (t.dataset.print) {
-      state[t.dataset.print] = parseInt(t.value, 10) / 100;
-      repaint();
-    }
+  $("#customColour").addEventListener("input", function (e) {
+    state[state.role] = e.target.value;
+    $("#customHex").textContent = e.target.value.toUpperCase();
+    renderStyles();
+    repaint();
+  });
+  $("#opacity").addEventListener("input", function (e) {
+    state.opacity = parseInt(e.target.value, 10) / 100;
+    $("#opacityVal").textContent = Math.round(state.opacity * 100) + "%";
+    repaint();
   });
   ["club","name","email","phone","notes"].forEach(function (f) {
     var el = document.getElementById("f" + f.charAt(0).toUpperCase() + f.slice(1));
     if (!el) return;
-    el.addEventListener("input", function (e) {
-      state.contact[f] = e.target.value;
-      save();
-    });
-  });
-
-  $("#copyBtn").addEventListener("click", function () {
-    var text = JSON.stringify(spec(), null, 2);
-    var done = function () { setStatus("Spec copied. Paste it into an email to koruathletic@gmail.com."); };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done, function () { setStatus("Copy failed — select the page and copy manually.", true); });
-    } else {
-      setStatus("Copy isn't available in this browser.", true);
-    }
+    el.addEventListener("input", function (e) { state.contact[f] = e.target.value; save(); });
   });
 
   $("#saveBtn").addEventListener("click", function () {
     setStatus("Saving…");
     persist("saved").then(function (code) {
-      if (code) setStatus("Saved as " + code + ". Share this page's link with your committee: " + shareUrl(code));
+      if (code) setStatus("Saved as " + code + ". Share this page's link with your committee.");
     });
   });
 
@@ -2162,9 +1332,8 @@
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email.trim())) { setStatus("Add an email we can send the proof to.", true); $("#fEmail").focus(); return; }
     setStatus("Sending…");
     persist("submitted").then(function (code) {
-      if (code) {
-        setStatus("Sent — reference " + code + ". We'll come back to " + c.email.trim() + " within two working days.");
-      }
+      if (code) setStatus("Sent — reference " + code + ". We'll come back to " + c.email.trim() +
+                          " within two working days.");
     });
   });
 
@@ -2173,33 +1342,18 @@
   ----------------------------------------------------------------*/
   var hashCode = (location.hash.match(/^#d=([A-Z0-9]{4,12})$/i) || [])[1];
   if (!hashCode) restore();
-
-  var stageEl = document.querySelector(".stage");
-  var hostEl = document.getElementById("stageHost");
-  if (hostEl) {
-    init3D(hostEl);
-    bindDrag(stageEl);
-  }
   renderAll();
-  resize();
-  window.addEventListener("resize", resize);
-  if (window.ResizeObserver && hostEl) new ResizeObserver(resize).observe(hostEl);
+  window.addEventListener("resize", renderStage);
+  if (window.ResizeObserver) new ResizeObserver(renderStage).observe($("#stageHost"));
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(function () {
-      paintTexture();
-      if (three.ok) draw(); else renderFlat();
-    });
+    document.fonts.ready.then(function () { paintTexture(); renderStage(); renderStyles(); });
   }
-
-  (function connect() {
-    var use = window.claude && window.claude.use;
-    if (!use) return;
+  if (window.claude && window.claude.use) {
     Promise.resolve(window.claude.use("db")).then(function (api) {
       dbApi = api || null;
-      dbReady = true;
       if (dbApi && hashCode) loadCode(hashCode.toUpperCase());
       else if (!dbApi && hashCode) setStatus("Shared designs can't be opened in this preview.", true);
-    }).catch(function () { dbApi = null; dbReady = true; });
-  })();
+    }).catch(function () { dbApi = null; });
+  }
 })();
 </script>

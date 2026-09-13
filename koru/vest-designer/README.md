@@ -1,112 +1,81 @@
 # Koru Club Vest Designer
 
-A lead capture for club kit. A club's gear officer builds their vest, sends it in, and
-Koru comes back with a proof — the design is the lead. Fabric, cuts, sizes and price are
+A lead capture for club kit. A club's gear officer builds their vest, sends it in, and Koru
+comes back with a proof — the design is the lead. Fabric, cuts, sizes and price are
 deliberately not asked here; they are the conversation that follows, and asking a club to
 decide them cold is what loses the lead.
 
 Once a design is agreed, Koru opens a pre-order window on korusports.ie — the same model
 already running for Bandon AC, but without Koru hand-building the spec each time.
 
-`index.html` is the whole thing: no build step, no dependencies except three.js from a CDN.
+`index.html` is the whole thing: one file, no build step, no dependencies.
 
 Published draft: https://claude.ai/code/artifact/19a809e7-c2bf-430a-be1b-bfb5f9c5f205
 
-## What it does
+## What a club does
 
-- **3D preview.** The vest is a tube of elliptical cross-sections whose top edge is a
-  function of the angle around the body — high over the shoulders, scooped at the neck,
-  cut away at the sides for the armholes. One profile (`EDGE` in `index.html`) gives
-  neckline, straps and armholes at once, and painting the binding against that same
-  profile makes the trim follow the real edge all the way round. Drag or arrow-key to turn.
-- **Fabric texture** is painted to a 2048×1024 canvas and wrapped with centre-front at
-  u=0.25 and centre-back at u=0.75, so neither print lands on the side seam.
-- **Falls back** to a flat projected view built from the same profile when WebGL or the
-  CDN is unavailable.
-- **Layered design.** Everything Koru makes is sublimated, so the design surface is a printed
-  image rather than pieces of cloth. Two kinds of layer stack in one list: hard-edged blocks
-  and stripes (band, hoops, sash, side panels, chevron, shoulder yoke, hem band, centre
-  stripe), and full-panel effects (fade, halftone, grain, ikat, geo blocks, camo, smear,
-  snakeskin, mosaic, warp chevron) that blend into whatever is under them. Each layer is a few numbers in texture space, so all of it moves,
-  resizes, recolours and restacks. Print and crest placement are free too — height on the
-  chest, print size, crest in six positions with its own size.
-- **Every layer has its own colour and opacity.** The palette is inline on the layer row
-  rather than in the colours step, because the old flow made you tap a layer's dot and then
-  scroll back up a section to act on it. Opacity is applied once in `paintElement` by scaling
-  `globalAlpha` around the draw, so it works for every layer type — including the ones that
-  composite through an offscreen canvas — without each painter knowing about it.
+Four steps: pick colours, pick a style, type the club name, send it. That is the entire
+surface. Everything else is Koru's job.
+
+## How it works
+
+- **Flat mockup, front and back.** Both panels are drawn side by side the way a kit supplier
+  presents them. An earlier version turned a generated 3D mesh, which was harder to make look
+  right than it was worth — a flat drawing is what clubs are used to seeing, and it dropped
+  the only external dependency the page had.
+- **One texture, two panels.** The design paints to a 2048×1024 canvas holding both printed
+  panels end to end, front centred at u=0.25 and back at u=0.75, so neither print lands on a
+  side seam. Each vest outline clips its half of it.
+- **Binding comes from the outline.** One stroke along the silhouette gives neck, armhole and
+  hem trim together, so the trim can never drift out of register with the garment.
+- **Styles name a colour role, not a hex.** A style says "design" or "accent" where a colour
+  goes, so changing one of the club's five colours restyles the whole gallery at once. That
+  is what lets seventeen styles sit behind five colour swatches.
+- **Eighteen layer types under the hood.** Blocks and stripes (band, hoops, sash, side panels,
+  chevron, yoke, hem band, centre stripe) and print effects (fade, halftone, grain, ikat, geo
+  blocks, camo, smear, snakeskin, mosaic, warp chevron). Clubs never see these: a style is a
+  short list of layers with their numbers baked in. Adding a style is a line in `STYLES`.
 - **Halftones behave like a separation.** A screen's dot radius follows a ramp across the
   panel and the screen sits 34° off the fade direction, so two screens in two colours
   interfere the way process printing does instead of sitting on top of each other.
-- **One noise function, read five ways.** Seeded value noise with fractal octaves drives
-  camo (pushed through itself so edges tear rather than curve, then hard-thresholded with the
+- **One noise function, read four ways.** Seeded value noise with fractal octaves drives camo
+  (pushed through itself so edges tear rather than curve, then hard-thresholded with the
   threshold jittered per pixel so the boundary breaks into speckle), smear (the same noise
-  stretched hard along one axis and mapped to a soft alpha), and the snakeskin blotches.
-  Mosaic and warp chevron get their V from the same trick: offset by distance from
-  centre-front, so the rows step away from the middle of each panel.
-- **Generated layers are seeded and cached.** Grain and ikat would otherwise re-randomise on
-  every pointermove, crawling under the cursor. Each layer carries a seed, and generated
-  canvases are cached by colour, parameters and seed.
+  stretched along one axis and mapped to a soft alpha), and the snakeskin blotches. Seeds come
+  from the style index, so nothing reshuffles between renders.
+- **Saving** uses the artifact `db` capability: designs are written to `designs/<code>` and the
+  page reopens one from `#d=<code>`, so a committee can share a link before committing.
 - **Nothing about the supply chain reaches the club.** Mill names and style codes are not
-  shown, not copied, and not in the page source — the (fabric, cut) → mill + style mapping
-  is fixed and belongs on Koru's side, resolved when a submission is processed. The club's
-  own copy of the spec describes their design and nothing else; the stored record adds a
-  `production` block with the club code and the `KORU-<CLUB>-<CUT>-<SIZE>` SKU shape.
-- **Saving** uses the artifact `db` capability: designs are written to `designs/<code>` and
-  the page reopens one from `#d=<code>`, so a committee can share a link before committing.
+  shown, not copied, and not in the page source. The stored record adds a `production` block
+  with the club code for the `KORU-<CLUB>-<CUT>-<SIZE>` SKU shape.
 
-## Numbers that need confirming before this goes live
+## Worth confirming with the mill
 
-These are placeholders chosen to be plausible, not facts pulled from the store:
+- The smallest halftone dot that holds without filling in.
+- Whether fine grain survives the press.
+- How close a print can run to a seam before it distorts.
 
-| Value | Currently | Where |
-|---|---|---|
-| Starting colour card | 16 colours | `PALETTE` |
-| Layer types | 18 | `SHAPES` |
-
-The page asks for no headcount, quotes no total, and offers no fabric or cut choice. The
-cut buttons over the preview only change which body the design is shown on. The race-mesh
-edge profile (`EDGE.elite`) is still in the code but unreachable, because the club no
-longer picks a fabric — it is there for when that choice comes back.
-
-Sublimation removes most of the limits a cut-and-sew vest would have — colour count costs
-nothing — but not all of them. Worth confirming: the smallest halftone dot the mill can hold
-without it filling in, whether fine grain survives the press, and how close a print can run
-to a seam before it distorts. Those belong in `SHAPES` as bounds once known.
-
-The texture wraps with the side seam at u=0, so a fade running across the body has a
+The texture wraps with the side seam at u=0, so a design running across the body has a
 discontinuity there. That is how a sublimated vest actually prints — flat panels, then sewn —
 so it is left as is rather than forced to wrap seamlessly.
 
 ## Getting it onto korusports.ie
 
-Three stages, each shippable on its own.
-
 **1. Page on the storefront.** Drop the markup, CSS and JS into a custom section
-(`sections/vest-designer.liquid`) and assign it to a page template at
-`/pages/vest-designer`. The section's schema exposes the colour card and the
-layer defaults as settings, so they change in the theme editor rather than in code. Keep
-three.js on cdnjs — the store's CSP allows it, and it is the one heavy dependency.
+(`sections/vest-designer.liquid`) and assign it to a page template at `/pages/vest-designer`.
+The section's schema exposes the colour card and the style list as settings, so they change in
+the theme editor rather than in code. There is no external script to allow through the CSP.
 
-**2. Submissions.** The designer already produces a clean JSON spec — the full layer stack with each shape's
-position and size as percentages, plus the print and crest placement — and can render the
-canvas to a PNG (`three.renderer.domElement.toDataURL()`). Post both to a Make.com webhook
-— Make is already connected to this stack — and have the scenario email Koru, drop the
-design into a sheet, and create or update the club contact in Klaviyo. That avoids needing
-a custom app on the Basic plan. If submissions should live in Shopify itself, define a
-`club_kit_design` metaobject and write to it via the Admin API instead.
+**2. Submissions.** The designer produces a clean JSON spec — style, the five colours, chest
+print and crest — and the stage canvas renders straight to a PNG. Post both to a Make.com
+webhook (Make is already connected to this stack) and have the scenario email Koru, drop the
+design into a sheet, and create or update the club contact in Klaviyo. That avoids needing a
+custom app on the Basic plan. If submissions should live in Shopify itself, define a
+`club_kit_design` metaobject and write to it via the Admin API.
 
-**3. Opening a window.** Cuts, sizes and prices are agreed off the back of the proof, not
-captured here, so the window is opened from that conversation rather than straight from the
-submission. Create the product set: one
-product per selected cut, per-size variants, tags `club:<handle>`, `tier:`, `mill:`,
-`style:`, `window:YYYY-MM`, and inventory left to go negative as pre-orders — exactly the
-shape the Bandon AC products already use. This is the step worth scripting, because it is
-the one Koru currently does by hand for every club.
-
-## Open questions for Koru
-
-- What is the smallest halftone dot the mill holds cleanly?
-- Does fine grain survive the press, or fill in?
-- How close to a seam can a print run before it distorts?
-- Do crest files need to arrive before the proof, or can a window open without one?
+**3. Opening a window.** Cuts, sizes and prices are agreed off the back of the proof, so the
+window is opened from that conversation rather than straight from the submission. Create the
+product set: one product per cut, per-size variants, tags `club:<handle>`, `tier:`, `mill:`,
+`style:`, `window:YYYY-MM`, and inventory left to go negative as pre-orders — the shape the
+Bandon AC products already use. This is the step worth scripting, because it is the one Koru
+currently does by hand for every club.
