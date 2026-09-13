@@ -26,13 +26,19 @@ Published draft: https://claude.ai/code/artifact/19a809e7-c2bf-430a-be1b-bfb5f9c
 - **Layered design.** Everything Koru makes is sublimated, so the design surface is a printed
   image rather than pieces of cloth. Two kinds of layer stack in one list: hard-edged blocks
   and stripes (band, hoops, sash, side panels, chevron, shoulder yoke, hem band, centre
-  stripe), and full-panel effects (fade, halftone, grain, ikat, geo blocks) that blend into
-  whatever is under them. Each layer is a few numbers in texture space, so all of it moves,
+  stripe), and full-panel effects (fade, halftone, grain, ikat, geo blocks, camo, smear,
+  snakeskin, mosaic, warp chevron) that blend into whatever is under them. Each layer is a few numbers in texture space, so all of it moves,
   resizes, recolours and restacks. Print and crest placement are free too — height on the
   chest, print size, crest in six positions with its own size.
 - **Halftones behave like a separation.** A screen's dot radius follows a ramp across the
   panel and the screen sits 34° off the fade direction, so two screens in two colours
   interfere the way process printing does instead of sitting on top of each other.
+- **One noise function, read five ways.** Seeded value noise with fractal octaves drives
+  camo (pushed through itself so edges tear rather than curve, then hard-thresholded with the
+  threshold jittered per pixel so the boundary breaks into speckle), smear (the same noise
+  stretched hard along one axis and mapped to a soft alpha), and the snakeskin blotches.
+  Mosaic and warp chevron get their V from the same trick: offset by distance from
+  centre-front, so the rows step away from the middle of each panel.
 - **Generated layers are seeded and cached.** Grain and ikat would otherwise re-randomise on
   every pointermove, crawling under the cursor. Each layer carries a seed, and generated
   canvases are cached by colour, parameters and seed.
@@ -51,7 +57,7 @@ These are placeholders chosen to be plausible, not facts pulled from the store:
 | Value | Currently | Where |
 |---|---|---|
 | Starting colour card | 16 colours | `PALETTE` |
-| Layer types | 13 | `SHAPES` |
+| Layer types | 18 | `SHAPES` |
 
 The page asks for no headcount, quotes no total, and offers no fabric or cut choice. The
 cut buttons over the preview only change which body the design is shown on. The race-mesh

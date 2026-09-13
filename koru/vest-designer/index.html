@@ -630,13 +630,31 @@
                fields:[["density","Coverage",10,80],["v","Position",0,100],["soft","Softness",5,100]] },
     blocks:  { label:"Geo blocks", group:"print",
                make:function(){ return {size:0.16, lean:0.30}; },
-               fields:[["size","Scale",6,40],["lean","Lean",0,60]] }
+               fields:[["size","Scale",6,40],["lean","Lean",0,60]] },
+    camo:    { label:"Camo",       group:"print",
+               make:function(){ return {size:0.14, coverage:0.50, stretch:0.55}; },
+               fields:[["size","Scale",4,40],["coverage","Coverage",20,80],
+                       ["stretch","Stretch",5,95]] },
+    smear:   { label:"Smear",      group:"print",
+               make:function(){ return {size:0.12, soft:0.28, grain:0.30}; },
+               fields:[["size","Bands",4,40],["soft","Softness",4,60],["grain","Grain",0,60]] },
+    snake:   { label:"Snakeskin",  group:"print",
+               make:function(){ return {size:0.12, coverage:0.55}; },
+               fields:[["size","Scale",4,30],["coverage","Coverage",20,100]] },
+    mosaic:  { label:"Mosaic",     group:"print",
+               make:function(){ return {size:0.16, coverage:0.40, v:0.55}; },
+               fields:[["size","Scale",6,40],["coverage","Coverage",10,70],
+                       ["v","Position",0,100]] },
+    warp:    { label:"Warp chevron", group:"print",
+               make:function(){ return {w:0.20, lean:0.30, density:0.60}; },
+               fields:[["w","Width",5,50],["lean","Lean",5,60],["density","Density",20,90]] }
   };
   Object.keys(SHAPES).forEach(function (k) {
     if (!SHAPES[k].group) SHAPES[k].group = "shape";
   });
   var SHAPE_ORDER = ["band","hoops","sash","panels","chevron","yoke","hem","stripe",
-                     "gradient","halftone","grain","ikat","blocks"];
+                     "gradient","halftone","grain","ikat","blocks",
+                     "camo","smear","snake","mosaic","warp"];
 
   /* A preset is a list of layers with optional overrides — the two
      halftone screens need different angles or they sit on top of each
@@ -653,7 +671,15 @@
                      { t:"halftone", c:"#4FA3D9", angle:0.21, v:0.62, soft:0.40, size:0.24 }]],
     ["Ikat",        [{ t:"ikat", density:0.55, soft:0.85 }]],
     ["Geo blocks",  [{ t:"blocks", c:"#1B4FA8" },
-                     { t:"grain", c:"#14284B", density:0.34, soft:0.9 }]]
+                     { t:"grain", c:"#14284B", density:0.34, soft:0.9 }]],
+    ["Tiger camo",  [{ t:"camo", c:"#14284B", stretch:0.72, coverage:0.52 }]],
+    ["Smear",       [{ t:"smear", c:"#15161A", size:0.14, soft:0.22 }]],
+    ["Snakeskin",   [{ t:"snake", c:"#14284B", coverage:1 },
+                     { t:"snake", c:"#4FA3D9", coverage:0.42 }]],
+    ["Mosaic V",    [{ t:"mosaic", c:"#14284B", coverage:0.5 },
+                     { t:"mosaic", c:"#CE2027", coverage:0.3 },
+                     { t:"mosaic", c:"#1B4FA8", coverage:0.28 }]],
+    ["Warp chevron",[{ t:"warp", c:"#15161A" }]]
   ];
 
   function fromPreset(spec, withId) {
@@ -962,6 +988,178 @@
     ctx.fill();
   }
 
+  /* Seeded value noise with fractal octaves. Camo, smear and the
+     snakeskin blotches are all this function read differently. */
+  function makeNoise(seed) {
+    var perm = new Uint8Array(512), rand = rng(seed), i, j, k, t;
+    for (i = 0; i < 256; i++) perm[i] = i;
+    for (j = 255; j > 0; j--) {
+      k = Math.floor(rand() * (j + 1));
+      t = perm[j]; perm[j] = perm[k]; perm[k] = t;
+    }
+    for (i = 0; i < 256; i++) perm[i + 256] = perm[i];
+    function at(ix, iy) { return perm[(perm[ix & 255] + (iy & 255)) & 255] / 255; }
+    function val(x, y) {
+      var ix = Math.floor(x), iy = Math.floor(y);
+      var fx = smooth(x - ix), fy = smooth(y - iy);
+      var a = at(ix, iy), b = at(ix + 1, iy), c = at(ix, iy + 1), d = at(ix + 1, iy + 1);
+      var top = a + (b - a) * fx, bot = c + (d - c) * fx;
+      return top + (bot - top) * fy;
+    }
+    return function (x, y, oct) {
+      var sum = 0, amp = 0.5, tot = 0;
+      for (var o = 0; o < (oct || 4); o++) {
+        sum += val(x, y) * amp;
+        tot += amp;
+        x *= 2; y *= 2; amp *= 0.5;
+      }
+      return sum / tot;
+    };
+  }
+
+  function drawPixels(ctx, canvas) {
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(canvas, 0, 0, TW, TH);
+    ctx.restore();
+  }
+
+  /* Tiger stripe: noise pushed through itself so the edges tear rather
+     than curve, thresholded hard, with the threshold jittered per pixel
+     so the boundary breaks into speckle the way a real print does. */
+  function camoCanvas(el) {
+    return cached("c|" + el.colour + "|" + el.size.toFixed(3) + "|" + el.coverage.toFixed(3) +
+                  "|" + el.stretch.toFixed(3) + "|" + el.seed, function () {
+      var w = 340, h = Math.max(2, Math.round(340 * TH / TW));
+      var c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      var x = c.getContext("2d"), img = x.createImageData(w, h);
+      var noise = makeNoise(el.seed), rand = rng(el.seed + 91);
+      var rgb = hexToRgb(el.colour);
+      var freq = 2 + el.size * 26;
+      var stretch = 0.3 + el.stretch * 3.2;
+      var cut = 1 - el.coverage;
+      for (var py = 0; py < h; py++) {
+        for (var px = 0; px < w; px++) {
+          var u = px / w, v = py / h;
+          var warp = noise(u * freq / stretch, v * freq, 3);
+          var n = noise(u * freq / stretch + warp * 1.6, v * freq + warp * 1.6, 4);
+          var on = (n + (rand() - 0.5) * 0.17) > cut;
+          var o = (py * w + px) * 4;
+          img.data[o] = rgb[0]; img.data[o + 1] = rgb[1]; img.data[o + 2] = rgb[2];
+          img.data[o + 3] = on ? 255 : 0;
+        }
+      }
+      x.putImageData(img, 0, 0);
+      return c;
+    });
+  }
+
+  /* Smear: the same noise stretched hard along one axis and mapped to a
+     soft alpha instead of a hard cut, so it reads as motion rather than
+     as shapes. */
+  function smearCanvas(el) {
+    return cached("s|" + el.colour + "|" + el.size.toFixed(3) + "|" + el.soft.toFixed(3) +
+                  "|" + el.grain.toFixed(3) + "|" + el.seed, function () {
+      var w = 320, h = Math.max(2, Math.round(320 * TH / TW));
+      var c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      var x = c.getContext("2d"), img = x.createImageData(w, h);
+      var noise = makeNoise(el.seed), rand = rng(el.seed + 17);
+      var rgb = hexToRgb(el.colour);
+      var freq = 2 + el.size * 30;
+      var edge = Math.max(0.02, el.soft);
+      for (var py = 0; py < h; py++) {
+        for (var px = 0; px < w; px++) {
+          var n = noise((px / w) * freq, (py / h) * freq * 0.16, 4);
+          var a = (n - 0.5 + edge) / (2 * edge);
+          a = a < 0 ? 0 : (a > 1 ? 1 : a);
+          if (el.grain > 0) a *= 1 - el.grain * rand();
+          var o = (py * w + px) * 4;
+          img.data[o] = rgb[0]; img.data[o + 1] = rgb[1]; img.data[o + 2] = rgb[2];
+          img.data[o + 3] = Math.round(a * 255);
+        }
+      }
+      x.putImageData(img, 0, 0);
+      return c;
+    });
+  }
+
+  /* Snakeskin: a grid of rotated scales, shown only where a noise blotch
+     says so. Two of these — a dark one at full coverage and a light one
+     on top — give the python look. */
+  function paintSnake(ctx, el) {
+    var cell = Math.max(6, el.size * TW * 0.055);
+    var noise = makeNoise(el.seed);
+    var jitter = rng(el.seed + 5);
+    var cut = 1 - el.coverage;
+    ctx.save();
+    ctx.fillStyle = el.colour;
+    for (var row = 0; row * cell * 0.7 < TH + cell; row++) {
+      var cy = row * cell * 0.7;
+      var off = (row % 2) ? cell * 0.5 : 0;
+      for (var col = 0; col * cell < TW + cell; col++) {
+        var cx = col * cell + off;
+        if (el.coverage < 0.995) {
+          var n = noise((cx / TW) * 7, (cy / TH) * 5, 4);
+          if (n < cut) { jitter(); continue; }
+        }
+        var r = cell * (0.30 + 0.12 * jitter());
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, r, r * 0.66, Math.PI / 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  /* Mosaic: parallelogram tiles laid in rows that step down and away from
+     centre-front, so the rows read as a chevron. Each layer takes a
+     seeded share of the tiles, so stacking three colours interleaves them. */
+  function paintMosaic(ctx, el) {
+    var cell = Math.max(10, el.size * TW * 0.16);
+    var pick = rng(el.seed + 3);
+    var slope = 0.55;
+    ctx.fillStyle = el.colour;
+    for (var row = -2; row * cell * 0.62 < TH + cell * 2; row++) {
+      for (var col = -2; col * cell < TW + cell * 2; col++) {
+        if (pick() > el.coverage) continue;
+        var x0 = col * cell + (row % 2 ? cell * 0.5 : 0);
+        var mid = Math.abs(((x0 / TW) % 0.5) - 0.25) * TW;
+        var y0 = row * cell * 0.62 + mid * slope;
+        polyPx(ctx, el.colour, [
+          [x0, y0], [x0 + cell * 0.5, y0 - cell * 0.34],
+          [x0 + cell * 0.5, y0 + cell * 0.3], [x0, y0 + cell * 0.64]
+        ]);
+      }
+    }
+  }
+
+  /* Warp chevron: rows of short dashes whose phase shifts with distance
+     from centre-front, which is what draws the V. */
+  function warpCanvas(el) {
+    return cached("w|" + el.colour + "|" + el.w.toFixed(3) + "|" + el.lean.toFixed(3) +
+                  "|" + el.density.toFixed(3) + "|" + el.seed, function () {
+      var w = 384, h = 560;
+      var c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      var x = c.getContext("2d"), rand = rng(el.seed);
+      x.fillStyle = el.colour;
+      var period = Math.max(6, el.w * w * 0.6);
+      var slope = 0.4 + el.lean * 4;
+      for (var py = 0; py < h; py++) {
+        for (var px = 0; px < w;) {
+          var run = 2 + Math.floor(rand() * 10);
+          var mid = Math.abs(((px / w) % 0.5) - 0.25) * w;
+          var phase = ((py + mid * slope) % period) / period;
+          if (phase < el.density && rand() < 0.85) x.fillRect(px, py, run, 1);
+          px += run + 1;
+        }
+      }
+      return c;
+    });
+  }
+
   function paintEffect(ctx, el) {
     var c = el.colour;
     switch (el.type) {
@@ -1042,6 +1240,29 @@
         }
         break;
       }
+
+      case "camo":
+        drawPixels(ctx, camoCanvas(el));
+        break;
+
+      case "smear":
+        drawPixels(ctx, smearCanvas(el));
+        break;
+
+      case "snake":
+        paintSnake(ctx, el);
+        break;
+
+      case "mosaic":
+        maskedDraw(ctx, function (s) { paintMosaic(s, el); }, 0, el.v, 0.35);
+        break;
+
+      case "warp":
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(warpCanvas(el), 0, 0, TW, TH);
+        ctx.restore();
+        break;
     }
   }
 
