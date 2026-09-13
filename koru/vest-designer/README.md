@@ -49,6 +49,8 @@ active step right.
   because it reads badly in capitals. A webfont used only on a canvas is never requested by the
   document, so `loadFonts` asks for each face explicitly before painting — otherwise the canvas
   silently falls back and every face looks the same.
+- **Front and back print independently.** Either can be dropped to nothing, so a club can put
+  its name on the chest only, on the back only, or run a plain vest with just a crest.
 - **Print size is a fraction of the panel, not a font size.** The slider sets how much of the
   chest the name spans, so a three-letter club and a twelve-letter one both fill the same
   width — which is how a chest print actually works. A cap stops short names ballooning.

@@ -246,6 +246,23 @@
 
       <section class="panel" id="p-name" data-panel="name" role="tabpanel">
         <h2>Club name and crest</h2>
+        <div class="field two-up">
+          <div>
+            <span class="label">Front print</span>
+            <div class="seg" role="group" aria-label="Print on the front">
+              <button type="button" data-front="on" aria-pressed="true">Club name</button>
+              <button type="button" data-front="off" aria-pressed="false">None</button>
+            </div>
+          </div>
+          <div>
+            <span class="label">Back print</span>
+            <div class="seg" role="group" aria-label="Print on the back">
+              <button type="button" data-back="on" aria-pressed="true">Club name</button>
+              <button type="button" data-back="off" aria-pressed="false">None</button>
+            </div>
+          </div>
+        </div>
+
         <div class="field">
           <label class="label" for="clubName">Name across the chest</label>
           <input type="text" id="clubName" class="text-input chest-input" maxlength="20"
@@ -432,6 +449,8 @@
     style: 1,
     opacity: 1,
     clubName: "KORU AC",
+    frontText: true,
+    backText: true,
     font: "block",
     textSize: 1,
     crest: "left",
@@ -1042,8 +1061,12 @@
     ctx.fillStyle = meshPattern;
     ctx.fillRect(0, 0, TW, TH);
 
-    trackedText(ctx, name, FRONT_U * TW, 0.345 * TH, span, state.text, 200, font);
-    trackedText(ctx, name, BACK_U * TW, 0.33 * TH, span * 0.86, state.text, 180, font);
+    if (state.frontText) {
+      trackedText(ctx, name, FRONT_U * TW, 0.345 * TH, span, state.text, 200, font);
+    }
+    if (state.backText) {
+      trackedText(ctx, name, BACK_U * TW, 0.33 * TH, span * 0.86, state.text, 180, font);
+    }
     var cp = CREST_POS[state.crest];
     if (cp) paintCrest(ctx, cp[0], cp[1], cp[2], state.text);
   }
@@ -1248,6 +1271,12 @@
         b.setAttribute("aria-pressed", String(b.dataset[m[0]] === state[m[1]]));
       });
     });
+    $$("[data-front]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String((b.dataset.front === "on") === !!state.frontText));
+    });
+    $$("[data-back]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String((b.dataset.back === "on") === !!state.backText));
+    });
     var n = (state.clubName || "").trim().length;
     $("#nameCount").textContent = n + " of 20 characters" +
       (n > 13 ? " · set smaller to fit the print area" : "");
@@ -1295,6 +1324,8 @@
         lettering: { hex: state.text, name: colourName(state.text) }
       },
       chestPrint: state.clubName.trim().toUpperCase(),
+      frontPrint: state.frontText ? "club name" : "none",
+      backPrint: state.backText ? "club name" : "none",
       lettering: fontOf(state.font).label,
       letteringSize: Math.round(state.textSize * 100) + "%",
       crest: state.crest,
@@ -1405,6 +1436,8 @@
   });
   onPick("font",    function (v) { state.font = v; });
   onPick("crest",   function (v) { state.crest = v; });
+  onPick("front",   function (v) { state.frontText = v === "on"; });
+  onPick("back",    function (v) { state.backText = v === "on"; });
   onPick("style",   function (v) { state.style = parseInt(v, 10); });
   onPick("hex",     function (v, btn) {
     var host = boxOf(btn);
