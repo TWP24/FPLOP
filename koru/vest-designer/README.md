@@ -1,8 +1,12 @@
 # Koru Club Vest Designer
 
-A self-serve designer for club kit. A club's gear officer builds their vest, sends it in,
-and Koru opens a pre-order window on korusports.ie — the same model already running for
-Bandon AC, but without Koru hand-building the spec each time.
+A lead capture for club kit. A club's gear officer builds their vest, sends it in, and
+Koru comes back with a proof — the design is the lead. Fabric, cuts, sizes and price are
+deliberately not asked here; they are the conversation that follows, and asking a club to
+decide them cold is what loses the lead.
+
+Once a design is agreed, Koru opens a pre-order window on korusports.ie — the same model
+already running for Bandon AC, but without Koru hand-building the spec each time.
 
 `index.html` is the whole thing: no build step, no dependencies except three.js from a CDN.
 
@@ -39,16 +43,16 @@ These are placeholders chosen to be plausible, not facts pulled from the store:
 | Value | Currently | Where |
 |---|---|---|
 | Stock colour card | 16 colours | `PALETTE` |
-| Elite availability | senior cuts only | `CUTS[*].price.elite` |
 | Shapes on offer | 8 | `SHAPES` |
 
-Prices (€30 senior club, €25 kids, €40 elite) are taken from live products and should
-stay in step with them. The designer deliberately quotes no window total and asks for no
-headcount — it is a design tool, and the commercial conversation happens with the proof.
+The page asks for no headcount, quotes no total, and offers no fabric or cut choice. The
+cut buttons over the preview only change which body the design is shown on. The race-mesh
+edge profile (`EDGE.elite`) is still in the code but unreachable, because the club no
+longer picks a fabric — it is there for when that choice comes back.
 
-There are also limits the mill will have that the tool does not yet enforce: how many
-colours a single vest can carry, whether a sash and hoops can coexist, and the minimum
-thickness a knitted band can be. Those belong in `SHAPES` as bounds once known.
+There are limits the mill will have that the tool does not enforce: how many colours a
+single vest can carry, whether a sash and hoops can coexist, and the minimum thickness a
+knitted band can be. Those belong in `SHAPES` as bounds once known.
 
 ## Getting it onto korusports.ie
 
@@ -68,7 +72,9 @@ design into a sheet, and create or update the club contact in Klaviyo. That avoi
 a custom app on the Basic plan. If submissions should live in Shopify itself, define a
 `club_kit_design` metaobject and write to it via the Admin API instead.
 
-**3. Opening a window.** On approval, create the product set from the stored spec: one
+**3. Opening a window.** Cuts, sizes and prices are agreed off the back of the proof, not
+captured here, so the window is opened from that conversation rather than straight from the
+submission. Create the product set: one
 product per selected cut, per-size variants, tags `club:<handle>`, `tier:`, `mill:`,
 `style:`, `window:YYYY-MM`, and inventory left to go negative as pre-orders — exactly the
 shape the Bandon AC products already use. This is the step worth scripting, because it is

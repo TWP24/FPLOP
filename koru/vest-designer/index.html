@@ -398,28 +398,9 @@
     <div class="steps">
 
       <section class="step">
-        <div class="step-head"><span class="step-num">01</span><h2>Fabric and cuts</h2></div>
-        <p class="step-note">Club mesh is the everyday vest. Race mesh is lighter, cut higher at the
-          arm and deeper at the neck — it's what people wear for championships and cross country.</p>
-
-        <div class="field">
-          <span class="label">Fabric</span>
-          <div class="seg" role="group" aria-label="Fabric tier">
-            <button type="button" data-tier="club" aria-pressed="true">Club mesh</button>
-            <button type="button" data-tier="elite" aria-pressed="false">Race mesh</button>
-          </div>
-        </div>
-
-        <div class="field">
-          <span class="label">Cuts in your window</span>
-          <div class="cuts" id="cutList"></div>
-        </div>
-      </section>
-
-      <section class="step">
-        <div class="step-head"><span class="step-num">02</span><h2>Club colours</h2></div>
+        <div class="step-head"><span class="step-num">01</span><h2>Club colours</h2></div>
         <p class="step-note">Body, trim and lettering are set here. To recolour a shape, tap its
-          colour dot in step 03 and it becomes the target. Anything outside the mill's sixteen
+          colour dot in step 02 and it becomes the target. Anything outside the mill's sixteen
           stock colours is a Pantone dye match — say so in the notes and we'll price it.</p>
 
         <div class="field">
@@ -440,7 +421,7 @@
       </section>
 
       <section class="step">
-        <div class="step-head"><span class="step-num">03</span><h2>The design</h2></div>
+        <div class="step-head"><span class="step-num">02</span><h2>The design</h2></div>
         <p class="step-note">Start from a shape, then move it, resize it, recolour it, or
           stack another on top of it. Everything here is knitted or cut-and-sewn into the
           vest, not printed on, so it won't crack or lift after a season of washing.</p>
@@ -462,7 +443,7 @@
       </section>
 
       <section class="step">
-        <div class="step-head"><span class="step-num">04</span><h2>Print and crest</h2></div>
+        <div class="step-head"><span class="step-num">03</span><h2>Print and crest</h2></div>
         <p class="step-note">Club name across the chest is the standard, but none of it is
           fixed — move the print up onto the chest or down towards the hem, size it to fill
           the width, and put the crest wherever your club puts it.</p>
@@ -525,9 +506,10 @@
       </section>
 
       <section class="step">
-        <div class="step-head"><span class="step-num">05</span><h2>Send it to Koru</h2></div>
-        <p class="step-note">We come back within two working days with a proof on the real garment
-          and a date for the window. Nothing is charged until your runners order.</p>
+        <div class="step-head"><span class="step-num">04</span><h2>Send it to Koru</h2></div>
+        <p class="step-note">We come back within two working days with a proof on the real garment,
+          the cuts and sizes we'd run, and a date for your window. Nothing is charged until your
+          runners order.</p>
 
         <div class="field two-up">
           <div>
@@ -564,8 +546,8 @@
       </section>
 
       <div class="fineprint">
-        <p>Prices shown are what each runner pays at checkout, including VAT. The club is not
-          invoiced and holds no stock.</p>
+        <p>Designing here costs nothing and commits you to nothing. Cuts, sizes and the price
+          your runners pay come back with your proof.</p>
         <p>A new club vest design has to be registered with Athletics Ireland before it can be worn
           in competition. We'll send you the artwork sheet you need for that with your proof.</p>
         <p>Stock colours, minimum runs and lead times are set by the mill and can move
@@ -585,38 +567,6 @@
      Style codes and prices mirror what is live on korusports.ie.
   ----------------------------------------------------------------*/
   var SHOULDER_Y = 56, CX = 160;
-
-  var CUTS = {
-    mens:   { key:"mens",   label:"Men's",   short:"SR",
-              sizes:["XS","S","M","L","XL","XXL"],
-              price:{club:30, elite:40},
-              geo:{shoulderHalf:64, neckHalf:27, neckDrop:30, armDrop:122,
-                   halfChest:80, halfWaist:76, halfHem:79, hemY:368} },
-    womens: { key:"womens", label:"Women's", short:"WMN",
-              sizes:["XS","S","M","L","XL","XXL"],
-              price:{club:30, elite:40},
-              geo:{shoulderHalf:58, neckHalf:25, neckDrop:32, armDrop:112,
-                   halfChest:72, halfWaist:64, halfHem:72, hemY:352} },
-    kids:   { key:"kids",   label:"Kids",    short:"KIDS",
-              sizes:["YXS","YS","YM","YL","YXL"],
-              price:{club:25, elite:null},
-              geo:{shoulderHalf:52, neckHalf:22, neckDrop:25, armDrop:100,
-                   halfChest:65, halfWaist:62, halfHem:65, hemY:322} },
-    crop:   { key:"crop",   label:"Crop top", short:"CROP",
-              sizes:["S","M","L","XL","XXL"],
-              price:{club:30, elite:null},
-              geo:{shoulderHalf:58, neckHalf:25, neckDrop:30, armDrop:104,
-                   halfChest:72, halfWaist:68, halfHem:70, hemY:264} }
-  };
-  var CUT_ORDER = ["mens","womens","kids","crop"];
-
-  /* Which mill and which style code a tier maps to is Koru's business, not
-     the club's — it stays out of the page and is resolved when a submission
-     is processed. */
-  var TIERS = {
-    club:  { label:"Club mesh", fabric:"Breathable club mesh" },
-    elite: { label:"Race mesh", fabric:"Lightweight race mesh" }
-  };
 
   /* Mill stock colour card. Anything else is a Pantone dye match. */
   var PALETTE = [
@@ -701,8 +651,7 @@
   var state = {
     view: "front",
     preview: "mens",
-    tier: "club",
-    cuts: { mens:true, womens:true, kids:true, crop:false },
+    tier: "club",   /* no fabric choice on this page — see README */
     layer: "base",
     base: "#F5C518",
     secondary: "#14284B",
@@ -738,12 +687,14 @@
     });
   }
 
-  /* height, half-width at hem / waist / chest, front-to-back depth */
+  /* height, half-width at hem / waist / chest, front-to-back depth. The cut
+     is a way to see the design on a different body, not an order line —
+     which cuts a club actually wants is settled with the proof. */
   var SHAPE = {
-    mens:   { H:0.62, hem:0.192, waist:0.184, chest:0.196, depth:0.56 },
-    womens: { H:0.56, hem:0.176, waist:0.156, chest:0.178, depth:0.57 },
-    kids:   { H:0.47, hem:0.156, waist:0.150, chest:0.158, depth:0.56 },
-    crop:   { H:0.34, hem:0.172, waist:0.166, chest:0.178, depth:0.57 }
+    mens:   { label:"Men's",    H:0.62, hem:0.192, waist:0.184, chest:0.196, depth:0.56 },
+    womens: { label:"Women's",  H:0.56, hem:0.176, waist:0.156, chest:0.178, depth:0.57 },
+    kids:   { label:"Kids",     H:0.47, hem:0.156, waist:0.150, chest:0.158, depth:0.56 },
+    crop:   { label:"Crop top", H:0.34, hem:0.172, waist:0.166, chest:0.178, depth:0.57 }
   };
 
   /* degrees from centre-front -> height fraction of the garment's top edge */
@@ -1102,7 +1053,7 @@
       b.setAttribute("aria-pressed", String(b.dataset.view === f));
     });
     var cap = document.getElementById("stageCaption");
-    if (cap) cap.textContent = CUTS[state.preview].label.toUpperCase() + " · " + f.toUpperCase();
+    if (cap) cap.textContent = SHAPE[state.preview].label.toUpperCase() + " · " + f.toUpperCase();
   }
 
   function tick() {
@@ -1273,32 +1224,9 @@
     return (letters + "XXX").slice(0, 3);
   }
 
-  function availableCuts() {
-    return CUT_ORDER.filter(function (k) {
-      return state.cuts[k] && CUTS[k].price[state.tier] != null;
-    });
-  }
-
-  function money(n) {
-    return "€" + n.toFixed(2);
-  }
-
   /* ---------------------------------------------------------------
      Controls
   ----------------------------------------------------------------*/
-  function renderCuts() {
-    $("#cutList").innerHTML = CUT_ORDER.map(function (k) {
-      var c = CUTS[k];
-      var price = c.price[state.tier];
-      var on = state.cuts[k] && price != null;
-      return '<button type="button" class="cut" data-cut="' + k + '" aria-pressed="' + on + '"' +
-             (price == null ? " disabled" : "") + '>' +
-             '<span class="cut-name">' + esc(c.label) + '</span>' +
-             '<span class="cut-meta">' + esc(c.sizes[0] + "–" + c.sizes[c.sizes.length - 1]) + '</span>' +
-             '<span class="cut-price">' + (price == null ? "club mesh only" : money(price)) + '</span>' +
-             '</button>';
-    }).join("");
-  }
 
   var LAYER_NAMES = { base:"the body", trim:"the trim", text:"the lettering" };
 
@@ -1376,9 +1304,6 @@
     $$("[data-preview]").forEach(function (b) {
       b.setAttribute("aria-pressed", String(b.dataset.preview === state.preview));
     });
-    $$("[data-tier]").forEach(function (b) {
-      b.setAttribute("aria-pressed", String(b.dataset.tier === state.tier));
-    });
     $$("[data-layer]").forEach(function (b) {
       b.setAttribute("aria-pressed", String(b.dataset.layer === state.layer));
     });
@@ -1407,7 +1332,6 @@
   }
 
   function renderAll() {
-    renderCuts();
     renderPresets();
     renderAddShapes();
     renderElements();
@@ -1423,20 +1347,8 @@
   var STORE_KEY = "koru-vest-design-v1";
 
   function spec() {
-    var cuts = availableCuts();
     return {
       version: 1,
-      tier: state.tier,
-      tierLabel: TIERS[state.tier].label,
-      fabric: TIERS[state.tier].fabric,
-      cuts: cuts.map(function (k) {
-        return {
-          cut: k,
-          label: CUTS[k].label,
-          sizes: CUTS[k].sizes,
-          memberPrice: CUTS[k].price[state.tier]
-        };
-      }),
       colours: {
         body: { hex: state.base, name: colourName(state.base) },
         pattern: { hex: state.secondary, name: colourName(state.secondary) },
@@ -1481,7 +1393,7 @@
     if (!next || typeof next !== "object") return;
     Object.keys(state).forEach(function (k) {
       if (next[k] === undefined) return;
-      if (k === "cuts" || k === "contact") {
+      if (k === "contact") {
         Object.keys(state[k]).forEach(function (sub) {
           if (next[k] && next[k][sub] !== undefined) state[k][sub] = next[k][sub];
         });
@@ -1539,12 +1451,7 @@
       code: code,
       status: status,
       spec: spec(),
-      production: {
-        clubCode: clubCode(),
-        cuts: availableCuts().map(function (k) {
-          return { cut: k, skuPattern: "KORU-" + clubCode() + "-" + CUTS[k].short + "-{size}" };
-        })
-      },
+      production: { clubCode: clubCode() },
       state: JSON.parse(JSON.stringify(state)),
       createdAt: new Date().toISOString()
     };
@@ -1623,11 +1530,7 @@
     state.elements.splice(j, 0, moved);
   });
   onPick("hex",     function (v) { setActiveColour(v); });
-  onPick("cut",     function (v) { state.cuts[v] = !state.cuts[v]; });
-  onPick("tier",    function (v) {
-    state.tier = v;
-    if (CUTS[state.preview].price[v] == null) state.preview = "mens";
-  });
+
 
   $("#clubName").addEventListener("input", function (e) {
     state.clubName = e.target.value;
@@ -1686,7 +1589,6 @@
     var c = state.contact;
     if (!c.club.trim()) { setStatus("Add your club name so we know whose vest this is.", true); $("#fClub").focus(); return; }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email.trim())) { setStatus("Add an email we can send the proof to.", true); $("#fEmail").focus(); return; }
-    if (!availableCuts().length) { setStatus("Pick at least one cut in step 01 before sending.", true); return; }
     setStatus("Sending…");
     persist("submitted").then(function (code) {
       if (code) {
