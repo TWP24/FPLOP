@@ -1,0 +1,1705 @@
+<title>Koru Vest Designer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#E6E8E4;
+    --surface:#FBFBFA;
+    --surface-2:#F1F2EF;
+    --ink:#171A19;
+    --ink-2:#4A524F;
+    --ink-3:#78807C;
+    --rule:#D2D5D0;
+    --rule-2:#E0E2DE;
+    --accent:#2E5E5A;
+    --accent-soft:#DCE8E5;
+    --accent-ink:#F4F7F5;
+    --warn:#8C5410;
+    --warn-soft:#F6EBDA;
+    --good:#2F6B3C;
+    --good-soft:#E2EEE4;
+    --stage:#DEE1DC;
+    --stage-2:#EFF1ED;
+    --sans:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --display:"Archivo",var(--sans);
+    --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+    --shadow:0 1px 2px rgba(23,26,25,.05), 0 8px 24px -16px rgba(23,26,25,.28);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#141716;
+      --surface:#1C201E;
+      --surface-2:#232825;
+      --ink:#E8EAE7;
+      --ink-2:#A7B0AB;
+      --ink-3:#7C857F;
+      --rule:#2E3432;
+      --rule-2:#272C2A;
+      --accent:#5FB3A6;
+      --accent-soft:#1E2E2C;
+      --accent-ink:#0E1413;
+      --warn:#D9A25C;
+      --warn-soft:#2A231A;
+      --good:#7FC08C;
+      --good-soft:#1B2A1E;
+      --stage:#1A1E1C;
+      --stage-2:#222725;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.9);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#141716;
+    --surface:#1C201E;
+    --surface-2:#232825;
+    --ink:#E8EAE7;
+    --ink-2:#A7B0AB;
+    --ink-3:#7C857F;
+    --rule:#2E3432;
+    --rule-2:#272C2A;
+    --accent:#5FB3A6;
+    --accent-soft:#1E2E2C;
+    --accent-ink:#0E1413;
+    --warn:#D9A25C;
+    --warn-soft:#2A231A;
+    --good:#7FC08C;
+    --good-soft:#1B2A1E;
+    --stage:#1A1E1C;
+    --stage-2:#222725;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.9);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.015em}
+  p{margin:0}
+  button,input,select,textarea{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+
+  .wrap{max-width:1260px;margin-inline:auto;padding-inline:20px}
+
+  /* ---------- masthead ---------- */
+  .masthead{
+    border-bottom:1px solid var(--rule);
+    background:var(--surface);
+  }
+  .masthead .wrap{
+    display:flex;flex-wrap:wrap;gap:16px 28px;align-items:baseline;
+    padding-block:18px 16px;
+  }
+  .mark{
+    font-family:var(--display);font-weight:700;font-size:17px;
+    letter-spacing:.14em;text-transform:uppercase;
+  }
+  .mark span{color:var(--accent)}
+  .masthead-title{font-size:14px;color:var(--ink-2);margin-right:auto}
+  .window-flag{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.02em;
+    color:var(--ink-2);
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--good);flex:none}
+
+  /* ---------- intro ---------- */
+  .intro{padding-block:36px 28px;border-bottom:1px solid var(--rule)}
+  .intro h1{font-size:clamp(30px,4.6vw,44px);font-weight:700;line-height:1.03;max-width:15ch}
+  .intro p{margin-top:14px;max-width:62ch;color:var(--ink-2);font-size:16px}
+  .intro .lede-note{
+    margin-top:18px;font-family:var(--mono);font-size:12.5px;color:var(--ink-3);
+    display:flex;flex-wrap:wrap;gap:6px 18px;
+  }
+
+  /* ---------- workbench ---------- */
+  .workbench{
+    display:grid;
+    grid-template-columns:minmax(0,0.95fr) minmax(0,1.05fr);
+    gap:44px;
+    align-items:start;
+    padding-block:32px 56px;
+  }
+
+  /* ---------- stage ---------- */
+  .stage-col{position:sticky;top:16px}
+  .stage{
+    background:radial-gradient(86% 66% at 50% 24%, #363C3F 0%, #232829 48%, #16191B 100%);
+    border:1px solid var(--rule);
+    border-radius:4px;
+    position:relative;
+    overflow:hidden;
+    aspect-ratio:4/5;
+    touch-action:pan-y;
+    cursor:grab;
+  }
+  .stage.dragging{cursor:grabbing}
+  .stage:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  #stageHost{position:absolute;inset:0}
+  #stageHost canvas{display:block;width:100%;height:100%}
+  .stage-caption{
+    position:absolute;left:14px;top:12px;pointer-events:none;
+    font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+    color:rgba(255,255,255,.44);
+  }
+  .stage-hint{
+    position:absolute;left:0;right:0;bottom:14px;text-align:center;pointer-events:none;
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(255,255,255,.42);transition:opacity .5s;
+  }
+  .stage-hint.gone{opacity:0}
+  .stage-toolbar{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    padding:12px 10px;border-top:1px solid var(--rule);
+    background:var(--surface);
+  }
+  .stage-toolbar .grow{margin-left:auto}
+
+  .docket{
+    margin-top:14px;
+    border:1px solid var(--rule);
+    background:var(--surface);
+    border-radius:4px;
+  }
+  .docket-head{
+    display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+    padding:11px 14px;border-bottom:1px solid var(--rule-2);
+  }
+  .docket-head h3{
+    font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--ink-2);
+  }
+  .docket-head .code{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+  .docket dl{
+    margin:0;padding:10px 14px 14px;
+    display:grid;grid-template-columns:auto 1fr;gap:5px 16px;
+    font-family:var(--mono);font-size:12.5px;
+  }
+  .docket dt{color:var(--ink-3);letter-spacing:.02em}
+  .docket dd{margin:0;text-align:right;color:var(--ink)}
+  .docket dd .sw{
+    display:inline-block;width:9px;height:9px;border-radius:2px;
+    border:1px solid rgba(128,128,128,.45);margin-right:6px;vertical-align:-1px;
+  }
+
+  /* ---------- steps ---------- */
+  .steps{display:flex;flex-direction:column;gap:14px}
+  .step{
+    background:var(--surface);
+    border:1px solid var(--rule);
+    border-radius:4px;
+    padding:18px 20px 20px;
+  }
+  .step-head{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
+  .step-num{
+    font-family:var(--mono);font-size:12px;color:var(--accent);
+    letter-spacing:.06em;flex:none;
+  }
+  .step-head h2{font-size:19px;font-weight:600}
+  .step-note{
+    color:var(--ink-2);font-size:13.5px;margin-bottom:16px;margin-left:30px;max-width:56ch;
+  }
+  .field{margin-top:16px}
+  .field:first-of-type{margin-top:0}
+  .label{
+    display:block;font-size:11px;font-weight:600;text-transform:uppercase;
+    letter-spacing:.14em;color:var(--ink-3);margin-bottom:8px;
+  }
+
+  /* segmented + chips */
+  .seg{display:flex;flex-wrap:wrap;gap:6px}
+  .seg button, .chip{
+    font-family:var(--sans);font-size:13.5px;font-weight:500;
+    background:var(--surface-2);color:var(--ink-2);
+    border:1px solid var(--rule);border-radius:3px;
+    padding:7px 13px;cursor:pointer;
+    transition:background .14s,border-color .14s,color .14s;
+  }
+  .seg button:hover,.chip:hover{border-color:var(--ink-3);color:var(--ink)}
+  .seg button[aria-pressed="true"],.chip[aria-pressed="true"]{
+    background:var(--accent);border-color:var(--accent);color:var(--accent-ink);
+  }
+  .seg button[disabled]{opacity:.38;cursor:not-allowed}
+  .seg button[disabled]:hover{border-color:var(--rule);color:var(--ink-2)}
+
+  /* cut cards */
+  .cuts{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px}
+  .cut{
+    display:flex;flex-direction:column;gap:2px;align-items:flex-start;
+    text-align:left;padding:11px 13px;cursor:pointer;
+    background:var(--surface-2);border:1px solid var(--rule);border-radius:3px;
+    transition:background .14s,border-color .14s;
+  }
+  .cut:hover{border-color:var(--ink-3)}
+  .cut[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+  .cut[disabled]{opacity:.36;cursor:not-allowed}
+  .cut .cut-name{font-weight:600;font-size:14px;color:var(--ink)}
+  .cut .cut-meta{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+  .cut .cut-price{font-family:var(--mono);font-size:12.5px;color:var(--accent);font-weight:500}
+  .cut[disabled] .cut-price{color:var(--ink-3)}
+
+  /* palette */
+  .layer-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .palette{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:7px}
+  .swatch{
+    aspect-ratio:1;border-radius:3px;cursor:pointer;padding:0;
+    border:1px solid rgba(128,128,128,.4);
+    position:relative;transition:transform .1s;
+  }
+  .swatch:hover{transform:translateY(-1px)}
+  .swatch[aria-pressed="true"]{
+    box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent);
+  }
+  .custom-row{
+    display:flex;align-items:center;gap:10px;margin-top:12px;
+    font-family:var(--mono);font-size:12px;color:var(--ink-3);
+  }
+  .custom-row input[type="color"]{
+    width:38px;height:28px;padding:2px;background:var(--surface-2);
+    border:1px solid var(--rule);border-radius:3px;cursor:pointer;
+  }
+
+  /* pattern grid */
+  .patterns{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px}
+  .pattern{
+    padding:8px 8px 7px;cursor:pointer;background:var(--surface-2);
+    border:1px solid var(--rule);border-radius:3px;
+    display:flex;flex-direction:column;gap:6px;align-items:center;
+    transition:border-color .14s,background .14s;
+  }
+  .pattern:hover{border-color:var(--ink-3)}
+  .pattern[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+  .pattern .pat-img{display:block;width:100%;aspect-ratio:176/92;border-radius:2px;
+    background-size:cover;background-position:center}
+  .pattern span{font-size:11.5px;font-weight:500;color:var(--ink-2)}
+
+  /* text inputs */
+  .text-input,.select-input{
+    width:100%;padding:9px 11px;
+    background:var(--surface-2);border:1px solid var(--rule);border-radius:3px;
+    font-size:14px;
+  }
+  .text-input::placeholder{color:var(--ink-3)}
+  .chest-input{
+    font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  }
+  .counter{
+    font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
+    margin-top:6px;display:block;
+  }
+  .two-up{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  /* slider */
+  .runner-row{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+  .runner-count{font-family:var(--mono);font-size:26px;font-weight:500;color:var(--ink)}
+  .runner-unit{font-size:13.5px;color:var(--ink-2)}
+  input[type="range"]{width:100%;accent-color:var(--accent);cursor:pointer}
+
+  .moq{margin-top:16px}
+  .moq-track{
+    height:6px;border-radius:3px;background:var(--surface-2);
+    border:1px solid var(--rule);overflow:hidden;
+  }
+  .moq-fill{height:100%;background:var(--accent);transition:width .25s}
+  .moq-fill.short{background:var(--warn)}
+  .moq-label{
+    display:flex;justify-content:space-between;gap:12px;
+    font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:7px;
+  }
+
+  .callout{
+    margin-top:16px;padding:11px 14px;border-radius:3px;
+    font-size:13.5px;border:1px solid;
+  }
+  .callout.ok{background:var(--good-soft);border-color:color-mix(in srgb,var(--good) 35%,transparent);color:var(--ink)}
+  .callout.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 38%,transparent);color:var(--ink)}
+  .callout strong{font-weight:600}
+
+  /* ticket */
+  .ticket{
+    border:1px solid var(--rule);border-radius:4px;background:var(--surface);
+    overflow:hidden;
+  }
+  .ticket-head{
+    padding:16px 20px;border-bottom:1px solid var(--rule-2);
+    display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap;
+  }
+  .ticket-head h2{font-size:19px;font-weight:600}
+  .ticket-head .code{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+  .lines{padding:6px 20px 14px}
+  .line{
+    display:grid;grid-template-columns:1fr auto auto;gap:6px 16px;
+    align-items:baseline;padding:9px 0;border-bottom:1px dotted var(--rule);
+    font-size:14px;
+  }
+  .line:last-child{border-bottom:none}
+  .line .sku{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);grid-column:1/-1;margin-top:-4px}
+  .line .qty,.line .amt{font-family:var(--mono);font-size:13.5px;font-variant-numeric:tabular-nums}
+  .line .qty{color:var(--ink-3)}
+  .totals{
+    padding:14px 20px;border-top:1px solid var(--rule);background:var(--surface-2);
+    display:grid;grid-template-columns:1fr auto;gap:6px 16px;
+    font-family:var(--mono);font-size:13.5px;font-variant-numeric:tabular-nums;
+  }
+  .totals .k{color:var(--ink-2)}
+  .totals .v{text-align:right}
+  .totals .big{font-size:17px;font-weight:500}
+  .totals .row-strong{font-family:var(--sans);font-weight:600;font-size:14px;color:var(--ink)}
+
+  .timeline{
+    list-style:none;margin:0;padding:16px 20px 18px;border-top:1px solid var(--rule-2);
+    display:flex;flex-direction:column;gap:0;
+  }
+  .timeline li{
+    display:grid;grid-template-columns:16px 1fr auto;gap:12px;align-items:baseline;
+    padding:7px 0;font-size:13.5px;
+  }
+  .timeline .pip{
+    width:9px;height:9px;border-radius:50%;border:2px solid var(--accent);
+    background:var(--surface);justify-self:center;align-self:center;
+  }
+  .timeline li.done .pip{background:var(--accent)}
+  .timeline .when{font-family:var(--mono);font-size:12.5px;color:var(--ink-2)}
+
+  /* submit */
+  .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+  .btn{
+    font-family:var(--sans);font-size:14px;font-weight:600;
+    padding:11px 20px;border-radius:3px;cursor:pointer;
+    border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);
+    transition:opacity .14s;
+  }
+  .btn:hover{opacity:.88}
+  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--rule)}
+  .btn.ghost:hover{border-color:var(--ink-3);opacity:1}
+  .btn[disabled]{opacity:.45;cursor:not-allowed}
+  .status{font-family:var(--mono);font-size:12.5px;color:var(--ink-2);min-height:1.4em}
+  .status.err{color:var(--warn)}
+
+  .fineprint{
+    margin-top:36px;padding-top:20px;border-top:1px solid var(--rule);
+    color:var(--ink-3);font-size:12.5px;max-width:70ch;
+  }
+  .fineprint p + p{margin-top:8px}
+  .visually-hidden{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+  }
+
+  @media (max-width:960px){
+    .workbench{grid-template-columns:minmax(0,1fr);gap:28px;padding-block:24px 44px}
+    .stage-col{position:static}
+    .stage{aspect-ratio:1/1}
+  }
+  @media (max-width:520px){
+    .wrap{padding-inline:16px}
+    .two-up{grid-template-columns:1fr}
+    .intro{padding-block:26px 22px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important;animation:none !important}
+  }
+</style>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="mark">Koru<span>.</span></div>
+    <div class="masthead-title">Club Vest Designer</div>
+    <div class="window-flag"><span class="dot"></span><span id="flagText">Autumn 2026 window — open</span></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="intro">
+    <h1>Design the vest your club races in.</h1>
+    <p>Build it here, send it to us, and we open a pre-order window on korusports.ie. Your runners
+      buy their own size directly — the club carries no stock and pays nothing up front.</p>
+    <div class="lede-note">
+      <span>Made in club mesh or race mesh</span>
+      <span>Men's · Women's · Kids · Crop</span>
+      <span>Pre-order window, then one delivery</span>
+    </div>
+  </section>
+
+  <main class="workbench">
+    <!-- ================= STAGE ================= -->
+    <div class="stage-col">
+      <div class="stage" tabindex="0" role="img"
+           aria-label="Vest preview. Drag, or use the left and right arrow keys, to turn it.">
+        <div id="stageHost"></div>
+        <span class="stage-caption" id="stageCaption">MEN'S · FRONT</span>
+        <span class="stage-hint" id="stageHint">Drag to turn</span>
+      </div>
+
+      <div class="stage-toolbar">
+        <div class="seg" role="group" aria-label="View side">
+          <button type="button" data-view="front" aria-pressed="true">Turn to front</button>
+          <button type="button" data-view="back" aria-pressed="false">Turn to back</button>
+        </div>
+        <div class="seg grow" role="group" aria-label="Preview which cut">
+          <button type="button" data-preview="mens" aria-pressed="true">Men's</button>
+          <button type="button" data-preview="womens" aria-pressed="false">Women's</button>
+          <button type="button" data-preview="kids" aria-pressed="false">Kids</button>
+          <button type="button" data-preview="crop" aria-pressed="false">Crop</button>
+        </div>
+      </div>
+
+      <div class="docket">
+        <div class="docket-head">
+          <h3>Spec sheet</h3>
+          <span class="code" id="docketRef">KORU-DRAFT</span>
+        </div>
+        <dl id="docketBody"></dl>
+      </div>
+    </div>
+
+    <!-- ================= STEPS ================= -->
+    <div class="steps">
+
+      <section class="step">
+        <div class="step-head"><span class="step-num">01</span><h2>Fabric and cuts</h2></div>
+        <p class="step-note">Club mesh is the everyday vest. Race mesh is lighter, cut higher at the
+          arm and deeper at the neck — it's what people wear for championships and cross country.</p>
+
+        <div class="field">
+          <span class="label">Fabric</span>
+          <div class="seg" role="group" aria-label="Fabric tier">
+            <button type="button" data-tier="club" aria-pressed="true">Club mesh</button>
+            <button type="button" data-tier="elite" aria-pressed="false">Race mesh</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label">Cuts in your window</span>
+          <div class="cuts" id="cutList"></div>
+        </div>
+      </section>
+
+      <section class="step">
+        <div class="step-head"><span class="step-num">02</span><h2>Club colours</h2></div>
+        <p class="step-note">Pick the layer you're colouring, then choose from the mill's stock
+          colours. Anything outside the sixteen is a Pantone dye match — tell us in the notes and
+          we'll price it.</p>
+
+        <div class="field">
+          <span class="label">Colouring</span>
+          <div class="layer-row seg" role="group" aria-label="Which layer to colour">
+            <button type="button" data-layer="base" aria-pressed="true">Body</button>
+            <button type="button" data-layer="secondary" aria-pressed="false">Pattern</button>
+            <button type="button" data-layer="trim" aria-pressed="false">Trim</button>
+            <button type="button" data-layer="text" aria-pressed="false">Lettering</button>
+          </div>
+          <div class="palette" id="palette"></div>
+          <div class="custom-row">
+            <label for="customColour">Pantone match</label>
+            <input type="color" id="customColour" value="#F5C518">
+            <span id="customHex">#F5C518</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="step">
+        <div class="step-head"><span class="step-num">03</span><h2>Pattern</h2></div>
+        <p class="step-note">All six are knitted or cut-and-sewn into the vest, not printed on, so
+          they won't crack or lift after a season of washing.</p>
+        <div class="patterns" id="patterns"></div>
+      </section>
+
+      <section class="step">
+        <div class="step-head"><span class="step-num">04</span><h2>Chest print and crest</h2></div>
+        <p class="step-note">Club name across the chest is standard. Keep it short — long names get
+          set smaller to stay inside the print area.</p>
+
+        <div class="field">
+          <label class="label" for="clubName">Name across the chest</label>
+          <input type="text" id="clubName" class="text-input chest-input" maxlength="20"
+                 value="KORU AC" placeholder="YOUR CLUB">
+          <span class="counter" id="nameCount"></span>
+        </div>
+
+        <div class="field">
+          <span class="label">Lettering</span>
+          <div class="seg" role="group" aria-label="Lettering style">
+            <button type="button" data-font="block" aria-pressed="true">Block</button>
+            <button type="button" data-font="wide" aria-pressed="false">Wide</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label">Club crest</span>
+          <div class="seg" role="group" aria-label="Crest placement">
+            <button type="button" data-crest="none" aria-pressed="false">No crest</button>
+            <button type="button" data-crest="left" aria-pressed="true">Left chest</button>
+            <button type="button" data-crest="centre" aria-pressed="false">Centre back</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label">Back of vest</span>
+          <div class="seg" role="group" aria-label="Back treatment">
+            <button type="button" data-back="name" aria-pressed="true">Club name</button>
+            <button type="button" data-back="plain" aria-pressed="false">Plain</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="step">
+        <div class="step-head"><span class="step-num">05</span><h2>How big is the window</h2></div>
+        <p class="step-note">A rough headcount is enough. It sets whether the run clears the mill's
+          minimum, and it's the number we watch while the window is open.</p>
+
+        <div class="field">
+          <label class="label" for="runners">Runners you expect to order</label>
+          <div class="runner-row">
+            <span class="runner-count" id="runnerCount">42</span>
+            <span class="runner-unit">vests across all cuts</span>
+          </div>
+          <input type="range" id="runners" min="8" max="220" step="1" value="42">
+          <div class="moq">
+            <div class="moq-track"><div class="moq-fill" id="moqFill"></div></div>
+            <div class="moq-label">
+              <span id="moqNow">42 of 30</span>
+              <span>mill minimum 30</span>
+            </div>
+          </div>
+          <div class="callout ok" id="moqNote"></div>
+        </div>
+      </section>
+
+      <section class="step" style="padding:0;overflow:hidden">
+        <div class="ticket">
+          <div class="ticket-head">
+            <h2><span class="step-num" style="margin-right:10px">06</span>What your runners pay</h2>
+            <span class="code" id="ticketRef">EST · EUR</span>
+          </div>
+          <div class="lines" id="ticketLines"></div>
+          <div class="totals" id="ticketTotals"></div>
+          <ul class="timeline" id="timeline"></ul>
+        </div>
+      </section>
+
+      <section class="step">
+        <div class="step-head"><span class="step-num">07</span><h2>Send it to Koru</h2></div>
+        <p class="step-note">We come back within two working days with a proof on the real garment
+          and a date for the window. Nothing is charged until your runners order.</p>
+
+        <div class="field two-up">
+          <div>
+            <label class="label" for="fClub">Club</label>
+            <input type="text" id="fClub" class="text-input" placeholder="Bandon AC" autocomplete="organization">
+          </div>
+          <div>
+            <label class="label" for="fName">Your name</label>
+            <input type="text" id="fName" class="text-input" placeholder="Gear officer" autocomplete="name">
+          </div>
+        </div>
+        <div class="field two-up">
+          <div>
+            <label class="label" for="fEmail">Email</label>
+            <input type="email" id="fEmail" class="text-input" placeholder="you@club.ie" autocomplete="email">
+          </div>
+          <div>
+            <label class="label" for="fPhone">Phone</label>
+            <input type="tel" id="fPhone" class="text-input" placeholder="08x xxx xxxx" autocomplete="tel">
+          </div>
+        </div>
+        <div class="field">
+          <label class="label" for="fNotes">Anything we should know</label>
+          <textarea id="fNotes" class="text-input" rows="3"
+            placeholder="Pantone references, crest file, a race you need these for…"></textarea>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn" id="submitBtn">Send design to Koru</button>
+          <button type="button" class="btn ghost" id="saveBtn">Save &amp; get a share link</button>
+          <button type="button" class="btn ghost" id="copyBtn">Copy spec</button>
+        </div>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <div class="fineprint">
+        <p>Prices shown are what each runner pays at checkout, including VAT. The club is not
+          invoiced and holds no stock.</p>
+        <p>A new club vest design has to be registered with Athletics Ireland before it can be worn
+          in competition. We'll send you the artwork sheet you need for that with your proof.</p>
+        <p>Minimum run, lead times and the stock colour card are set by the mill and can move
+          between seasons. Everything here is an estimate until we confirm the proof.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------------------------------------------------------
+     Garment data. Geometry is in the preview's own 320x440 space.
+     Style codes and prices mirror what is live on korusports.ie.
+  ----------------------------------------------------------------*/
+  var SHOULDER_Y = 56, CX = 160;
+
+  var CUTS = {
+    mens:   { key:"mens",   label:"Men's",   short:"SR",
+              sizes:["XS","S","M","L","XL","XXL"],
+              price:{club:30, elite:40},
+              style:{club:"TJ010", elite:"TS0738M"},
+              geo:{shoulderHalf:64, neckHalf:27, neckDrop:30, armDrop:122,
+                   halfChest:80, halfWaist:76, halfHem:79, hemY:368} },
+    womens: { key:"womens", label:"Women's", short:"WMN",
+              sizes:["XS","S","M","L","XL","XXL"],
+              price:{club:30, elite:40},
+              style:{club:"TJ005", elite:"TS0661W"},
+              geo:{shoulderHalf:58, neckHalf:25, neckDrop:32, armDrop:112,
+                   halfChest:72, halfWaist:64, halfHem:72, hemY:352} },
+    kids:   { key:"kids",   label:"Kids",    short:"KIDS",
+              sizes:["YXS","YS","YM","YL","YXL"],
+              price:{club:25, elite:null},
+              style:{club:"TJ010", elite:null},
+              geo:{shoulderHalf:52, neckHalf:22, neckDrop:25, armDrop:100,
+                   halfChest:65, halfWaist:62, halfHem:65, hemY:322} },
+    crop:   { key:"crop",   label:"Crop top", short:"CROP",
+              sizes:["S","M","L","XL","XXL"],
+              price:{club:30, elite:null},
+              style:{club:null, elite:null},
+              geo:{shoulderHalf:58, neckHalf:25, neckDrop:30, armDrop:104,
+                   halfChest:72, halfWaist:68, halfHem:70, hemY:264} }
+  };
+  var CUT_ORDER = ["mens","womens","kids","crop"];
+
+  var TIERS = {
+    club:  { label:"Club mesh", mill:"Zhongkang", fabric:"Breathable club mesh" },
+    elite: { label:"Race mesh", mill:"Tarstone",  fabric:"Lightweight race mesh" }
+  };
+
+  var MOQ = 30;
+
+  /* Mill stock colour card. Anything else is a Pantone dye match. */
+  var PALETTE = [
+    ["Chalk","#F2F1EC"], ["Silver","#C7CCC9"], ["Steel","#6E7A80"], ["Jet","#15161A"],
+    ["Sky","#4FA3D9"],   ["Royal","#1B4FA8"],  ["Navy","#14284B"],  ["Bottle","#0C3B2B"],
+    ["Emerald","#17875A"],["Club Yellow","#F5C518"],["Amber","#E8890C"],["Scarlet","#CE2027"],
+    ["Maroon","#6E1A2E"],["Plum","#5B2A6E"],   ["Magenta","#C61A72"],["Sand","#D9C9A3"]
+  ];
+  function colourName(hex) {
+    for (var i = 0; i < PALETTE.length; i++) {
+      if (PALETTE[i][1].toLowerCase() === String(hex).toLowerCase()) return PALETTE[i][0];
+    }
+    return "Pantone match " + String(hex).toUpperCase();
+  }
+
+  var PATTERNS = [
+    ["solid",   "Solid"],
+    ["band",    "Chest band"],
+    ["hoops",   "Hoops"],
+    ["sash",    "Sash"],
+    ["panels",  "Side panels"],
+    ["chevron", "Chevron"]
+  ];
+
+  /* ---------------------------------------------------------------
+     State
+  ----------------------------------------------------------------*/
+  var state = {
+    view: "front",
+    preview: "mens",
+    tier: "club",
+    cuts: { mens:true, womens:true, kids:true, crop:false },
+    layer: "base",
+    base: "#F5C518",
+    secondary: "#14284B",
+    trim: "#14284B",
+    text: "#F2F1EC",
+    pattern: "band",
+    clubName: "KORU AC",
+    font: "block",
+    crest: "left",
+    back: "name",
+    runners: 42,
+    contact: { club:"", name:"", email:"", phone:"", notes:"" }
+  };
+
+  var $ = function (sel) { return document.querySelector(sel); };
+  var $$ = function (sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); };
+
+  /* ---------------------------------------------------------------
+     The vest is a tube of elliptical cross-sections whose TOP EDGE is
+     a function of the angle around the body: high over the shoulders,
+     scooped at the neck, cut away at the sides for the armholes. One
+     profile gives neckline, straps and armholes at once — and painting
+     the binding against that same profile makes the trim follow the
+     real edge all the way round.
+  ----------------------------------------------------------------*/
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+    });
+  }
+
+  /* height, half-width at hem / waist / chest, front-to-back depth */
+  var SHAPE = {
+    mens:   { H:0.62, hem:0.192, waist:0.184, chest:0.196, depth:0.56 },
+    womens: { H:0.56, hem:0.176, waist:0.156, chest:0.178, depth:0.57 },
+    kids:   { H:0.47, hem:0.156, waist:0.150, chest:0.158, depth:0.56 },
+    crop:   { H:0.34, hem:0.172, waist:0.166, chest:0.178, depth:0.57 }
+  };
+
+  /* degrees from centre-front -> height fraction of the garment's top edge */
+  var EDGE = {
+    club:  [[0,0.900],[9,0.907],[20,0.952],[31,0.993],[46,1.0],[60,0.963],
+            [73,0.80],[90,0.585],[107,0.80],[120,0.963],[134,1.0],[149,0.993],
+            [160,0.975],[180,0.955]],
+    elite: [[0,0.848],[8,0.856],[18,0.918],[29,0.984],[44,1.0],[56,0.947],
+            [70,0.74],[90,0.455],[110,0.74],[124,0.947],[136,1.0],[151,0.984],
+            [162,0.958],[180,0.928]]
+  };
+
+  function smooth(a) { return a * a * (3 - 2 * a); }
+
+  function topAt(theta, tier) {
+    var keys = EDGE[tier] || EDGE.club;
+    var deg = ((theta * 180 / Math.PI) % 360 + 360) % 360;
+    if (deg > 180) deg = 360 - deg;
+    for (var i = 1; i < keys.length; i++) {
+      if (deg <= keys[i][0]) {
+        var a = keys[i - 1], b = keys[i];
+        var k = smooth((deg - a[0]) / ((b[0] - a[0]) || 1));
+        return a[1] + (b[1] - a[1]) * k;
+      }
+    }
+    return keys[keys.length - 1][1];
+  }
+
+  function radiusAt(t, sh) {
+    if (t < 0.42) return sh.hem + (sh.waist - sh.hem) * smooth(t / 0.42);
+    if (t < 0.85) return sh.waist + (sh.chest - sh.waist) * smooth((t - 0.42) / 0.43);
+    return sh.chest * (1 - 0.09 * smooth((t - 0.85) / 0.15));
+  }
+
+  /* ---------------------------------------------------------------
+     Fabric texture. u wraps the body with centre-front at 0.25 and
+     centre-back at 0.75, so neither print lands on the side seam.
+  ----------------------------------------------------------------*/
+  var TW = 2048, TH = 1024, FRONT_U = 0.25, BACK_U = 0.75;
+  var texCanvas = null, texCtx = null, meshPattern = null;
+
+  function ensureTexCanvas() {
+    if (texCtx) return;
+    texCanvas = document.createElement("canvas");
+    texCanvas.width = TW;
+    texCanvas.height = TH;
+    texCtx = texCanvas.getContext("2d");
+  }
+
+  function makeMeshPattern(ctx) {
+    var c = document.createElement("canvas");
+    c.width = c.height = 8;
+    var x = c.getContext("2d");
+    x.fillStyle = "rgba(0,0,0,.075)";
+    x.fillRect(0, 0, 2, 2); x.fillRect(4, 4, 2, 2);
+    x.fillStyle = "rgba(255,255,255,.055)";
+    x.fillRect(4, 0, 2, 2); x.fillRect(0, 4, 2, 2);
+    return ctx.createPattern(c, "repeat");
+  }
+
+  function vBox(ctx, colour, v0, v1) {
+    ctx.fillStyle = colour;
+    ctx.fillRect(0, v0 * TH, TW, (v1 - v0) * TH);
+  }
+
+  function poly(ctx, colour, pts) {
+    ctx.fillStyle = colour;
+    ctx.beginPath();
+    pts.forEach(function (p, i) {
+      var x = p[0] * TW, y = p[1] * TH;
+      if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+    });
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function paintPattern(ctx, kind, colour) {
+    switch (kind) {
+      case "band":
+        vBox(ctx, colour, 0.27, 0.41);
+        break;
+      case "hoops":
+        for (var v = 0.08; v < 1; v += 0.15) vBox(ctx, colour, v, Math.min(v + 0.075, 1));
+        break;
+      case "sash":
+        poly(ctx, colour, [[0.075,0.02],[0.195,0.02],[0.445,1],[0.325,1]]);
+        poly(ctx, colour, [[0.575,0.02],[0.695,0.02],[0.945,1],[0.825,1]]);
+        break;
+      case "panels":
+        ctx.fillStyle = colour;
+        ctx.fillRect(0.468 * TW, 0, 0.064 * TW, TH);
+        ctx.fillRect(0.968 * TW, 0, 0.032 * TW, TH);
+        ctx.fillRect(0, 0, 0.032 * TW, TH);
+        break;
+      case "chevron":
+        [0, 0.5].forEach(function (o) {
+          poly(ctx, colour, [
+            [o + 0.02, 0.235], [o + 0.25, 0.375], [o + 0.48, 0.235],
+            [o + 0.48, 0.335], [o + 0.25, 0.475], [o + 0.02, 0.335]
+          ]);
+        });
+        break;
+    }
+  }
+
+  /* Binding follows the garment's own top edge, so one pass gives neck,
+     shoulder and armhole trim. */
+  function paintBinding(ctx, colour, tier) {
+    ctx.fillStyle = colour;
+    var band = 0.022 * TH, step = 2;
+    for (var px = 0; px <= TW; px += step) {
+      var theta = (px / TW - FRONT_U) * Math.PI * 2;
+      ctx.fillRect(px, (1 - topAt(theta, tier)) * TH, step, band);
+    }
+    ctx.fillRect(0, TH - band, TW, band);
+  }
+
+  function trackedText(ctx, text, cxPx, cyPx, maxPx, tracking, colour) {
+    if (!text) return;
+    var face = "Archivo, 'Arial Narrow', 'Helvetica Neue', sans-serif";
+    var size = 150;
+    ctx.font = "700 " + size + "px " + face;
+    var chars = text.split("");
+    var natural = 0;
+    chars.forEach(function (c) { natural += ctx.measureText(c).width; });
+    natural += tracking * size * (chars.length - 1);
+    if (natural > maxPx) {
+      size = size * (maxPx / natural);
+      ctx.font = "700 " + size + "px " + face;
+    }
+    var widths = chars.map(function (c) { return ctx.measureText(c).width; });
+    var total = tracking * size * (chars.length - 1);
+    widths.forEach(function (w) { total += w; });
+    var x = cxPx - total / 2;
+    ctx.fillStyle = colour;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    chars.forEach(function (c, i) {
+      ctx.fillText(c, x, cyPx);
+      x += widths[i] + tracking * size;
+    });
+  }
+
+  function paintCrest(ctx, uCentre, v, r, colour) {
+    var x = uCentre * TW, y = v * TH;
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = 5;
+    ctx.setLineDash([14, 12]);
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = colour;
+    ctx.font = "500 " + (r * 0.34) + "px 'IBM Plex Mono', monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("CREST", x, y);
+    ctx.restore();
+  }
+
+  function paintTexture() {
+    ensureTexCanvas();
+    var ctx = texCtx;
+    var name = (state.clubName || "").trim().toUpperCase();
+    var tracking = state.font === "wide" ? 0.14 : 0.06;
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = state.base;
+    ctx.fillRect(0, 0, TW, TH);
+    if (state.pattern !== "solid") paintPattern(ctx, state.pattern, state.secondary);
+
+    if (!meshPattern) meshPattern = makeMeshPattern(ctx);
+    ctx.fillStyle = meshPattern;
+    ctx.fillRect(0, 0, TW, TH);
+
+    paintBinding(ctx, state.trim, state.tier);
+
+    var chestMax = TW * 0.30;
+    trackedText(ctx, name, FRONT_U * TW, 0.345 * TH, chestMax, tracking, state.text);
+    if (state.back === "name") {
+      trackedText(ctx, name, BACK_U * TW, 0.30 * TH, chestMax * 0.92, tracking, state.text);
+    }
+    if (state.crest === "left") paintCrest(ctx, FRONT_U - 0.060, 0.255, 58, state.text);
+    if (state.crest === "centre") paintCrest(ctx, BACK_U, 0.50, 86, state.text);
+
+    if (three.texture) three.texture.needsUpdate = true;
+  }
+
+  /* ---------------------------------------------------------------
+     Scene
+  ----------------------------------------------------------------*/
+  var three = {
+    ok:false, renderer:null, scene:null, camera:null, group:null, mesh:null,
+    material:null, texture:null, host:null, shapeKey:"",
+    rotY:0, rotX:0, vel:0, target:null, raf:0
+  };
+
+  function buildGeometry(cutKey, tier) {
+    var sh = SHAPE[cutKey], AN = 168, VN = 88;
+    var pos = [], uv = [], idx = [];
+    for (var i = 0; i <= AN; i++) {
+      var f = i / AN, theta = f * Math.PI * 2, tTop = topAt(theta, tier);
+      for (var j = 0; j <= VN; j++) {
+        var t = (j / VN) * tTop, r = radiusAt(t, sh);
+        pos.push(Math.sin(theta) * r, t * sh.H, Math.cos(theta) * r * sh.depth);
+        uv.push(f + FRONT_U, 1 - t);
+      }
+    }
+    for (var a = 0; a < AN; a++) {
+      for (var b = 0; b < VN; b++) {
+        var p0 = a * (VN + 1) + b, p1 = p0 + VN + 1;
+        idx.push(p0, p1, p0 + 1, p1, p1 + 1, p0 + 1);
+      }
+    }
+    var g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  }
+
+  function shadowTexture() {
+    var c = document.createElement("canvas");
+    c.width = c.height = 256;
+    var x = c.getContext("2d");
+    var grd = x.createRadialGradient(128, 128, 6, 128, 128, 126);
+    grd.addColorStop(0, "rgba(0,0,0,.5)");
+    grd.addColorStop(0.5, "rgba(0,0,0,.2)");
+    grd.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = grd;
+    x.fillRect(0, 0, 256, 256);
+    return new THREE.CanvasTexture(c);
+  }
+
+  function init3D(host) {
+    if (!window.THREE) return false;
+    try {
+      ensureTexCanvas();
+      var renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.05;
+      host.appendChild(renderer.domElement);
+
+      var texture = new THREE.CanvasTexture(texCanvas);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.encoding = THREE.sRGBEncoding;
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+      var scene = new THREE.Scene();
+      scene.add(new THREE.HemisphereLight(0xffffff, 0x2b3033, 0.7));
+      var key = new THREE.DirectionalLight(0xfff6e8, 1.2);
+      key.position.set(1.1, 1.6, 1.5); scene.add(key);
+      var fill = new THREE.DirectionalLight(0xd8e6ff, 0.42);
+      fill.position.set(-1.6, 0.4, 0.9); scene.add(fill);
+      var rim = new THREE.DirectionalLight(0xffffff, 0.8);
+      rim.position.set(-0.4, 0.9, -1.8); scene.add(rim);
+
+      var group = new THREE.Group();
+      scene.add(group);
+
+      var shadow = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.66, 0.66),
+        new THREE.MeshBasicMaterial({ map:shadowTexture(), transparent:true, depthWrite:false })
+      );
+      shadow.rotation.x = -Math.PI / 2;
+      shadow.position.y = -0.014;
+      scene.add(shadow);
+
+      three.renderer = renderer;
+      three.scene = scene;
+      three.camera = new THREE.PerspectiveCamera(30, 1, 0.1, 20);
+      three.group = group;
+      three.texture = texture;
+      three.material = new THREE.MeshStandardMaterial({
+        map: texture, roughness: 0.85, metalness: 0.02, side: THREE.DoubleSide
+      });
+      three.host = host;
+      three.ok = true;
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function ensureMesh() {
+    var key = state.preview + "|" + state.tier;
+    if (three.shapeKey === key) return;
+    three.shapeKey = key;
+    if (three.mesh) {
+      three.group.remove(three.mesh);
+      three.mesh.geometry.dispose();
+    }
+    three.mesh = new THREE.Mesh(buildGeometry(state.preview, state.tier), three.material);
+    three.group.add(three.mesh);
+    var sh = SHAPE[state.preview];
+    three.camera.position.set(0, sh.H * 0.52, sh.H * 2.5 + 0.5);
+    three.camera.lookAt(0, sh.H * 0.5, 0);
+  }
+
+  function resize() {
+    if (!three.ok || !three.host) return;
+    var w = three.host.clientWidth || 460, h = three.host.clientHeight || 560;
+    three.renderer.setSize(w, h, false);
+    three.camera.aspect = w / h;
+    three.camera.updateProjectionMatrix();
+    draw();
+  }
+
+  function draw() {
+    if (!three.ok || !three.mesh) return;
+    three.group.rotation.y = three.rotY;
+    three.group.rotation.x = three.rotX;
+    three.renderer.render(three.scene, three.camera);
+  }
+
+  function facing() {
+    return three.ok ? (Math.cos(three.rotY) >= 0 ? "front" : "back") : state.view;
+  }
+
+  function syncFacing() {
+    var f = facing();
+    if (f !== state.view) state.view = f;
+    $$("[data-view]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.view === f));
+    });
+    var cap = document.getElementById("stageCaption");
+    if (cap) cap.textContent = CUTS[state.preview].label.toUpperCase() + " · " + f.toUpperCase();
+  }
+
+  function tick() {
+    three.raf = 0;
+    var moving = false;
+    if (three.target !== null) {
+      var d = three.target - three.rotY;
+      if (Math.abs(d) < 0.003) { three.rotY = three.target; three.target = null; }
+      else { three.rotY += d * 0.16; moving = true; }
+    } else if (Math.abs(three.vel) > 0.0008) {
+      three.rotY += three.vel;
+      three.vel *= 0.94;
+      moving = true;
+    } else {
+      three.vel = 0;
+    }
+    draw();
+    syncFacing();
+    if (moving) three.raf = requestAnimationFrame(tick);
+  }
+
+  function kick() { if (!three.raf) three.raf = requestAnimationFrame(tick); }
+
+  function turnTo(view) {
+    if (!three.ok) { state.view = view; renderPreview(); return; }
+    var want = view === "front" ? 0 : Math.PI;
+    var turns = Math.round((three.rotY - want) / (Math.PI * 2));
+    three.target = want + turns * Math.PI * 2;
+    three.vel = 0;
+    kick();
+  }
+
+  function hideHint() {
+    var hint = document.getElementById("stageHint");
+    if (hint) hint.classList.add("gone");
+  }
+
+  function bindDrag(stage) {
+    var dragging = false, lastX = 0, lastY = 0, moved = 0;
+    stage.addEventListener("pointerdown", function (e) {
+      if (!three.ok) return;
+      dragging = true; moved = 0;
+      lastX = e.clientX; lastY = e.clientY;
+      three.target = null; three.vel = 0;
+      stage.classList.add("dragging");
+      try { stage.setPointerCapture(e.pointerId); } catch (err) { /* no capture */ }
+    });
+    stage.addEventListener("pointermove", function (e) {
+      if (!dragging) return;
+      var dx = e.clientX - lastX, dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      moved += Math.abs(dx) + Math.abs(dy);
+      three.rotY += dx * 0.0095;
+      three.rotX = Math.max(-0.16, Math.min(0.16, three.rotX + dy * 0.0024));
+      three.vel = dx * 0.0095;
+      draw();
+      syncFacing();
+      if (moved > 24) hideHint();
+    });
+    function end(e) {
+      if (!dragging) return;
+      dragging = false;
+      stage.classList.remove("dragging");
+      try { stage.releasePointerCapture(e.pointerId); } catch (err) { /* already released */ }
+      kick();
+    }
+    stage.addEventListener("pointerup", end);
+    stage.addEventListener("pointercancel", end);
+    stage.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      e.preventDefault();
+      three.rotY += (e.key === "ArrowLeft" ? -1 : 1) * 0.32;
+      three.vel = 0; three.target = null;
+      draw(); syncFacing(); hideHint();
+    });
+  }
+
+  /* ---------------------------------------------------------------
+     Flat fallback, for a viewer with no WebGL. Same texture, same
+     edge profile — projected instead of turned.
+  ----------------------------------------------------------------*/
+  var flat = null;
+
+  function renderFlat() {
+    var host = document.getElementById("stageHost");
+    if (!host) return;
+    if (!flat) {
+      flat = document.createElement("canvas");
+      host.appendChild(flat);
+    }
+    var w = host.clientWidth || 460, h = host.clientHeight || 560;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    flat.width = w * dpr; flat.height = h * dpr;
+    flat.style.width = "100%"; flat.style.height = "100%";
+    var ctx = flat.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    var sh = SHAPE[state.preview], tier = state.tier;
+    var back = state.view === "back";
+    var theta0 = back ? Math.PI : 0;
+    var scale = (h * 0.82) / sh.H;
+    var originX = w / 2, originY = h * 0.90;
+
+    var edge = [];
+    for (var i = 0; i <= 120; i++) {
+      var phi = -Math.PI / 2 + (i / 120) * Math.PI;
+      var t = topAt(theta0 + phi, tier);
+      edge.push([Math.sin(phi) * radiusAt(t, sh), t]);
+    }
+    ctx.beginPath();
+    edge.forEach(function (p, i) {
+      var x = originX + p[0] * scale, y = originY - p[1] * sh.H * scale;
+      if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+    });
+    var tRight = topAt(theta0 + Math.PI / 2, tier);
+    for (var s = tRight; s >= 0; s -= 0.02) {
+      ctx.lineTo(originX + radiusAt(s, sh) * scale, originY - s * sh.H * scale);
+    }
+    for (var s2 = 0; s2 <= tRight; s2 += 0.02) {
+      ctx.lineTo(originX - radiusAt(s2, sh) * scale, originY - s2 * sh.H * scale);
+    }
+    ctx.closePath();
+    ctx.save();
+    ctx.clip();
+    var rmax = radiusAt(1, sh) > radiusAt(0, sh) ? radiusAt(1, sh) : radiusAt(0, sh);
+    ctx.drawImage(texCanvas,
+      back ? TW * 0.5 : 0, 0, TW * 0.5, TH,
+      originX - rmax * scale, originY - sh.H * scale, rmax * 2 * scale, sh.H * scale);
+    ctx.restore();
+    ctx.strokeStyle = "rgba(0,0,0,.35)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  /* ---------------------------------------------------------------
+     Pattern chips reuse the texture painter, cropped to the front half
+  ----------------------------------------------------------------*/
+  function patternThumb(kind) {
+    var c = document.createElement("canvas");
+    c.width = 288; c.height = 144;
+    var x = c.getContext("2d");
+    var keepW = TW, keepH = TH;
+    TW = 288; TH = 144;
+    x.fillStyle = state.base;
+    x.fillRect(0, 0, TW, TH);
+    if (kind !== "solid") paintPattern(x, kind, state.secondary);
+    TW = keepW; TH = keepH;
+    var t = document.createElement("canvas");
+    t.width = 176; t.height = 92;
+    t.getContext("2d").drawImage(c, 0, 14, 144, 75, 0, 0, 176, 92);
+    return t.toDataURL();
+  }
+
+  function renderPreview() {
+    if (three.ok) ensureMesh();
+    paintTexture();
+    if (three.ok) draw(); else renderFlat();
+    syncFacing();
+  }
+
+  /* ---------------------------------------------------------------
+     Spec sheet, quote and dates
+  ----------------------------------------------------------------*/
+  function clubCode() {
+    var src = (state.contact.club || state.clubName || "KORU").toUpperCase();
+    var letters = src.replace(/[^A-Z ]/g, "").trim().split(/\s+/)[0] || "KORU";
+    return (letters + "XXX").slice(0, 3);
+  }
+
+  function availableCuts() {
+    return CUT_ORDER.filter(function (k) {
+      return state.cuts[k] && CUTS[k].price[state.tier] != null;
+    });
+  }
+
+  function renderDocket() {
+    var cut = CUTS[state.preview];
+    var tier = TIERS[state.tier];
+    var style = cut.style[state.tier];
+    var patLabel = "Solid";
+    for (var i = 0; i < PATTERNS.length; i++) {
+      if (PATTERNS[i][0] === state.pattern) patLabel = PATTERNS[i][1];
+    }
+    var crestLabel = { none:"None", left:"Left chest", centre:"Centre back" }[state.crest];
+
+    function sw(hex) {
+      return '<span class="sw" style="background:' + hex + '"></span>';
+    }
+    var rows = [
+      ["Cut", esc(cut.label)],
+      ["Fabric", esc(tier.fabric)],
+      ["Mill", esc(tier.mill) + " · " + (style ? esc(style) : "style at proof")],
+      ["Body", sw(state.base) + esc(colourName(state.base))],
+      ["Pattern", state.pattern === "solid"
+          ? "Solid"
+          : esc(patLabel) + ", " + sw(state.secondary) + esc(colourName(state.secondary))],
+      ["Trim", sw(state.trim) + esc(colourName(state.trim))],
+      ["Chest", state.clubName.trim()
+          ? esc(state.clubName.trim().toUpperCase()) + ", " + sw(state.text) + esc(colourName(state.text))
+          : "No chest print"],
+      ["Crest", esc(crestLabel)],
+      ["Sizes", esc(cut.sizes.join("  "))],
+      ["SKU", "KORU-" + esc(clubCode()) + "-" + esc(cut.short) + "-&lt;size&gt;"]
+    ];
+    $("#docketBody").innerHTML = rows.map(function (r) {
+      return "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>";
+    }).join("");
+    $("#docketRef").textContent = "KORU-" + clubCode() + "-" + state.tier.toUpperCase();
+  }
+
+  function money(n) {
+    return "€" + n.toFixed(2);
+  }
+
+  function renderTicket() {
+    var cuts = availableCuts();
+    var lines = $("#ticketLines");
+
+    if (!cuts.length) {
+      lines.innerHTML = '<p class="line" style="color:var(--ink-2)">' +
+        'Pick at least one cut in step 01 and the window pricing appears here.</p>';
+      $("#ticketTotals").innerHTML = "";
+      return;
+    }
+
+    lines.innerHTML = cuts.map(function (k) {
+      var c = CUTS[k];
+      var sizes = c.sizes[0] + "–" + c.sizes[c.sizes.length - 1];
+      return '<div class="line">' +
+               '<span>' + esc(c.label) + ' · ' + esc(TIERS[state.tier].label.toLowerCase()) + '</span>' +
+               '<span class="qty">' + esc(sizes) + '</span>' +
+               '<span class="amt">' + money(c.price[state.tier]) + '</span>' +
+               '<span class="sku">KORU-' + esc(clubCode()) + '-' + esc(c.short) + '-&lt;size&gt; · ' +
+                 (c.style[state.tier] ? esc(c.style[state.tier]) : "style at proof") + '</span>' +
+             '</div>';
+    }).join("");
+
+    var sum = 0;
+    cuts.forEach(function (k) { sum += CUTS[k].price[state.tier]; });
+    var avg = sum / cuts.length;
+    var windowValue = avg * state.runners;
+
+    $("#ticketTotals").innerHTML =
+      '<span class="k">Runners expected</span><span class="v">' + state.runners + '</span>' +
+      '<span class="k">Blended price per vest</span><span class="v">' + money(avg) + '</span>' +
+      '<span class="k row-strong">Window value, estimated</span>' +
+        '<span class="v big">' + money(windowValue) + '</span>' +
+      '<span class="k row-strong">The club pays up front</span>' +
+        '<span class="v big">' + money(0) + '</span>';
+  }
+
+  var DAY = 86400000;
+  var fmtDate = new Intl.DateTimeFormat("en-IE", { weekday:"short", day:"numeric", month:"short" });
+  function plusDays(n) { return fmtDate.format(new Date(Date.now() + n * DAY)); }
+
+  function renderTimeline() {
+    var steps = [
+      ["Design sent to Koru", "today", true],
+      ["Proof back on the real garment", plusDays(3), false],
+      ["Window opens on korusports.ie", plusDays(5), false],
+      ["Window closes, order goes to the mill", plusDays(26), false],
+      ["Vests with the club", plusDays(61), false]
+    ];
+    $("#timeline").innerHTML = steps.map(function (s) {
+      return '<li class="' + (s[2] ? "done" : "") + '"><span class="pip"></span>' +
+             '<span>' + esc(s[0]) + '</span><span class="when">' + esc(s[1]) + '</span></li>';
+    }).join("");
+  }
+
+  function renderMoq() {
+    var n = state.runners;
+    var pct = Math.min(100, (n / MOQ) * 100);
+    var fill = $("#moqFill");
+    fill.style.width = pct + "%";
+    fill.className = "moq-fill" + (n < MOQ ? " short" : "");
+    $("#runnerCount").textContent = n;
+    $("#moqNow").textContent = n + " of " + MOQ;
+
+    var note = $("#moqNote");
+    if (n >= MOQ) {
+      note.className = "callout ok";
+      note.innerHTML = "<strong>Clears the mill minimum</strong> with " + (n - MOQ) +
+        " to spare. We can open the window as soon as you sign off the proof.";
+    } else {
+      note.className = "callout warn";
+      note.innerHTML = "<strong>" + (MOQ - n) + " short of the minimum run of " + MOQ + ".</strong> " +
+        "Windows that close under 30 either roll into the next one or carry a small per-vest " +
+        "surcharge — we'll set that out with your proof.";
+    }
+  }
+
+  /* ---------------------------------------------------------------
+     Controls
+  ----------------------------------------------------------------*/
+  function renderCuts() {
+    $("#cutList").innerHTML = CUT_ORDER.map(function (k) {
+      var c = CUTS[k];
+      var price = c.price[state.tier];
+      var on = state.cuts[k] && price != null;
+      return '<button type="button" class="cut" data-cut="' + k + '" aria-pressed="' + on + '"' +
+             (price == null ? " disabled" : "") + '>' +
+             '<span class="cut-name">' + esc(c.label) + '</span>' +
+             '<span class="cut-meta">' + esc(c.sizes[0] + "–" + c.sizes[c.sizes.length - 1]) + '</span>' +
+             '<span class="cut-price">' + (price == null ? "club mesh only" : money(price)) + '</span>' +
+             '</button>';
+    }).join("");
+  }
+
+  function renderPalette() {
+    var current = state[state.layer];
+    $("#palette").innerHTML = PALETTE.map(function (p) {
+      var sel = p[1].toLowerCase() === String(current).toLowerCase();
+      return '<button type="button" class="swatch" data-hex="' + p[1] + '" title="' + esc(p[0]) +
+             '" aria-label="' + esc(p[0]) + '" aria-pressed="' + sel + '" ' +
+             'style="background:' + p[1] + '"></button>';
+    }).join("");
+    $("#customColour").value = /^#[0-9a-f]{6}$/i.test(current) ? current : "#F5C518";
+    $("#customHex").textContent = String(current).toUpperCase();
+  }
+
+  function renderPatterns() {
+    $("#patterns").innerHTML = PATTERNS.map(function (p) {
+      return '<button type="button" class="pattern" data-pattern="' + p[0] + '" aria-pressed="' +
+             (state.pattern === p[0]) + '">' +
+             '<span class="pat-img" style="background-image:url(' + patternThumb(p[0]) + ')"></span>' +
+             '<span>' + esc(p[1]) + '</span></button>';
+    }).join("");
+  }
+
+  function syncToggles() {
+    $$("[data-view]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.view === state.view));
+    });
+    $$("[data-preview]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.preview === state.preview));
+    });
+    $$("[data-tier]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.tier === state.tier));
+    });
+    $$("[data-layer]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.layer === state.layer));
+    });
+    $$("[data-font]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.font === state.font));
+    });
+    $$("[data-crest]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.crest === state.crest));
+    });
+    $$("[data-back]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.back === state.back));
+    });
+    var n = (state.clubName || "").trim().length;
+    $("#nameCount").textContent = n + " of 20 characters" +
+      (n > 13 ? " · set smaller to fit the print area" : "");
+  }
+
+  function renderAll() {
+    renderCuts();
+    renderPalette();
+    renderPatterns();
+    renderPreview();
+    renderDocket();
+    renderTicket();
+    renderMoq();
+    syncToggles();
+    save();
+  }
+
+  /* ---------------------------------------------------------------
+     Spec export, local memory, and saving to Koru
+  ----------------------------------------------------------------*/
+  var STORE_KEY = "koru-vest-design-v1";
+
+  function spec() {
+    var cuts = availableCuts();
+    return {
+      version: 1,
+      tier: state.tier,
+      tierLabel: TIERS[state.tier].label,
+      mill: TIERS[state.tier].mill,
+      cuts: cuts.map(function (k) {
+        return {
+          cut: k,
+          label: CUTS[k].label,
+          style: CUTS[k].style[state.tier],
+          sizes: CUTS[k].sizes,
+          memberPrice: CUTS[k].price[state.tier],
+          skuPattern: "KORU-" + clubCode() + "-" + CUTS[k].short + "-{size}"
+        };
+      }),
+      colours: {
+        body: { hex: state.base, name: colourName(state.base) },
+        pattern: { hex: state.secondary, name: colourName(state.secondary) },
+        trim: { hex: state.trim, name: colourName(state.trim) },
+        lettering: { hex: state.text, name: colourName(state.text) }
+      },
+      pattern: state.pattern,
+      chestPrint: state.clubName.trim().toUpperCase(),
+      lettering: state.font,
+      crest: state.crest,
+      back: state.back,
+      expectedRunners: state.runners,
+      meetsMinimum: state.runners >= MOQ,
+      contact: state.contact
+    };
+  }
+
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* private mode */ }
+  }
+
+  function restore() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return false;
+      applyState(JSON.parse(raw));
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function applyState(next) {
+    if (!next || typeof next !== "object") return;
+    Object.keys(state).forEach(function (k) {
+      if (next[k] === undefined) return;
+      if (k === "cuts" || k === "contact") {
+        Object.keys(state[k]).forEach(function (sub) {
+          if (next[k] && next[k][sub] !== undefined) state[k][sub] = next[k][sub];
+        });
+      } else {
+        state[k] = next[k];
+      }
+    });
+    $("#clubName").value = state.clubName;
+    $("#runners").value = state.runners;
+    ["club","name","email","phone","notes"].forEach(function (f) {
+      var el = document.getElementById("f" + f.charAt(0).toUpperCase() + f.slice(1));
+      if (el) el.value = state.contact[f] || "";
+    });
+  }
+
+  var dbApi = null, dbReady = false;
+
+  function newCode() {
+    var alphabet = "ACDEFGHJKLMNPQRTUVWXY3479";
+    var out = "";
+    for (var i = 0; i < 6; i++) {
+      out += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+    }
+    return out;
+  }
+
+  function setStatus(msg, isError) {
+    var el = $("#status");
+    el.textContent = msg;
+    el.className = "status" + (isError ? " err" : "");
+  }
+
+  function shareUrl(code) {
+    return location.origin + location.pathname + location.search + "#d=" + code;
+  }
+
+  function persist(status) {
+    if (!dbApi) {
+      setStatus("Saving isn't available in this preview — use Copy spec and email it to " +
+                "koruathletic@gmail.com instead.", true);
+      return Promise.resolve(null);
+    }
+    var code = newCode();
+    var body = {
+      code: code,
+      status: status,
+      spec: spec(),
+      state: JSON.parse(JSON.stringify(state)),
+      createdAt: new Date().toISOString()
+    };
+    return dbApi.doc("designs/" + code).set(body).then(function () {
+      try {
+        var mine = JSON.parse(localStorage.getItem(STORE_KEY + "-codes") || "[]");
+        mine.unshift(code);
+        localStorage.setItem(STORE_KEY + "-codes", JSON.stringify(mine.slice(0, 20)));
+      } catch (e) { /* ignore */ }
+      history.replaceState(null, "", "#d=" + code);
+      return code;
+    }).catch(function (err) {
+      var msg = err && err.code === "rate_limited"
+        ? "Too many saves just now — give it a few seconds and try again."
+        : "That didn't save. Copy the spec and send it to koruathletic@gmail.com and we'll pick it up.";
+      setStatus(msg, true);
+      return null;
+    });
+  }
+
+  function loadCode(code) {
+    if (!dbApi || !code) return;
+    dbApi.doc("designs/" + code).get().then(function (snap) {
+      if (!snap.exists) {
+        setStatus("No design found for " + code + ".", true);
+        return;
+      }
+      var body = snap.data();
+      applyState(body && body.state);
+      renderAll();
+      setStatus("Loaded design " + code + ".");
+    }).catch(function () {
+      setStatus("Couldn't open that design link.", true);
+    });
+  }
+
+  /* ---------------------------------------------------------------
+     Wiring
+  ----------------------------------------------------------------*/
+  function onPick(attr, handler) {
+    document.addEventListener("click", function (ev) {
+      var btn = ev.target.closest ? ev.target.closest("[data-" + attr + "]") : null;
+      if (!btn || btn.disabled) return;
+      handler(btn.dataset[attr], btn);
+      renderAll();
+    });
+  }
+
+  onPick("view",    function (v) { turnTo(v); });
+  onPick("preview", function (v) { state.preview = v; });
+  onPick("layer",   function (v) { state.layer = v; });
+  onPick("font",    function (v) { state.font = v; });
+  onPick("crest",   function (v) { state.crest = v; });
+  onPick("back",    function (v) { state.back = v; });
+  onPick("pattern", function (v) { state.pattern = v; });
+  onPick("hex",     function (v) { state[state.layer] = v; });
+  onPick("cut",     function (v) { state.cuts[v] = !state.cuts[v]; });
+  onPick("tier",    function (v) {
+    state.tier = v;
+    if (CUTS[state.preview].price[v] == null) state.preview = "mens";
+  });
+
+  $("#clubName").addEventListener("input", function (e) {
+    state.clubName = e.target.value;
+    renderAll();
+  });
+  $("#runners").addEventListener("input", function (e) {
+    state.runners = parseInt(e.target.value, 10) || MOQ;
+    renderTicket(); renderMoq(); save();
+  });
+  $("#customColour").addEventListener("input", function (e) {
+    state[state.layer] = e.target.value;
+    renderAll();
+  });
+  ["club","name","email","phone","notes"].forEach(function (f) {
+    var el = document.getElementById("f" + f.charAt(0).toUpperCase() + f.slice(1));
+    if (!el) return;
+    el.addEventListener("input", function (e) {
+      state.contact[f] = e.target.value;
+      if (f === "club") { renderDocket(); renderTicket(); }
+      save();
+    });
+  });
+
+  $("#copyBtn").addEventListener("click", function () {
+    var text = JSON.stringify(spec(), null, 2);
+    var done = function () { setStatus("Spec copied. Paste it into an email to koruathletic@gmail.com."); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { setStatus("Copy failed — select the page and copy manually.", true); });
+    } else {
+      setStatus("Copy isn't available in this browser.", true);
+    }
+  });
+
+  $("#saveBtn").addEventListener("click", function () {
+    setStatus("Saving…");
+    persist("saved").then(function (code) {
+      if (code) setStatus("Saved as " + code + ". Share this page's link with your committee: " + shareUrl(code));
+    });
+  });
+
+  $("#submitBtn").addEventListener("click", function () {
+    var c = state.contact;
+    if (!c.club.trim()) { setStatus("Add your club name so we know whose vest this is.", true); $("#fClub").focus(); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email.trim())) { setStatus("Add an email we can send the proof to.", true); $("#fEmail").focus(); return; }
+    if (!availableCuts().length) { setStatus("Pick at least one cut in step 01 before sending.", true); return; }
+    setStatus("Sending…");
+    persist("submitted").then(function (code) {
+      if (code) {
+        setStatus("Sent — reference " + code + ". We'll come back to " + c.email.trim() + " within two working days.");
+      }
+    });
+  });
+
+  /* ---------------------------------------------------------------
+     Boot
+  ----------------------------------------------------------------*/
+  var hashCode = (location.hash.match(/^#d=([A-Z0-9]{4,12})$/i) || [])[1];
+  if (!hashCode) restore();
+  renderTimeline();
+
+  var stageEl = document.querySelector(".stage");
+  var hostEl = document.getElementById("stageHost");
+  if (hostEl) {
+    init3D(hostEl);
+    bindDrag(stageEl);
+  }
+  renderAll();
+  resize();
+  window.addEventListener("resize", resize);
+  if (window.ResizeObserver && hostEl) new ResizeObserver(resize).observe(hostEl);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () {
+      paintTexture();
+      if (three.ok) draw(); else renderFlat();
+    });
+  }
+
+  (function connect() {
+    var use = window.claude && window.claude.use;
+    if (!use) return;
+    Promise.resolve(window.claude.use("db")).then(function (api) {
+      dbApi = api || null;
+      dbReady = true;
+      if (dbApi && hashCode) loadCode(hashCode.toUpperCase());
+      else if (!dbApi && hashCode) setStatus("Shared designs can't be opened in this preview.", true);
+    }).catch(function () { dbApi = null; dbReady = true; });
+  })();
+})();
+</script>
