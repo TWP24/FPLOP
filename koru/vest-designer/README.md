@@ -24,9 +24,11 @@ Published draft: https://claude.ai/code/artifact/19a809e7-c2bf-430a-be1b-bfb5f9c
   resized, recoloured and stacked. Presets just seed the layer stack; everything stays
   editable after. Print and crest placement are free too — height on the chest, print size,
   crest in six positions with its own size.
-- **Spec sheet** carries the real mill codes already on the store: Zhongkang TJ010 (men's,
-  kids), TJ005 (women's), Tarstone TS0738M / TS0661W (elite), and generates the store's
-  existing SKU shape, `KORU-<CLUB>-<CUT>-<SIZE>`.
+- **Nothing about the supply chain reaches the club.** Mill names and style codes are not
+  shown, not copied, and not in the page source — the (fabric, cut) → mill + style mapping
+  is fixed and belongs on Koru's side, resolved when a submission is processed. The club's
+  own copy of the spec describes their design and nothing else; the stored record adds a
+  `production` block with the club code and the `KORU-<CLUB>-<CUT>-<SIZE>` SKU shape.
 - **Saving** uses the artifact `db` capability: designs are written to `designs/<code>` and
   the page reopens one from `#d=<code>`, so a committee can share a link before committing.
 
@@ -58,8 +60,8 @@ Three stages, each shippable on its own.
 colour card as settings so they change in the theme editor rather than in code. Keep
 three.js on cdnjs — the store's CSP allows it, and it is the one heavy dependency.
 
-**2. Submissions.** The designer already produces a clean JSON spec — including the full layer stack with each
-shape's position and size as percentages — and can render the
+**2. Submissions.** The designer already produces a clean JSON spec — the full layer stack with each shape's
+position and size as percentages, plus the print and crest placement — and can render the
 canvas to a PNG (`three.renderer.domElement.toDataURL()`). Post both to a Make.com webhook
 — Make is already connected to this stack — and have the scenario email Koru, drop the
 design into a sheet, and create or update the club contact in Klaviyo. That avoids needing

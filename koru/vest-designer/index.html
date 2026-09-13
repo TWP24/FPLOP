@@ -160,32 +160,6 @@
   }
   .stage-toolbar .grow{margin-left:auto}
 
-  .docket{
-    margin-top:14px;
-    border:1px solid var(--rule);
-    background:var(--surface);
-    border-radius:4px;
-  }
-  .docket-head{
-    display:flex;justify-content:space-between;align-items:baseline;gap:12px;
-    padding:11px 14px;border-bottom:1px solid var(--rule-2);
-  }
-  .docket-head h3{
-    font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--ink-2);
-  }
-  .docket-head .code{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
-  .docket dl{
-    margin:0;padding:10px 14px 14px;
-    display:grid;grid-template-columns:auto 1fr;gap:5px 16px;
-    font-family:var(--mono);font-size:12.5px;
-  }
-  .docket dt{color:var(--ink-3);letter-spacing:.02em}
-  .docket dd{margin:0;text-align:right;color:var(--ink)}
-  .docket dd .sw{
-    display:inline-block;width:9px;height:9px;border-radius:2px;
-    border:1px solid rgba(128,128,128,.45);margin-right:6px;vertical-align:-1px;
-  }
-
   /* ---------- steps ---------- */
   .steps{display:flex;flex-direction:column;gap:14px}
   .step{
@@ -418,13 +392,6 @@
         </div>
       </div>
 
-      <div class="docket">
-        <div class="docket-head">
-          <h3>Spec sheet</h3>
-          <span class="code" id="docketRef">KORU-DRAFT</span>
-        </div>
-        <dl id="docketBody"></dl>
-      </div>
     </div>
 
     <!-- ================= STEPS ================= -->
@@ -623,33 +590,32 @@
     mens:   { key:"mens",   label:"Men's",   short:"SR",
               sizes:["XS","S","M","L","XL","XXL"],
               price:{club:30, elite:40},
-              style:{club:"TJ010", elite:"TS0738M"},
               geo:{shoulderHalf:64, neckHalf:27, neckDrop:30, armDrop:122,
                    halfChest:80, halfWaist:76, halfHem:79, hemY:368} },
     womens: { key:"womens", label:"Women's", short:"WMN",
               sizes:["XS","S","M","L","XL","XXL"],
               price:{club:30, elite:40},
-              style:{club:"TJ005", elite:"TS0661W"},
               geo:{shoulderHalf:58, neckHalf:25, neckDrop:32, armDrop:112,
                    halfChest:72, halfWaist:64, halfHem:72, hemY:352} },
     kids:   { key:"kids",   label:"Kids",    short:"KIDS",
               sizes:["YXS","YS","YM","YL","YXL"],
               price:{club:25, elite:null},
-              style:{club:"TJ010", elite:null},
               geo:{shoulderHalf:52, neckHalf:22, neckDrop:25, armDrop:100,
                    halfChest:65, halfWaist:62, halfHem:65, hemY:322} },
     crop:   { key:"crop",   label:"Crop top", short:"CROP",
               sizes:["S","M","L","XL","XXL"],
               price:{club:30, elite:null},
-              style:{club:null, elite:null},
               geo:{shoulderHalf:58, neckHalf:25, neckDrop:30, armDrop:104,
                    halfChest:72, halfWaist:68, halfHem:70, hemY:264} }
   };
   var CUT_ORDER = ["mens","womens","kids","crop"];
 
+  /* Which mill and which style code a tier maps to is Koru's business, not
+     the club's — it stays out of the page and is resolved when a submission
+     is processed. */
   var TIERS = {
-    club:  { label:"Club mesh", mill:"Zhongkang", fabric:"Breathable club mesh" },
-    elite: { label:"Race mesh", mill:"Tarstone",  fabric:"Lightweight race mesh" }
+    club:  { label:"Club mesh", fabric:"Breathable club mesh" },
+    elite: { label:"Race mesh", fabric:"Lightweight race mesh" }
   };
 
   /* Mill stock colour card. Anything else is a Pantone dye match. */
@@ -1313,41 +1279,6 @@
     });
   }
 
-  function renderDocket() {
-    var cut = CUTS[state.preview];
-    var tier = TIERS[state.tier];
-    var style = cut.style[state.tier];
-    var crestLabel = { none:"None", left:"Left chest", right:"Right chest",
-                       chest:"Centre chest", "upper-back":"Upper back",
-                       back:"Centre back" }[state.crest] || "None";
-
-    function sw(hex) {
-      return '<span class="sw" style="background:' + hex + '"></span>';
-    }
-    var rows = [
-      ["Cut", esc(cut.label)],
-      ["Fabric", esc(tier.fabric)],
-      ["Mill", esc(tier.mill) + " · " + (style ? esc(style) : "style at proof")],
-      ["Body", sw(state.base) + esc(colourName(state.base))],
-      ["Design", state.elements.length
-          ? state.elements.map(function (el) {
-              return sw(el.colour) + esc(SHAPES[el.type].label);
-            }).join(", ")
-          : "Solid, no shapes"],
-      ["Trim", sw(state.trim) + esc(colourName(state.trim))],
-      ["Chest", state.clubName.trim()
-          ? esc(state.clubName.trim().toUpperCase()) + ", " + sw(state.text) + esc(colourName(state.text))
-          : "No chest print"],
-      ["Crest", esc(crestLabel)],
-      ["Sizes", esc(cut.sizes.join("  "))],
-      ["SKU", "KORU-" + esc(clubCode()) + "-" + esc(cut.short) + "-&lt;size&gt;"]
-    ];
-    $("#docketBody").innerHTML = rows.map(function (r) {
-      return "<dt>" + r[0] + "</dt><dd>" + r[1] + "</dd>";
-    }).join("");
-    $("#docketRef").textContent = "KORU-" + clubCode() + "-" + state.tier.toUpperCase();
-  }
-
   function money(n) {
     return "€" + n.toFixed(2);
   }
@@ -1472,7 +1403,6 @@
   function repaint() {
     paintTexture();
     if (three.ok) draw(); else renderFlat();
-    renderDocket();
     save();
   }
 
@@ -1483,7 +1413,6 @@
     renderElements();
     renderPalette();
     renderPreview();
-    renderDocket();
     syncToggles();
     save();
   }
@@ -1499,15 +1428,13 @@
       version: 1,
       tier: state.tier,
       tierLabel: TIERS[state.tier].label,
-      mill: TIERS[state.tier].mill,
+      fabric: TIERS[state.tier].fabric,
       cuts: cuts.map(function (k) {
         return {
           cut: k,
           label: CUTS[k].label,
-          style: CUTS[k].style[state.tier],
           sizes: CUTS[k].sizes,
-          memberPrice: CUTS[k].price[state.tier],
-          skuPattern: "KORU-" + clubCode() + "-" + CUTS[k].short + "-{size}"
+          memberPrice: CUTS[k].price[state.tier]
         };
       }),
       colours: {
@@ -1612,6 +1539,12 @@
       code: code,
       status: status,
       spec: spec(),
+      production: {
+        clubCode: clubCode(),
+        cuts: availableCuts().map(function (k) {
+          return { cut: k, skuPattern: "KORU-" + clubCode() + "-" + CUTS[k].short + "-{size}" };
+        })
+      },
       state: JSON.parse(JSON.stringify(state)),
       createdAt: new Date().toISOString()
     };
@@ -1728,7 +1661,6 @@
     if (!el) return;
     el.addEventListener("input", function (e) {
       state.contact[f] = e.target.value;
-      if (f === "club") renderDocket();
       save();
     });
   });
