@@ -17,6 +17,18 @@ Published draft: https://claude.ai/code/artifact/19a809e7-c2bf-430a-be1b-bfb5f9c
 Four steps: pick colours, pick a style, type the club name, send it. That is the entire
 surface. Everything else is Koru's job.
 
+## Mobile first
+
+A gear officer opens this on a phone, so the phone layout is the base and the desktop one is
+the media query. The preview sticks to the top of the viewport and the four steps are tabs
+that scroll beneath it, so the vest is never off screen while you are changing it — the
+earlier stacked layout pushed it away the moment you started. Tap targets are at least 44px,
+text inputs are 16px so iOS does not zoom on focus, and the tab bar parks itself under the
+preview by measuring it (`--tabTop`) rather than assuming a height.
+
+From 880px up the same markup becomes two columns via grid areas: preview left, tabs and the
+active step right.
+
 ## How it works
 
 - **Flat mockup, front and back.** Both panels are drawn side by side the way a kit supplier
