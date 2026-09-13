@@ -1,7 +1,7 @@
 <title>Koru Vest Designer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Bevan&family=Graduate&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&family=Kaushan+Script&family=Oswald:wght@600&display=swap">
 <style>
   :root{
     --paper:#E6E8E4; --surface:#FBFBFA; --surface-2:#F1F2EF;
@@ -112,6 +112,7 @@
   .custom-row input[type="color"]{width:46px;height:34px;padding:2px;background:var(--surface-2);
     border:1px solid var(--rule);border-radius:4px;cursor:pointer}
 
+  .fonts button{font-size:17px;line-height:1.2;padding:9px 15px}
   .styles{display:grid;grid-template-columns:repeat(auto-fill,minmax(102px,1fr));gap:9px}
   .style{
     padding:8px 8px 8px;cursor:pointer;background:var(--surface-2);
@@ -198,7 +199,7 @@
     </div>
 
     <nav class="tabs" role="tablist" aria-label="Design steps">
-      <button type="button" role="tab" data-tab="colours" aria-selected="true" aria-controls="p-colours">Colours</button>
+      <button type="button" role="tab" data-tab="colours" aria-selected="true" aria-controls="p-colours">Vest</button>
       <button type="button" role="tab" data-tab="style" aria-selected="false" aria-controls="p-style">Style</button>
       <button type="button" role="tab" data-tab="name" aria-selected="false" aria-controls="p-name">Name</button>
       <button type="button" role="tab" data-tab="send" aria-selected="false" aria-controls="p-send">Send</button>
@@ -206,24 +207,11 @@
 
     <div class="panels">
       <section class="panel on" id="p-colours" data-panel="colours" role="tabpanel">
-        <h2>Your colours</h2>
+        <h2>Body and trim</h2>
         <p class="note">Everything is sublimated, so colour is free — a five-colour vest costs
-          the same as a plain one.</p>
+          the same as a plain one. The rest of the colours sit with the things they colour.</p>
         <div class="field">
-          <span class="label">Colouring</span>
-          <div class="seg" role="group" aria-label="Which colour to change">
-            <button type="button" data-role="base" aria-pressed="true">Body</button>
-            <button type="button" data-role="design" aria-pressed="false">Design</button>
-            <button type="button" data-role="accent" aria-pressed="false">Accent</button>
-            <button type="button" data-role="trim" aria-pressed="false">Trim</button>
-            <button type="button" data-role="text" aria-pressed="false">Lettering</button>
-          </div>
-          <div class="palette" id="palette"></div>
-          <div class="custom-row">
-            <label for="customColour">Any other colour</label>
-            <input type="color" id="customColour" value="#F5C518">
-            <span id="customHex">#F5C518</span>
-          </div>
+          <div class="colourbox" data-box="garment" data-roles="base,trim"></div>
         </div>
         <div class="nextbar"><button type="button" class="btn ghost" data-goto="style">Next: Style</button></div>
       </section>
@@ -239,6 +227,10 @@
             <input type="range" id="opacity" min="10" max="100" value="100">
             <span class="slider-val" id="opacityVal">100%</span>
           </div>
+        </div>
+        <div class="field">
+          <span class="label">Style colours</span>
+          <div class="colourbox" data-box="style" data-roles="design,accent"></div>
         </div>
         <div class="field">
           <span class="label">See it on</span>
@@ -262,10 +254,19 @@
         </div>
         <div class="field">
           <span class="label">Lettering</span>
-          <div class="seg" role="group" aria-label="Lettering style">
-            <button type="button" data-font="block" aria-pressed="true">Block</button>
-            <button type="button" data-font="wide" aria-pressed="false">Wide</button>
+          <div class="seg fonts" id="fontPicker" role="group" aria-label="Lettering face"></div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="textSize">Print size</label>
+          <div class="slider-row">
+            <input type="range" id="textSize" min="60" max="160" value="100">
+            <span class="slider-val" id="textSizeVal">100%</span>
           </div>
+        </div>
+        <div class="field">
+          <span class="label">Lettering colour</span>
+          <div class="colourbox" data-box="lettering" data-roles="text"></div>
         </div>
         <div class="field">
           <span class="label">Club crest</span>
@@ -347,6 +348,29 @@
 
   var LEAN = 0.25;
 
+  /* Chest prints, in the faces clubs actually ask for. `track` is the
+     letter-spacing each face wants; `upper` is off for the script,
+     which reads badly in capitals. */
+  var FONTS = [
+    { key:"block",     label:"Block",     family:"Archivo",        weight:"700", track:0.055, upper:true },
+    { key:"condensed", label:"Condensed", family:"Oswald",         weight:"600", track:0.045, upper:true },
+    { key:"slab",      label:"Slab",      family:"Bevan",          weight:"400", track:0.030, upper:true },
+    { key:"varsity",   label:"Varsity",   family:"Graduate",       weight:"400", track:0.075, upper:true },
+    { key:"script",    label:"Script",    family:"Kaushan Script", weight:"400", track:0.000, upper:false }
+  ];
+  function fontOf(key) {
+    for (var i = 0; i < FONTS.length; i++) if (FONTS[i].key === key) return FONTS[i];
+    return FONTS[0];
+  }
+  /* A webfont used only on a canvas is never requested by the document,
+     so it has to be asked for explicitly or it silently falls back. */
+  function loadFonts(then) {
+    if (!document.fonts || !document.fonts.load) { then(); return; }
+    Promise.all(FONTS.map(function (f) {
+      return document.fonts.load(f.weight + " 120px '" + f.family + "'");
+    })).then(then, then);
+  }
+
   /* A layer is a handful of numbers in texture space. Clubs never see
      these — they pick a style below and the numbers come with it. */
   var SHAPES = {
@@ -400,7 +424,6 @@
   var state = {
     tab: "colours",
     preview: "mens",
-    role: "base",
     base:   "#F5C518",
     design: "#14284B",
     accent: "#CE2027",
@@ -410,6 +433,7 @@
     opacity: 1,
     clubName: "KORU AC",
     font: "block",
+    textSize: 1,
     crest: "left",
     contact: { club:"", name:"", email:"", phone:"", notes:"" }
   };
@@ -916,18 +940,19 @@
     }
   }
 
-  function trackedText(ctx, text, cxPx, cyPx, maxPx, tracking, colour, baseSize) {
+  function trackedText(ctx, text, cxPx, cyPx, maxPx, colour, capSize, font) {
     if (!text) return;
-    var face = "Archivo, 'Arial Narrow', 'Helvetica Neue', sans-serif";
-    var size = baseSize || 150;
-    ctx.font = "700 " + size + "px " + face;
+    var face = "'" + font.family + "', 'Arial Narrow', 'Helvetica Neue', sans-serif";
+    var tracking = font.track;
+    var size = capSize;
+    ctx.font = font.weight + " " + size + "px " + face;
     var chars = text.split("");
     var natural = 0;
     chars.forEach(function (c) { natural += ctx.measureText(c).width; });
     natural += tracking * size * (chars.length - 1);
     if (natural > maxPx) {
       size = size * (maxPx / natural);
-      ctx.font = "700 " + size + "px " + face;
+      ctx.font = font.weight + " " + size + "px " + face;
     }
     var widths = chars.map(function (c) { return ctx.measureText(c).width; });
     var total = tracking * size * (chars.length - 1);
@@ -997,8 +1022,14 @@
   function paintTexture(layers) {
     ensureTexCanvas();
     var ctx = texCtx;
-    var name = (state.clubName || "").trim().toUpperCase();
-    var tracking = state.font === "wide" ? 0.14 : 0.06;
+    var font = fontOf(state.font);
+    var raw = (state.clubName || "").trim();
+    var name = font.upper ? raw.toUpperCase() : raw;
+    /* The slider sets what fraction of the panel the print spans, so a
+       short name fills the same width a long one does. The garment is
+       about 83% of the panel box at chest height, so even the widest
+       setting stays inside the cloth. */
+    var span = TW * 0.5 * (0.18 + state.textSize * 0.40);
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 1;
@@ -1011,8 +1042,8 @@
     ctx.fillStyle = meshPattern;
     ctx.fillRect(0, 0, TW, TH);
 
-    trackedText(ctx, name, FRONT_U * TW, 0.345 * TH, TW * 0.34, tracking, state.text, 160);
-    trackedText(ctx, name, BACK_U * TW, 0.30 * TH, TW * 0.30, tracking, state.text, 140);
+    trackedText(ctx, name, FRONT_U * TW, 0.345 * TH, span, state.text, 200, font);
+    trackedText(ctx, name, BACK_U * TW, 0.33 * TH, span * 0.86, state.text, 180, font);
     var cp = CREST_POS[state.crest];
     if (cp) paintCrest(ctx, cp[0], cp[1], cp[2], state.text);
   }
@@ -1150,19 +1181,56 @@
   /* ---------------------------------------------------------------
      Controls
   ----------------------------------------------------------------*/
-  var ROLE_NAMES = { base:"the body", design:"the design", accent:"the accent",
-                     trim:"the trim", text:"the lettering" };
+  var ROLE_LABELS = { base:"Body", trim:"Trim", design:"Design",
+                      accent:"Accent", text:"Lettering" };
+  var boxRole = {};
 
-  function renderPalette() {
-    var current = state[state.role];
-    $("#palette").innerHTML = PALETTE.map(function (p) {
-      var sel = p[1].toLowerCase() === String(current).toLowerCase();
-      return '<button type="button" class="swatch" data-hex="' + p[1] + '" title="' + esc(p[0]) +
-             '" aria-label="' + esc(p[0]) + '" aria-pressed="' + sel +
-             '" style="background:' + p[1] + '"></button>';
+  function boxOf(node) {
+    return node && node.closest ? node.closest(".colourbox") : null;
+  }
+  function roleOfBox(host) {
+    var roles = host.dataset.roles.split(",");
+    var id = host.dataset.box;
+    if (!boxRole[id] || roles.indexOf(boxRole[id]) < 0) boxRole[id] = roles[0];
+    return boxRole[id];
+  }
+
+  function renderColourBoxes() {
+    $$(".colourbox").forEach(function (host) {
+      var roles = host.dataset.roles.split(",");
+      var id = host.dataset.box;
+      var active = roleOfBox(host);
+      var current = state[active];
+      var chips = roles.length < 2 ? "" :
+        '<div class="seg" role="group" aria-label="Which colour to change">' +
+        roles.map(function (r) {
+          return '<button type="button" data-role="' + r + '" aria-pressed="' +
+                 (r === active) + '">' + esc(ROLE_LABELS[r]) + '</button>';
+        }).join("") + '</div>';
+      host.innerHTML = chips +
+        '<div class="palette">' + PALETTE.map(function (p) {
+          var sel = p[1].toLowerCase() === String(current).toLowerCase();
+          return '<button type="button" class="swatch" data-hex="' + p[1] + '" title="' +
+                 esc(p[0]) + '" aria-label="' + esc(p[0]) + '" aria-pressed="' + sel +
+                 '" style="background:' + p[1] + '"></button>';
+        }).join("") + '</div>' +
+        '<div class="custom-row"><label for="cc-' + id + '">Any other colour</label>' +
+        '<input type="color" id="cc-' + id + '" data-custom="' + id + '" value="' +
+        (/^#[0-9a-f]{6}$/i.test(current) ? current : "#F5C518") + '">' +
+        '<span>' + esc(String(current).toUpperCase()) + '</span></div>';
+    });
+  }
+
+  function renderFontPicker() {
+    $("#fontPicker").innerHTML = FONTS.map(function (f) {
+      return '<button type="button" data-font="' + f.key + '" aria-pressed="' +
+             (state.font === f.key) + '" style="font-family:\'' + f.family +
+             '\',sans-serif">' + esc(f.label) + '</button>';
     }).join("");
-    $("#customColour").value = /^#[0-9a-f]{6}$/i.test(current) ? current : "#F5C518";
-    $("#customHex").textContent = String(current).toUpperCase();
+    var input = $("#clubName");
+    var cur = fontOf(state.font);
+    input.style.fontFamily = "'" + cur.family + "', sans-serif";
+    input.style.textTransform = cur.upper ? "uppercase" : "none";
   }
 
   function renderStyles() {
@@ -1175,7 +1243,7 @@
   }
 
   function syncToggles() {
-    [["preview","preview"],["role","role"],["font","font"],["crest","crest"]].forEach(function (m) {
+    [["preview","preview"],["font","font"],["crest","crest"]].forEach(function (m) {
       $$("[data-" + m[0] + "]").forEach(function (b) {
         b.setAttribute("aria-pressed", String(b.dataset[m[0]] === state[m[1]]));
       });
@@ -1184,6 +1252,7 @@
     $("#nameCount").textContent = n + " of 20 characters" +
       (n > 13 ? " · set smaller to fit the print area" : "");
     $("#opacityVal").textContent = Math.round(state.opacity * 100) + "%";
+    $("#textSizeVal").textContent = Math.round(state.textSize * 100) + "%";
   }
 
   function repaint() {
@@ -1193,7 +1262,8 @@
   }
 
   function renderAll() {
-    renderPalette();
+    renderColourBoxes();
+    renderFontPicker();
     renderStyles();
     paintTexture();
     renderStage();
@@ -1225,7 +1295,8 @@
         lettering: { hex: state.text, name: colourName(state.text) }
       },
       chestPrint: state.clubName.trim().toUpperCase(),
-      lettering: state.font,
+      lettering: fontOf(state.font).label,
+      letteringSize: Math.round(state.textSize * 100) + "%",
       crest: state.crest,
       contact: state.contact
     };
@@ -1248,7 +1319,9 @@
       }
     });
     if (!STYLES[state.style]) state.style = 1;
+    if (!fontOf(state.font) || state.font === "wide") state.font = "block";
     $("#clubName").value = state.clubName;
+    $("#textSize").value = Math.round(state.textSize * 100);
     $("#opacity").value = Math.round(state.opacity * 100);
     ["club","name","email","phone","notes"].forEach(function (f) {
       var el = document.getElementById("f" + f.charAt(0).toUpperCase() + f.slice(1));
@@ -1326,21 +1399,37 @@
     });
   }
   onPick("preview", function (v) { state.preview = v; });
-  onPick("role",    function (v) { state.role = v; });
+  onPick("role",    function (v, btn) {
+    var host = boxOf(btn);
+    if (host) boxRole[host.dataset.box] = v;
+  });
   onPick("font",    function (v) { state.font = v; });
   onPick("crest",   function (v) { state.crest = v; });
   onPick("style",   function (v) { state.style = parseInt(v, 10); });
-  onPick("hex",     function (v) { state[state.role] = v; });
+  onPick("hex",     function (v, btn) {
+    var host = boxOf(btn);
+    if (host) state[roleOfBox(host)] = v;
+  });
 
   $("#clubName").addEventListener("input", function (e) {
     state.clubName = e.target.value;
     syncToggles();
     repaint();
   });
-  $("#customColour").addEventListener("input", function (e) {
-    state[state.role] = e.target.value;
-    $("#customHex").textContent = e.target.value.toUpperCase();
+  document.addEventListener("input", function (e) {
+    if (!e.target || !e.target.dataset || !e.target.dataset.custom) return;
+    var host = boxOf(e.target);
+    if (!host) return;
+    state[roleOfBox(host)] = e.target.value;
+    var hex = host.querySelector(".custom-row span");
+    if (hex) hex.textContent = e.target.value.toUpperCase();
     renderStyles();
+    repaint();
+  });
+
+  $("#textSize").addEventListener("input", function (e) {
+    state.textSize = parseInt(e.target.value, 10) / 100;
+    $("#textSizeVal").textContent = Math.round(state.textSize * 100) + "%";
     repaint();
   });
   $("#opacity").addEventListener("input", function (e) {
@@ -1414,9 +1503,7 @@
   if (window.ResizeObserver) {
     new ResizeObserver(function () { renderStage(); syncSticky(); }).observe($("#stageHost"));
   }
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(function () { paintTexture(); renderStage(); renderStyles(); });
-  }
+  loadFonts(function () { paintTexture(); renderStage(); });
   if (window.claude && window.claude.use) {
     Promise.resolve(window.claude.use("db")).then(function (api) {
       dbApi = api || null;

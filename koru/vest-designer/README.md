@@ -40,6 +40,18 @@ active step right.
   side seam. Each vest outline clips its half of it.
 - **Binding comes from the outline.** One stroke along the silhouette gives neck, armhole and
   hem trim together, so the trim can never drift out of register with the garment.
+- **Colour sits with the thing it colours.** Body and trim are on the Vest tab, design and
+  accent with the style gallery, lettering with the font controls. One `.colourbox` component
+  renders wherever it is dropped, reading its roles from `data-roles` and keeping its own
+  active target, so there is no global "which colour am I editing" state to lose track of.
+- **Five chest faces**, each with the letter-spacing it wants: Block (Archivo), Condensed
+  (Oswald), Slab (Bevan), Varsity (Graduate) and Script (Kaushan), the last set in mixed case
+  because it reads badly in capitals. A webfont used only on a canvas is never requested by the
+  document, so `loadFonts` asks for each face explicitly before painting — otherwise the canvas
+  silently falls back and every face looks the same.
+- **Print size is a fraction of the panel, not a font size.** The slider sets how much of the
+  chest the name spans, so a three-letter club and a twelve-letter one both fill the same
+  width — which is how a chest print actually works. A cap stops short names ballooning.
 - **Styles name a colour role, not a hex.** A style says "design" or "accent" where a colour
   goes, so changing one of the club's five colours restyles the whole gallery at once. That
   is what lets seventeen styles sit behind five colour swatches.
