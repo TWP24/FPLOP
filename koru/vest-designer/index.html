@@ -293,77 +293,47 @@
   }
   .two-up{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
-  /* slider */
-  .runner-row{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
-  .runner-count{font-family:var(--mono);font-size:26px;font-weight:500;color:var(--ink)}
-  .runner-unit{font-size:13.5px;color:var(--ink-2)}
-  input[type="range"]{width:100%;accent-color:var(--accent);cursor:pointer}
+  /* sliders + layer stack */
+  input[type="range"]{
+    width:100%;accent-color:var(--accent);cursor:pointer;
+    height:22px;margin:0;
+  }
+  .palette-target{
+    font-family:var(--mono);font-size:12px;color:var(--ink-3);margin:0 0 10px;
+  }
+  .palette-target b{color:var(--ink);font-weight:500}
 
-  .moq{margin-top:16px}
-  .moq-track{
-    height:6px;border-radius:3px;background:var(--surface-2);
-    border:1px solid var(--rule);overflow:hidden;
+  .layers{display:flex;flex-direction:column;gap:8px}
+  .layer{
+    border:1px solid var(--rule);border-radius:3px;
+    background:var(--surface-2);padding:10px 12px 12px;
   }
-  .moq-fill{height:100%;background:var(--accent);transition:width .25s}
-  .moq-fill.short{background:var(--warn)}
-  .moq-label{
-    display:flex;justify-content:space-between;gap:12px;
-    font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:7px;
+  .layer.sel{border-color:var(--accent);background:var(--accent-soft)}
+  .layer-top{display:flex;align-items:center;gap:10px}
+  .layer-sw{
+    width:22px;height:22px;border-radius:3px;flex:none;cursor:pointer;padding:0;
+    border:1px solid rgba(128,128,128,.45);
   }
-
-  .callout{
-    margin-top:16px;padding:11px 14px;border-radius:3px;
-    font-size:13.5px;border:1px solid;
+  .layer.sel .layer-sw{box-shadow:0 0 0 2px var(--accent-soft),0 0 0 3px var(--accent)}
+  .layer-name{font-weight:600;font-size:14px;margin-right:auto}
+  .icon{
+    width:26px;height:26px;flex:none;cursor:pointer;padding:0;line-height:1;
+    font-size:11px;color:var(--ink-2);
+    background:var(--surface);border:1px solid var(--rule);border-radius:3px;
   }
-  .callout.ok{background:var(--good-soft);border-color:color-mix(in srgb,var(--good) 35%,transparent);color:var(--ink)}
-  .callout.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 38%,transparent);color:var(--ink)}
-  .callout strong{font-weight:600}
-
-  /* ticket */
-  .ticket{
-    border:1px solid var(--rule);border-radius:4px;background:var(--surface);
-    overflow:hidden;
+  .icon:hover{border-color:var(--ink-3);color:var(--ink)}
+  .icon[disabled]{opacity:.3;cursor:not-allowed}
+  .icon.kill{font-size:15px}
+  .layer-field{
+    display:grid;grid-template-columns:86px 1fr;gap:10px;align-items:center;margin-top:8px;
   }
-  .ticket-head{
-    padding:16px 20px;border-bottom:1px solid var(--rule-2);
-    display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap;
+  .layer-field label{
+    font-family:var(--mono);font-size:11.5px;color:var(--ink-3);
   }
-  .ticket-head h2{font-size:19px;font-weight:600}
-  .ticket-head .code{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
-  .lines{padding:6px 20px 14px}
-  .line{
-    display:grid;grid-template-columns:1fr auto auto;gap:6px 16px;
-    align-items:baseline;padding:9px 0;border-bottom:1px dotted var(--rule);
-    font-size:14px;
+  .empty{
+    font-size:13.5px;color:var(--ink-2);padding:12px 14px;
+    border:1px dashed var(--rule);border-radius:3px;
   }
-  .line:last-child{border-bottom:none}
-  .line .sku{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);grid-column:1/-1;margin-top:-4px}
-  .line .qty,.line .amt{font-family:var(--mono);font-size:13.5px;font-variant-numeric:tabular-nums}
-  .line .qty{color:var(--ink-3)}
-  .totals{
-    padding:14px 20px;border-top:1px solid var(--rule);background:var(--surface-2);
-    display:grid;grid-template-columns:1fr auto;gap:6px 16px;
-    font-family:var(--mono);font-size:13.5px;font-variant-numeric:tabular-nums;
-  }
-  .totals .k{color:var(--ink-2)}
-  .totals .v{text-align:right}
-  .totals .big{font-size:17px;font-weight:500}
-  .totals .row-strong{font-family:var(--sans);font-weight:600;font-size:14px;color:var(--ink)}
-
-  .timeline{
-    list-style:none;margin:0;padding:16px 20px 18px;border-top:1px solid var(--rule-2);
-    display:flex;flex-direction:column;gap:0;
-  }
-  .timeline li{
-    display:grid;grid-template-columns:16px 1fr auto;gap:12px;align-items:baseline;
-    padding:7px 0;font-size:13.5px;
-  }
-  .timeline .pip{
-    width:9px;height:9px;border-radius:50%;border:2px solid var(--accent);
-    background:var(--surface);justify-self:center;align-self:center;
-  }
-  .timeline li.done .pip{background:var(--accent)}
-  .timeline .when{font-family:var(--mono);font-size:12.5px;color:var(--ink-2)}
 
   /* submit */
   .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
@@ -481,18 +451,18 @@
 
       <section class="step">
         <div class="step-head"><span class="step-num">02</span><h2>Club colours</h2></div>
-        <p class="step-note">Pick the layer you're colouring, then choose from the mill's stock
-          colours. Anything outside the sixteen is a Pantone dye match — tell us in the notes and
-          we'll price it.</p>
+        <p class="step-note">Body, trim and lettering are set here. To recolour a shape, tap its
+          colour dot in step 03 and it becomes the target. Anything outside the mill's sixteen
+          stock colours is a Pantone dye match — say so in the notes and we'll price it.</p>
 
         <div class="field">
           <span class="label">Colouring</span>
           <div class="layer-row seg" role="group" aria-label="Which layer to colour">
             <button type="button" data-layer="base" aria-pressed="true">Body</button>
-            <button type="button" data-layer="secondary" aria-pressed="false">Pattern</button>
             <button type="button" data-layer="trim" aria-pressed="false">Trim</button>
             <button type="button" data-layer="text" aria-pressed="false">Lettering</button>
           </div>
+          <p class="palette-target" id="paletteTarget"></p>
           <div class="palette" id="palette"></div>
           <div class="custom-row">
             <label for="customColour">Pantone match</label>
@@ -503,16 +473,32 @@
       </section>
 
       <section class="step">
-        <div class="step-head"><span class="step-num">03</span><h2>Pattern</h2></div>
-        <p class="step-note">All six are knitted or cut-and-sewn into the vest, not printed on, so
-          they won't crack or lift after a season of washing.</p>
-        <div class="patterns" id="patterns"></div>
+        <div class="step-head"><span class="step-num">03</span><h2>The design</h2></div>
+        <p class="step-note">Start from a shape, then move it, resize it, recolour it, or
+          stack another on top of it. Everything here is knitted or cut-and-sewn into the
+          vest, not printed on, so it won't crack or lift after a season of washing.</p>
+
+        <div class="field">
+          <span class="label">Start from</span>
+          <div class="patterns" id="patterns"></div>
+        </div>
+
+        <div class="field">
+          <span class="label">Add a shape</span>
+          <div class="seg" id="addShapes" role="group" aria-label="Add a shape to the design"></div>
+        </div>
+
+        <div class="field">
+          <span class="label">Layers, bottom to top</span>
+          <div class="layers" id="elementList"></div>
+        </div>
       </section>
 
       <section class="step">
-        <div class="step-head"><span class="step-num">04</span><h2>Chest print and crest</h2></div>
-        <p class="step-note">Club name across the chest is standard. Keep it short — long names get
-          set smaller to stay inside the print area.</p>
+        <div class="step-head"><span class="step-num">04</span><h2>Print and crest</h2></div>
+        <p class="step-note">Club name across the chest is the standard, but none of it is
+          fixed — move the print up onto the chest or down towards the hem, size it to fill
+          the width, and put the crest wherever your club puts it.</p>
 
         <div class="field">
           <label class="label" for="clubName">Name across the chest</label>
@@ -529,13 +515,32 @@
           </div>
         </div>
 
+        <div class="field two-up">
+          <div>
+            <label class="label" for="chestV">Height on the chest</label>
+            <input type="range" id="chestV" data-print="chestV" min="16" max="62" value="35">
+          </div>
+          <div>
+            <label class="label" for="chestSize">Print size</label>
+            <input type="range" id="chestSize" data-print="chestSize" min="55" max="150" value="100">
+          </div>
+        </div>
+
         <div class="field">
           <span class="label">Club crest</span>
           <div class="seg" role="group" aria-label="Crest placement">
-            <button type="button" data-crest="none" aria-pressed="false">No crest</button>
+            <button type="button" data-crest="none" aria-pressed="false">None</button>
             <button type="button" data-crest="left" aria-pressed="true">Left chest</button>
-            <button type="button" data-crest="centre" aria-pressed="false">Centre back</button>
+            <button type="button" data-crest="right" aria-pressed="false">Right chest</button>
+            <button type="button" data-crest="chest" aria-pressed="false">Centre chest</button>
+            <button type="button" data-crest="upper-back" aria-pressed="false">Upper back</button>
+            <button type="button" data-crest="back" aria-pressed="false">Centre back</button>
           </div>
+        </div>
+
+        <div class="field" id="crestSizeField">
+          <label class="label" for="crestSize">Crest size</label>
+          <input type="range" id="crestSize" data-print="crestSize" min="55" max="170" value="100">
         </div>
 
         <div class="field">
@@ -545,45 +550,15 @@
             <button type="button" data-back="plain" aria-pressed="false">Plain</button>
           </div>
         </div>
-      </section>
 
-      <section class="step">
-        <div class="step-head"><span class="step-num">05</span><h2>How big is the window</h2></div>
-        <p class="step-note">A rough headcount is enough. It sets whether the run clears the mill's
-          minimum, and it's the number we watch while the window is open.</p>
-
-        <div class="field">
-          <label class="label" for="runners">Runners you expect to order</label>
-          <div class="runner-row">
-            <span class="runner-count" id="runnerCount">42</span>
-            <span class="runner-unit">vests across all cuts</span>
-          </div>
-          <input type="range" id="runners" min="8" max="220" step="1" value="42">
-          <div class="moq">
-            <div class="moq-track"><div class="moq-fill" id="moqFill"></div></div>
-            <div class="moq-label">
-              <span id="moqNow">42 of 30</span>
-              <span>mill minimum 30</span>
-            </div>
-          </div>
-          <div class="callout ok" id="moqNote"></div>
-        </div>
-      </section>
-
-      <section class="step" style="padding:0;overflow:hidden">
-        <div class="ticket">
-          <div class="ticket-head">
-            <h2><span class="step-num" style="margin-right:10px">06</span>What your runners pay</h2>
-            <span class="code" id="ticketRef">EST · EUR</span>
-          </div>
-          <div class="lines" id="ticketLines"></div>
-          <div class="totals" id="ticketTotals"></div>
-          <ul class="timeline" id="timeline"></ul>
+        <div class="field" id="backVField">
+          <label class="label" for="backV">Height on the back</label>
+          <input type="range" id="backV" data-print="backV" min="14" max="62" value="30">
         </div>
       </section>
 
       <section class="step">
-        <div class="step-head"><span class="step-num">07</span><h2>Send it to Koru</h2></div>
+        <div class="step-head"><span class="step-num">05</span><h2>Send it to Koru</h2></div>
         <p class="step-note">We come back within two working days with a proof on the real garment
           and a date for the window. Nothing is charged until your runners order.</p>
 
@@ -626,8 +601,8 @@
           invoiced and holds no stock.</p>
         <p>A new club vest design has to be registered with Athletics Ireland before it can be worn
           in competition. We'll send you the artwork sheet you need for that with your proof.</p>
-        <p>Minimum run, lead times and the stock colour card are set by the mill and can move
-          between seasons. Everything here is an estimate until we confirm the proof.</p>
+        <p>Stock colours, minimum runs and lead times are set by the mill and can move
+          between seasons. We confirm all three with your proof.</p>
       </div>
     </div>
   </main>
@@ -677,8 +652,6 @@
     elite: { label:"Race mesh", mill:"Tarstone",  fabric:"Lightweight race mesh" }
   };
 
-  var MOQ = 30;
-
   /* Mill stock colour card. Anything else is a Pantone dye match. */
   var PALETTE = [
     ["Chalk","#F2F1EC"], ["Silver","#C7CCC9"], ["Steel","#6E7A80"], ["Jet","#15161A"],
@@ -693,14 +666,68 @@
     return "Pantone match " + String(hex).toUpperCase();
   }
 
-  var PATTERNS = [
-    ["solid",   "Solid"],
-    ["band",    "Chest band"],
-    ["hoops",   "Hoops"],
-    ["sash",    "Sash"],
-    ["panels",  "Side panels"],
-    ["chevron", "Chevron"]
+  /* Every shape is a few numbers in texture space, so any of them can be
+     moved, resized, recoloured and stacked. Slider values are percentages. */
+  var LEAN = 0.25;
+  var SHAPES = {
+    band:    { label:"Band",         make:function(){ return {v:0.35, h:0.14}; },
+               fields:[["v","Position",10,88],["h","Thickness",3,36]] },
+    hoops:   { label:"Hoops",        make:function(){ return {v:0.08, h:0.075, gap:0.075}; },
+               fields:[["v","Start",0,44],["h","Thickness",2,22],["gap","Spacing",2,32]] },
+    sash:    { label:"Sash",         make:function(){ return {u:0.075, w:0.12}; },
+               fields:[["u","Position",0,34],["w","Width",4,28]] },
+    panels:  { label:"Side panels",  make:function(){ return {w:0.064}; },
+               fields:[["w","Width",2,22]] },
+    chevron: { label:"Chevron",      make:function(){ return {v:0.235, h:0.10}; },
+               fields:[["v","Position",4,72],["h","Thickness",3,24]] },
+    yoke:    { label:"Shoulder yoke",make:function(){ return {v:0.17}; },
+               fields:[["v","Depth",5,48]] },
+    hem:     { label:"Hem band",     make:function(){ return {h:0.10}; },
+               fields:[["h","Depth",3,32]] },
+    stripe:  { label:"Centre stripe",make:function(){ return {w:0.07}; },
+               fields:[["w","Width",2,26]] }
+  };
+  var SHAPE_ORDER = ["band","hoops","sash","panels","chevron","yoke","hem","stripe"];
+
+  var PRESETS = [
+    ["Solid", []], ["Chest band", ["band"]], ["Hoops", ["hoops"]],
+    ["Sash", ["sash"]], ["Side panels", ["panels"]], ["Chevron", ["chevron"]],
+    ["Yoke", ["yoke"]], ["Hoops + band", ["hoops","band"]]
   ];
+
+  var elId = 1;
+  function bareEl(type) {
+    var e = SHAPES[type].make();
+    e.type = type;
+    e.colour = state.secondary;
+    return e;
+  }
+  function mk(type) {
+    var e = bareEl(type);
+    e.id = elId++;
+    return e;
+  }
+  function findEl(id) {
+    for (var i = 0; i < state.elements.length; i++) {
+      if (state.elements[i].id === id) return state.elements[i];
+    }
+    return null;
+  }
+  function layerEl() {
+    return state.layer.indexOf("el:") === 0
+      ? findEl(parseInt(state.layer.slice(3), 10)) : null;
+  }
+  function activeColour() {
+    var el = layerEl();
+    return el ? el.colour : (state[state.layer] || state.base);
+  }
+  function setActiveColour(hex) {
+    var el = layerEl();
+    if (el) { el.colour = hex; state.secondary = hex; }
+    else if (state.layer === "base" || state.layer === "trim" || state.layer === "text") {
+      state[state.layer] = hex;
+    }
+  }
 
   /* ---------------------------------------------------------------
      State
@@ -715,14 +742,18 @@
     secondary: "#14284B",
     trim: "#14284B",
     text: "#F2F1EC",
-    pattern: "band",
+    elements: [],
     clubName: "KORU AC",
     font: "block",
+    chestV: 0.35,
+    chestSize: 1,
     crest: "left",
+    crestSize: 1,
     back: "name",
-    runners: 42,
+    backV: 0.30,
     contact: { club:"", name:"", email:"", phone:"", notes:"" }
   };
+  state.elements = [mk("band")];
 
   var $ = function (sel) { return document.querySelector(sel); };
   var $$ = function (sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); };
@@ -823,30 +854,47 @@
     ctx.fill();
   }
 
-  function paintPattern(ctx, kind, colour) {
-    switch (kind) {
+  function paintElement(ctx, el) {
+    var c = el.colour, o;
+    switch (el.type) {
       case "band":
-        vBox(ctx, colour, 0.27, 0.41);
+        vBox(ctx, c, el.v - el.h / 2, el.v + el.h / 2);
         break;
       case "hoops":
-        for (var v = 0.08; v < 1; v += 0.15) vBox(ctx, colour, v, Math.min(v + 0.075, 1));
+        var step = el.h + el.gap;
+        if (step <= 0.005) break;
+        for (var v = el.v; v < 1; v += step) vBox(ctx, c, v, Math.min(v + el.h, 1));
         break;
       case "sash":
-        poly(ctx, colour, [[0.075,0.02],[0.195,0.02],[0.445,1],[0.325,1]]);
-        poly(ctx, colour, [[0.575,0.02],[0.695,0.02],[0.945,1],[0.825,1]]);
+        for (o = 0; o < 1; o += 0.5) {
+          poly(ctx, c, [[o + el.u, 0.02], [o + el.u + el.w, 0.02],
+                        [o + el.u + el.w + LEAN, 1], [o + el.u + LEAN, 1]]);
+        }
         break;
       case "panels":
-        ctx.fillStyle = colour;
-        ctx.fillRect(0.468 * TW, 0, 0.064 * TW, TH);
-        ctx.fillRect(0.968 * TW, 0, 0.032 * TW, TH);
-        ctx.fillRect(0, 0, 0.032 * TW, TH);
+        ctx.fillStyle = c;
+        ctx.fillRect((0.5 - el.w / 2) * TW, 0, el.w * TW, TH);
+        ctx.fillRect((1 - el.w / 2) * TW, 0, (el.w / 2) * TW, TH);
+        ctx.fillRect(0, 0, (el.w / 2) * TW, TH);
         break;
       case "chevron":
-        [0, 0.5].forEach(function (o) {
-          poly(ctx, colour, [
-            [o + 0.02, 0.235], [o + 0.25, 0.375], [o + 0.48, 0.235],
-            [o + 0.48, 0.335], [o + 0.25, 0.475], [o + 0.02, 0.335]
+        for (o = 0; o < 1; o += 0.5) {
+          poly(ctx, c, [
+            [o + 0.02, el.v], [o + 0.25, el.v + 0.14], [o + 0.48, el.v],
+            [o + 0.48, el.v + el.h], [o + 0.25, el.v + 0.14 + el.h], [o + 0.02, el.v + el.h]
           ]);
+        }
+        break;
+      case "yoke":
+        vBox(ctx, c, 0, el.v);
+        break;
+      case "hem":
+        vBox(ctx, c, 1 - el.h, 1);
+        break;
+      case "stripe":
+        ctx.fillStyle = c;
+        [FRONT_U, BACK_U].forEach(function (u) {
+          ctx.fillRect((u - el.w / 2) * TW, 0, el.w * TW, TH);
         });
         break;
     }
@@ -864,10 +912,10 @@
     ctx.fillRect(0, TH - band, TW, band);
   }
 
-  function trackedText(ctx, text, cxPx, cyPx, maxPx, tracking, colour) {
+  function trackedText(ctx, text, cxPx, cyPx, maxPx, tracking, colour, baseSize) {
     if (!text) return;
     var face = "Archivo, 'Arial Narrow', 'Helvetica Neue', sans-serif";
-    var size = 150;
+    var size = baseSize || 150;
     ctx.font = "700 " + size + "px " + face;
     var chars = text.split("");
     var natural = 0;
@@ -889,6 +937,14 @@
       x += widths[i] + tracking * size;
     });
   }
+
+  var CREST_POS = {
+    "left":       [FRONT_U - 0.060, 0.255, 58],
+    "right":      [FRONT_U + 0.060, 0.255, 58],
+    "chest":      [FRONT_U, 0.215, 66],
+    "upper-back": [BACK_U, 0.265, 70],
+    "back":       [BACK_U, 0.50, 86]
+  };
 
   function paintCrest(ctx, uCentre, v, r, colour) {
     var x = uCentre * TW, y = v * TH;
@@ -919,7 +975,7 @@
     ctx.globalAlpha = 1;
     ctx.fillStyle = state.base;
     ctx.fillRect(0, 0, TW, TH);
-    if (state.pattern !== "solid") paintPattern(ctx, state.pattern, state.secondary);
+    state.elements.forEach(function (el) { paintElement(ctx, el); });
 
     if (!meshPattern) meshPattern = makeMeshPattern(ctx);
     ctx.fillStyle = meshPattern;
@@ -927,13 +983,14 @@
 
     paintBinding(ctx, state.trim, state.tier);
 
-    var chestMax = TW * 0.30;
-    trackedText(ctx, name, FRONT_U * TW, 0.345 * TH, chestMax, tracking, state.text);
+    trackedText(ctx, name, FRONT_U * TW, state.chestV * TH, TW * 0.34,
+                tracking, state.text, 160 * state.chestSize);
     if (state.back === "name") {
-      trackedText(ctx, name, BACK_U * TW, 0.30 * TH, chestMax * 0.92, tracking, state.text);
+      trackedText(ctx, name, BACK_U * TW, state.backV * TH, TW * 0.30,
+                  tracking, state.text, 140 * state.chestSize);
     }
-    if (state.crest === "left") paintCrest(ctx, FRONT_U - 0.060, 0.255, 58, state.text);
-    if (state.crest === "centre") paintCrest(ctx, BACK_U, 0.50, 86, state.text);
+    var cp = CREST_POS[state.crest];
+    if (cp) paintCrest(ctx, cp[0], cp[1], cp[2] * state.crestSize, state.text);
 
     if (three.texture) three.texture.needsUpdate = true;
   }
@@ -1218,7 +1275,7 @@
   /* ---------------------------------------------------------------
      Pattern chips reuse the texture painter, cropped to the front half
   ----------------------------------------------------------------*/
-  function patternThumb(kind) {
+  function patternThumb(types) {
     var c = document.createElement("canvas");
     c.width = 288; c.height = 144;
     var x = c.getContext("2d");
@@ -1226,7 +1283,7 @@
     TW = 288; TH = 144;
     x.fillStyle = state.base;
     x.fillRect(0, 0, TW, TH);
-    if (kind !== "solid") paintPattern(x, kind, state.secondary);
+    types.forEach(function (t) { paintElement(x, bareEl(t)); });
     TW = keepW; TH = keepH;
     var t = document.createElement("canvas");
     t.width = 176; t.height = 92;
@@ -1260,11 +1317,9 @@
     var cut = CUTS[state.preview];
     var tier = TIERS[state.tier];
     var style = cut.style[state.tier];
-    var patLabel = "Solid";
-    for (var i = 0; i < PATTERNS.length; i++) {
-      if (PATTERNS[i][0] === state.pattern) patLabel = PATTERNS[i][1];
-    }
-    var crestLabel = { none:"None", left:"Left chest", centre:"Centre back" }[state.crest];
+    var crestLabel = { none:"None", left:"Left chest", right:"Right chest",
+                       chest:"Centre chest", "upper-back":"Upper back",
+                       back:"Centre back" }[state.crest] || "None";
 
     function sw(hex) {
       return '<span class="sw" style="background:' + hex + '"></span>';
@@ -1274,9 +1329,11 @@
       ["Fabric", esc(tier.fabric)],
       ["Mill", esc(tier.mill) + " · " + (style ? esc(style) : "style at proof")],
       ["Body", sw(state.base) + esc(colourName(state.base))],
-      ["Pattern", state.pattern === "solid"
-          ? "Solid"
-          : esc(patLabel) + ", " + sw(state.secondary) + esc(colourName(state.secondary))],
+      ["Design", state.elements.length
+          ? state.elements.map(function (el) {
+              return sw(el.colour) + esc(SHAPES[el.type].label);
+            }).join(", ")
+          : "Solid, no shapes"],
       ["Trim", sw(state.trim) + esc(colourName(state.trim))],
       ["Chest", state.clubName.trim()
           ? esc(state.clubName.trim().toUpperCase()) + ", " + sw(state.text) + esc(colourName(state.text))
@@ -1293,83 +1350,6 @@
 
   function money(n) {
     return "€" + n.toFixed(2);
-  }
-
-  function renderTicket() {
-    var cuts = availableCuts();
-    var lines = $("#ticketLines");
-
-    if (!cuts.length) {
-      lines.innerHTML = '<p class="line" style="color:var(--ink-2)">' +
-        'Pick at least one cut in step 01 and the window pricing appears here.</p>';
-      $("#ticketTotals").innerHTML = "";
-      return;
-    }
-
-    lines.innerHTML = cuts.map(function (k) {
-      var c = CUTS[k];
-      var sizes = c.sizes[0] + "–" + c.sizes[c.sizes.length - 1];
-      return '<div class="line">' +
-               '<span>' + esc(c.label) + ' · ' + esc(TIERS[state.tier].label.toLowerCase()) + '</span>' +
-               '<span class="qty">' + esc(sizes) + '</span>' +
-               '<span class="amt">' + money(c.price[state.tier]) + '</span>' +
-               '<span class="sku">KORU-' + esc(clubCode()) + '-' + esc(c.short) + '-&lt;size&gt; · ' +
-                 (c.style[state.tier] ? esc(c.style[state.tier]) : "style at proof") + '</span>' +
-             '</div>';
-    }).join("");
-
-    var sum = 0;
-    cuts.forEach(function (k) { sum += CUTS[k].price[state.tier]; });
-    var avg = sum / cuts.length;
-    var windowValue = avg * state.runners;
-
-    $("#ticketTotals").innerHTML =
-      '<span class="k">Runners expected</span><span class="v">' + state.runners + '</span>' +
-      '<span class="k">Blended price per vest</span><span class="v">' + money(avg) + '</span>' +
-      '<span class="k row-strong">Window value, estimated</span>' +
-        '<span class="v big">' + money(windowValue) + '</span>' +
-      '<span class="k row-strong">The club pays up front</span>' +
-        '<span class="v big">' + money(0) + '</span>';
-  }
-
-  var DAY = 86400000;
-  var fmtDate = new Intl.DateTimeFormat("en-IE", { weekday:"short", day:"numeric", month:"short" });
-  function plusDays(n) { return fmtDate.format(new Date(Date.now() + n * DAY)); }
-
-  function renderTimeline() {
-    var steps = [
-      ["Design sent to Koru", "today", true],
-      ["Proof back on the real garment", plusDays(3), false],
-      ["Window opens on korusports.ie", plusDays(5), false],
-      ["Window closes, order goes to the mill", plusDays(26), false],
-      ["Vests with the club", plusDays(61), false]
-    ];
-    $("#timeline").innerHTML = steps.map(function (s) {
-      return '<li class="' + (s[2] ? "done" : "") + '"><span class="pip"></span>' +
-             '<span>' + esc(s[0]) + '</span><span class="when">' + esc(s[1]) + '</span></li>';
-    }).join("");
-  }
-
-  function renderMoq() {
-    var n = state.runners;
-    var pct = Math.min(100, (n / MOQ) * 100);
-    var fill = $("#moqFill");
-    fill.style.width = pct + "%";
-    fill.className = "moq-fill" + (n < MOQ ? " short" : "");
-    $("#runnerCount").textContent = n;
-    $("#moqNow").textContent = n + " of " + MOQ;
-
-    var note = $("#moqNote");
-    if (n >= MOQ) {
-      note.className = "callout ok";
-      note.innerHTML = "<strong>Clears the mill minimum</strong> with " + (n - MOQ) +
-        " to spare. We can open the window as soon as you sign off the proof.";
-    } else {
-      note.className = "callout warn";
-      note.innerHTML = "<strong>" + (MOQ - n) + " short of the minimum run of " + MOQ + ".</strong> " +
-        "Windows that close under 30 either roll into the next one or carry a small per-vest " +
-        "surcharge — we'll set that out with your proof.";
-    }
   }
 
   /* ---------------------------------------------------------------
@@ -1389,8 +1369,14 @@
     }).join("");
   }
 
+  var LAYER_NAMES = { base:"the body", trim:"the trim", text:"the lettering" };
+
   function renderPalette() {
-    var current = state[state.layer];
+    if (state.layer.indexOf("el:") === 0 && !layerEl()) state.layer = "base";
+    var current = activeColour();
+    var el = layerEl();
+    $("#paletteTarget").innerHTML = "Colouring <b>" +
+      esc(el ? SHAPES[el.type].label.toLowerCase() : LAYER_NAMES[state.layer]) + "</b>";
     $("#palette").innerHTML = PALETTE.map(function (p) {
       var sel = p[1].toLowerCase() === String(current).toLowerCase();
       return '<button type="button" class="swatch" data-hex="' + p[1] + '" title="' + esc(p[0]) +
@@ -1401,12 +1387,54 @@
     $("#customHex").textContent = String(current).toUpperCase();
   }
 
-  function renderPatterns() {
-    $("#patterns").innerHTML = PATTERNS.map(function (p) {
-      return '<button type="button" class="pattern" data-pattern="' + p[0] + '" aria-pressed="' +
-             (state.pattern === p[0]) + '">' +
-             '<span class="pat-img" style="background-image:url(' + patternThumb(p[0]) + ')"></span>' +
-             '<span>' + esc(p[1]) + '</span></button>';
+  function typeKey(types) { return types.join("+"); }
+
+  function renderPresets() {
+    var current = typeKey(state.elements.map(function (e) { return e.type; }));
+    $("#patterns").innerHTML = PRESETS.map(function (p, i) {
+      return '<button type="button" class="pattern" data-preset="' + i + '" aria-pressed="' +
+             (typeKey(p[1]) === current) + '">' +
+             '<span class="pat-img" style="background-image:url(' + patternThumb(p[1]) + ')"></span>' +
+             '<span>' + esc(p[0]) + '</span></button>';
+    }).join("");
+  }
+
+  function renderAddShapes() {
+    $("#addShapes").innerHTML = SHAPE_ORDER.map(function (t) {
+      return '<button type="button" data-add="' + t + '">+ ' + esc(SHAPES[t].label) + '</button>';
+    }).join("");
+  }
+
+  function renderElements() {
+    var host = $("#elementList");
+    if (!state.elements.length) {
+      host.innerHTML = '<p class="empty">No shapes — a plain vest in your body colour. ' +
+                       'Add one above, or start from a shape.</p>';
+      return;
+    }
+    host.innerHTML = state.elements.map(function (el, i) {
+      var def = SHAPES[el.type];
+      var sel = state.layer === "el:" + el.id;
+      return '<div class="layer' + (sel ? " sel" : "") + '">' +
+        '<div class="layer-top">' +
+          '<button type="button" class="layer-sw" data-layer="el:' + el.id + '" ' +
+            'style="background:' + el.colour + '" aria-pressed="' + sel + '" ' +
+            'aria-label="Colour this ' + esc(def.label.toLowerCase()) + '"></button>' +
+          '<span class="layer-name">' + esc(def.label) + '</span>' +
+          '<button type="button" class="icon" data-move="up:' + el.id + '" aria-label="Move up"' +
+            (i === state.elements.length - 1 ? " disabled" : "") + '>&#9650;</button>' +
+          '<button type="button" class="icon" data-move="down:' + el.id + '" aria-label="Move down"' +
+            (i === 0 ? " disabled" : "") + '>&#9660;</button>' +
+          '<button type="button" class="icon kill" data-remove="' + el.id + '" ' +
+            'aria-label="Remove this ' + esc(def.label.toLowerCase()) + '">&times;</button>' +
+        '</div>' +
+        def.fields.map(function (f) {
+          var id = "el" + el.id + f[0];
+          return '<div class="layer-field"><label for="' + id + '">' + esc(f[1]) + '</label>' +
+            '<input type="range" id="' + id + '" data-el="' + el.id + ':' + f[0] + '" min="' +
+            f[2] + '" max="' + f[3] + '" value="' + Math.round(el[f[0]] * 100) + '"></div>';
+        }).join("") +
+      '</div>';
     }).join("");
   }
 
@@ -1432,19 +1460,30 @@
     $$("[data-back]").forEach(function (b) {
       b.setAttribute("aria-pressed", String(b.dataset.back === state.back));
     });
+    var crestField = document.getElementById("crestSizeField");
+    if (crestField) crestField.hidden = state.crest === "none";
+    var backField = document.getElementById("backVField");
+    if (backField) backField.hidden = state.back !== "name";
     var n = (state.clubName || "").trim().length;
     $("#nameCount").textContent = n + " of 20 characters" +
       (n > 13 ? " · set smaller to fit the print area" : "");
   }
 
+  function repaint() {
+    paintTexture();
+    if (three.ok) draw(); else renderFlat();
+    renderDocket();
+    save();
+  }
+
   function renderAll() {
     renderCuts();
+    renderPresets();
+    renderAddShapes();
+    renderElements();
     renderPalette();
-    renderPatterns();
     renderPreview();
     renderDocket();
-    renderTicket();
-    renderMoq();
     syncToggles();
     save();
   }
@@ -1477,13 +1516,23 @@
         trim: { hex: state.trim, name: colourName(state.trim) },
         lettering: { hex: state.text, name: colourName(state.text) }
       },
-      pattern: state.pattern,
-      chestPrint: state.clubName.trim().toUpperCase(),
-      lettering: state.font,
-      crest: state.crest,
-      back: state.back,
-      expectedRunners: state.runners,
-      meetsMinimum: state.runners >= MOQ,
+      design: state.elements.map(function (el) {
+        var out = { shape: el.type, label: SHAPES[el.type].label,
+                    colour: { hex: el.colour, name: colourName(el.colour) } };
+        SHAPES[el.type].fields.forEach(function (f) {
+          out[f[1].toLowerCase()] = Math.round(el[f[0]] * 100) + "%";
+        });
+        return out;
+      }),
+      print: {
+        chest: state.clubName.trim().toUpperCase(),
+        lettering: state.font,
+        heightOnChest: Math.round(state.chestV * 100) + "%",
+        size: Math.round(state.chestSize * 100) + "%",
+        back: state.back,
+        heightOnBack: Math.round(state.backV * 100) + "%"
+      },
+      crest: { position: state.crest, size: Math.round(state.crestSize * 100) + "%" },
       contact: state.contact
     };
   }
@@ -1513,8 +1562,18 @@
         state[k] = next[k];
       }
     });
+    if (!Array.isArray(state.elements)) state.elements = [];
+    state.elements = state.elements.filter(function (e) { return e && SHAPES[e.type]; });
+    state.elements.forEach(function (e) {
+      if (typeof e.id !== "number") e.id = elId++;
+      if (e.id >= elId) elId = e.id + 1;
+      if (!e.colour) e.colour = state.secondary;
+    });
     $("#clubName").value = state.clubName;
-    $("#runners").value = state.runners;
+    [["chestV", 1], ["chestSize", 1], ["backV", 1], ["crestSize", 1]].forEach(function (f) {
+      var el = document.getElementById(f[0]);
+      if (el) el.value = Math.round(state[f[0]] * 100);
+    });
     ["club","name","email","phone","notes"].forEach(function (f) {
       var el = document.getElementById("f" + f.charAt(0).toUpperCase() + f.slice(1));
       if (el) el.value = state.contact[f] || "";
@@ -1607,8 +1666,30 @@
   onPick("font",    function (v) { state.font = v; });
   onPick("crest",   function (v) { state.crest = v; });
   onPick("back",    function (v) { state.back = v; });
-  onPick("pattern", function (v) { state.pattern = v; });
-  onPick("hex",     function (v) { state[state.layer] = v; });
+  onPick("preset",  function (v) {
+    state.elements = PRESETS[parseInt(v, 10)][1].map(mk);
+    var last = state.elements[state.elements.length - 1];
+    state.layer = last ? "el:" + last.id : "base";
+  });
+  onPick("add",     function (v) {
+    var el = mk(v);
+    state.elements.push(el);
+    state.layer = "el:" + el.id;
+  });
+  onPick("remove",  function (v) {
+    var id = parseInt(v, 10);
+    state.elements = state.elements.filter(function (e) { return e.id !== id; });
+    if (state.layer === "el:" + id) state.layer = "base";
+  });
+  onPick("move",    function (v) {
+    var parts = v.split(":"), id = parseInt(parts[1], 10);
+    var i = state.elements.map(function (e) { return e.id; }).indexOf(id);
+    var j = parts[0] === "up" ? i + 1 : i - 1;
+    if (i < 0 || j < 0 || j >= state.elements.length) return;
+    var moved = state.elements.splice(i, 1)[0];
+    state.elements.splice(j, 0, moved);
+  });
+  onPick("hex",     function (v) { setActiveColour(v); });
   onPick("cut",     function (v) { state.cuts[v] = !state.cuts[v]; });
   onPick("tier",    function (v) {
     state.tier = v;
@@ -1619,20 +1700,35 @@
     state.clubName = e.target.value;
     renderAll();
   });
-  $("#runners").addEventListener("input", function (e) {
-    state.runners = parseInt(e.target.value, 10) || MOQ;
-    renderTicket(); renderMoq(); save();
-  });
   $("#customColour").addEventListener("input", function (e) {
-    state[state.layer] = e.target.value;
-    renderAll();
+    setActiveColour(e.target.value);
+    renderElements();
+    renderPalette();
+    repaint();
+  });
+
+  /* Sliders repaint without rebuilding their own markup, so a drag is
+     never interrupted by the control being replaced underneath it. */
+  document.addEventListener("input", function (e) {
+    var t = e.target;
+    if (!t || !t.dataset) return;
+    if (t.dataset.el) {
+      var parts = t.dataset.el.split(":");
+      var el = findEl(parseInt(parts[0], 10));
+      if (!el) return;
+      el[parts[1]] = parseInt(t.value, 10) / 100;
+      repaint();
+    } else if (t.dataset.print) {
+      state[t.dataset.print] = parseInt(t.value, 10) / 100;
+      repaint();
+    }
   });
   ["club","name","email","phone","notes"].forEach(function (f) {
     var el = document.getElementById("f" + f.charAt(0).toUpperCase() + f.slice(1));
     if (!el) return;
     el.addEventListener("input", function (e) {
       state.contact[f] = e.target.value;
-      if (f === "club") { renderDocket(); renderTicket(); }
+      if (f === "club") renderDocket();
       save();
     });
   });
@@ -1672,7 +1768,6 @@
   ----------------------------------------------------------------*/
   var hashCode = (location.hash.match(/^#d=([A-Z0-9]{4,12})$/i) || [])[1];
   if (!hashCode) restore();
-  renderTimeline();
 
   var stageEl = document.querySelector(".stage");
   var hostEl = document.getElementById("stageHost");
