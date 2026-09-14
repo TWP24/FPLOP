@@ -67,6 +67,9 @@
     position:relative;overflow:hidden;
     height:clamp(180px,33vh,300px);
   }
+  .stage.live{touch-action:pan-y}
+  .stage.over{cursor:grab}
+  .stage.grabbing{cursor:grabbing}
   #stageHost{position:absolute;inset:0}
   #stageHost canvas{display:block;width:100%;height:100%}
 
@@ -286,11 +289,16 @@
         </div>
         <div class="field">
           <span class="label">Sponsor logo</span>
-          <div class="seg" role="group" aria-label="Sponsor logo placement">
-            <button type="button" data-sponsor="none" aria-pressed="true">None</button>
-            <button type="button" data-sponsor="chest" aria-pressed="false">Chest</button>
-            <button type="button" data-sponsor="back" aria-pressed="false">Back</button>
-            <button type="button" data-sponsor="hem" aria-pressed="false">Hem</button>
+          <div class="seg" role="group" aria-label="Sponsor logo">
+            <button type="button" data-badge="sponsor:off" aria-pressed="true">None</button>
+            <button type="button" data-badge="sponsor:on" aria-pressed="false">Show</button>
+            <button type="button" data-upload="sponsor">Upload image</button>
+            <button type="button" data-clear="sponsor" hidden>Remove image</button>
+          </div>
+          <input type="file" id="sponsorFile" accept="image/*" hidden>
+          <div class="slider-row" id="sponsorSizeRow" style="margin-top:12px">
+            <input type="range" data-badgesize="sponsor" min="6" max="70" value="30" aria-label="Sponsor logo size">
+            <span class="slider-val" id="sponsorSizeVal">30%</span>
           </div>
         </div>
 
@@ -300,11 +308,18 @@
         </div>
         <div class="field">
           <span class="label">Club crest</span>
-          <div class="seg" role="group" aria-label="Crest placement">
-            <button type="button" data-crest="none" aria-pressed="false">None</button>
-            <button type="button" data-crest="left" aria-pressed="true">Left chest</button>
-            <button type="button" data-crest="chest" aria-pressed="false">Centre chest</button>
-            <button type="button" data-crest="back" aria-pressed="false">Centre back</button>
+          <p class="note" style="margin:-4px 0 10px">Upload it, then drag it on the vest to place
+            it — front panel or back.</p>
+          <div class="seg" role="group" aria-label="Club crest">
+            <button type="button" data-badge="crest:off" aria-pressed="false">None</button>
+            <button type="button" data-badge="crest:on" aria-pressed="true">Show</button>
+            <button type="button" data-upload="crest">Upload image</button>
+            <button type="button" data-clear="crest" hidden>Remove image</button>
+          </div>
+          <input type="file" id="crestFile" accept="image/*" hidden>
+          <div class="slider-row" id="crestSizeRow" style="margin-top:12px">
+            <input type="range" data-badgesize="crest" min="6" max="70" value="17" aria-label="Club crest size">
+            <span class="slider-val" id="crestSizeVal">17%</span>
           </div>
         </div>
         <div class="nextbar"><button type="button" class="btn ghost" data-goto="send">Next: Send</button></div>
@@ -491,8 +506,8 @@
     backText: true,
     font: "block",
     textSize: 1,
-    crest: "left",
-    sponsor: "none",
+    crest:   { on:true,  u:0.188, v:0.222, scale:0.17, src:null },
+    sponsor: { on:false, u:0.250, v:0.470, scale:0.30, src:null },
     contact: { club:"", name:"", email:"", phone:"", notes:"" }
   };
 
@@ -1192,57 +1207,181 @@
     });
   }
 
-  var SPONSOR_POS = {
-    chest: [FRONT_U, 0.47, 0.20, 0.052],
-    back:  [BACK_U,  0.52, 0.20, 0.052],
-    hem:   [FRONT_U, 0.80, 0.16, 0.042]
-  };
+  /* ---------------------------------------------------------------
+     Crest and sponsor artwork. Each is a badge: a position in texture
+     space, a size as a fraction of one panel, and optionally an image.
+     With no image it draws as a placeholder, so a club without their
+     logo to hand can still say where it goes.
+  ----------------------------------------------------------------*/
+  var badgeImg = { crest: null, sponsor: null };
 
-  function paintSponsor(ctx, pos, colour) {
-    var w = pos[2] * TW, h = pos[3] * TH;
-    var x = pos[0] * TW - w / 2, y = pos[1] * TH - h / 2;
+  function badgeAspect(key) {
+    var img = badgeImg[key];
+    if (img && img.naturalWidth) return img.naturalHeight / img.naturalWidth;
+    return key === "crest" ? 1 : 0.34;
+  }
+
+  function badgeRect(key) {
+    var b = state[key];
+    var w = b.scale * TW * 0.5;
+    var h = w * badgeAspect(key);
+    return { x: b.u * TW - w / 2, y: b.v * TH - h / 2, w: w, h: h };
+  }
+
+  function paintBadge(ctx, key, colour) {
+    var b = state[key];
+    if (!b.on) return;
+    var r = badgeRect(key);
+    var img = badgeImg[key];
+    if (img && img.naturalWidth) {
+      ctx.drawImage(img, r.x, r.y, r.w, r.h);
+      return;
+    }
     ctx.save();
-    ctx.globalAlpha = 0.9;
+    ctx.globalAlpha = ctx.globalAlpha * 0.9;
     ctx.strokeStyle = colour;
     ctx.fillStyle = colour;
-    ctx.lineWidth = 4;
-    ctx.setLineDash([13, 11]);
-    ctx.strokeRect(x, y, w, h);
+    ctx.lineWidth = Math.max(2, r.w * 0.02);
+    ctx.setLineDash([r.w * 0.09, r.w * 0.075]);
+    if (key === "crest") {
+      ctx.beginPath();
+      ctx.arc(b.u * TW, b.v * TH, r.w / 2, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      ctx.strokeRect(r.x, r.y, r.w, r.h);
+    }
     ctx.setLineDash([]);
-    ctx.font = "500 " + (h * 0.30).toFixed(1) + "px 'IBM Plex Mono', monospace";
+    ctx.font = "500 " + Math.max(9, r.h * 0.26).toFixed(1) + "px 'IBM Plex Mono', monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("SPONSOR", pos[0] * TW, pos[1] * TH);
+    ctx.fillText(key === "crest" ? "CREST" : "SPONSOR", b.u * TW, b.v * TH);
     ctx.restore();
   }
 
-  var CREST_POS = {
-    "left":       [FRONT_U - 0.066, 0.222, 54],
-    "right":      [FRONT_U + 0.060, 0.255, 58],
-    "chest":      [FRONT_U, 0.200, 64],
-    "upper-back": [BACK_U, 0.265, 70],
-    "back":       [BACK_U, 0.50, 86]
-  };
-
-  function paintCrest(ctx, uCentre, v, r, colour) {
-    var x = uCentre * TW, y = v * TH;
-    ctx.save();
-    ctx.globalAlpha = 0.92;
-    ctx.strokeStyle = colour;
-    ctx.lineWidth = 5;
-    ctx.setLineDash([14, 12]);
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = colour;
-    ctx.font = "500 " + (r * 0.34) + "px 'IBM Plex Mono', monospace";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("CREST", x, y);
-    ctx.restore();
+  /* Uploads are scaled down before anything else touches them: a club's
+     logo can be 4000px, and this only ever has to look right on a mockup.
+     The print file is the vector they send with the proof. */
+  function loadArtwork(file, done) {
+    if (!file || !/^image\//.test(file.type)) { done(null); return; }
+    var reader = new FileReader();
+    reader.onerror = function () { done(null); };
+    reader.onload = function () {
+      var probe = new Image();
+      probe.onerror = function () { done(null); };
+      probe.onload = function () {
+        var max = 360;
+        var k = Math.min(1, max / Math.max(probe.width, probe.height));
+        var c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(probe.width * k));
+        c.height = Math.max(1, Math.round(probe.height * k));
+        c.getContext("2d").drawImage(probe, 0, 0, c.width, c.height);
+        done(c.toDataURL("image/png"));
+      };
+      probe.src = reader.result;
+    };
+    reader.readAsDataURL(file);
   }
 
+  function adoptArtwork(key, src, then) {
+    if (!src) { badgeImg[key] = null; state[key].src = null; if (then) then(); return; }
+    var img = new Image();
+    img.onload = function () {
+      badgeImg[key] = img;
+      state[key].src = src;
+      if (then) then();
+    };
+    img.onerror = function () { badgeImg[key] = null; state[key].src = null; if (then) then(); };
+    img.src = src;
+  }
+
+  /* ---------------------------------------------------------------
+     Dragging a badge on the flat mockup
+  ----------------------------------------------------------------*/
+  var stageLayout = null, dragging = null, repaintQueued = false;
+
+  function queueRepaint() {
+    if (repaintQueued) return;
+    repaintQueued = true;
+    requestAnimationFrame(function () {
+      repaintQueued = false;
+      paintTexture();
+      renderStage();
+    });
+  }
+
+  /* Screen point -> texture coordinates, via whichever panel it landed in. */
+  function toTexture(ev) {
+    if (!stageLayout) return null;
+    var host = $("#stageHost");
+    var box = host.getBoundingClientRect();
+    var px = ev.clientX - box.left, py = ev.clientY - box.top;
+    var hit = null;
+    ["front", "back"].forEach(function (side) {
+      var L = stageLayout[side];
+      if (!L || hit) return;
+      if (px >= L.x && px <= L.x + L.w && py >= L.y && py <= L.y + L.h) {
+        hit = { u: (side === "back" ? 0.5 : 0) + ((px - L.x) / L.w) * 0.5,
+                v: (py - L.y) / L.h };
+      }
+    });
+    return hit;
+  }
+
+  function badgeAt(p) {
+    var found = null;
+    ["sponsor", "crest"].forEach(function (key) {
+      if (found || !state[key].on) return;
+      var r = badgeRect(key);
+      var x = p.u * TW, y = p.v * TH;
+      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) found = key;
+    });
+    return found;
+  }
+
+  function bindBadgeDrag(stage) {
+    /* pan-y keeps the page scrollable over the preview; a touch that lands
+       on a badge is claimed here instead, so vertical drags move the badge. */
+    stage.addEventListener("touchstart", function (ev) {
+      if (ev.touches.length !== 1) return;
+      var p = toTexture(ev.touches[0]);
+      if (p && badgeAt(p)) ev.preventDefault();
+    }, { passive: false });
+
+    stage.addEventListener("pointerdown", function (ev) {
+      var p = toTexture(ev);
+      if (!p) return;
+      var key = badgeAt(p);
+      if (!key) return;
+      ev.preventDefault();
+      dragging = { key: key, du: state[key].u - p.u, dv: state[key].v - p.v };
+      stage.classList.add("grabbing");
+      try { stage.setPointerCapture(ev.pointerId); } catch (e) { /* no capture */ }
+    });
+
+    stage.addEventListener("pointermove", function (ev) {
+      if (!dragging) {
+        var hover = toTexture(ev);
+        stage.classList.toggle("over", !!(hover && badgeAt(hover)));
+        return;
+      }
+      var p = toTexture(ev);
+      if (!p) return;
+      var b = state[dragging.key];
+      b.u = Math.max(0.02, Math.min(0.98, p.u + dragging.du));
+      b.v = Math.max(0.03, Math.min(0.97, p.v + dragging.dv));
+      queueRepaint();
+    });
+
+    function release(ev) {
+      if (!dragging) return;
+      dragging = null;
+      stage.classList.remove("grabbing");
+      try { stage.releasePointerCapture(ev.pointerId); } catch (e) { /* gone */ }
+      save();
+    }
+    stage.addEventListener("pointerup", release);
+    stage.addEventListener("pointercancel", release);
+  }
 
   function paintElement(ctx, el) {
     var prev = ctx.globalAlpha;
@@ -1297,10 +1436,8 @@
     if (state.backText) {
       trackedText(ctx, name, BACK_U * TW, 0.33 * TH, span * 0.86, state.text, 180, font);
     }
-    var cp = CREST_POS[state.crest];
-    if (cp) paintCrest(ctx, cp[0], cp[1], cp[2], state.text);
-    var sp = SPONSOR_POS[state.sponsor];
-    if (sp) paintSponsor(ctx, sp, state.text);
+    paintBadge(ctx, "sponsor", state.text);
+    paintBadge(ctx, "crest", state.text);
   }
 
   /* ---------------------------------------------------------------
@@ -1400,6 +1537,10 @@
 
     drawVest(ctx, cut, x0, y0, boxW, boxH, false);
     drawVest(ctx, cut, x0 + boxW + gap, y0, boxW, boxH, true);
+    stageLayout = {
+      front: { x: x0, y: y0, w: boxW, h: boxH },
+      back:  { x: x0 + boxW + gap, y: y0, w: boxW, h: boxH }
+    };
 
     ctx.fillStyle = "rgba(128,136,132,.95)";
     ctx.font = "500 11px 'IBM Plex Mono', monospace";
@@ -1521,8 +1662,7 @@
   }
 
   function syncToggles() {
-    [["preview","preview"],["font","font"],["crest","crest"],
-     ["sponsor","sponsor"]].forEach(function (m) {
+    [["preview","preview"],["font","font"]].forEach(function (m) {
       $$("[data-" + m[0] + "]").forEach(function (b) {
         b.setAttribute("aria-pressed", String(b.dataset[m[0]] === state[m[1]]));
       });
@@ -1533,6 +1673,23 @@
     $$("[data-back]").forEach(function (b) {
       b.setAttribute("aria-pressed", String((b.dataset.back === "on") === !!state.backText));
     });
+    ["crest", "sponsor"].forEach(function (key) {
+      var b = state[key];
+      $$('[data-badge^="' + key + ':"]').forEach(function (btn) {
+        btn.setAttribute("aria-pressed",
+          String((btn.dataset.badge === key + ":on") === !!b.on));
+      });
+      var clear = document.querySelector('[data-clear="' + key + '"]');
+      if (clear) clear.hidden = !b.src;
+      var row = document.getElementById(key + "SizeRow");
+      if (row) row.hidden = !b.on;
+      var slider = document.querySelector('[data-badgesize="' + key + '"]');
+      if (slider) slider.value = Math.round(b.scale * 100);
+      var val = document.getElementById(key + "SizeVal");
+      if (val) val.textContent = Math.round(b.scale * 100) + "%";
+    });
+    var stageEl2 = document.querySelector(".stage");
+    if (stageEl2) stageEl2.classList.toggle("live", !!(state.crest.on || state.sponsor.on));
     var n = (state.clubName || "").trim().length;
     $("#nameCount").textContent = n + " of 20 characters" +
       (n > 13 ? " · set smaller to fit the print area" : "");
@@ -1584,8 +1741,12 @@
       backPrint: state.backText ? "club name" : "none",
       lettering: fontOf(state.font).label,
       letteringSize: Math.round(state.textSize * 100) + "%",
-      crest: state.crest,
-      sponsorLogo: state.sponsor,
+      crest: { shown: state.crest.on, artwork: !!state.crest.src,
+               at: Math.round(state.crest.u * 100) + "," + Math.round(state.crest.v * 100),
+               size: Math.round(state.crest.scale * 100) + "%" },
+      sponsor: { shown: state.sponsor.on, artwork: !!state.sponsor.src,
+                 at: Math.round(state.sponsor.u * 100) + "," + Math.round(state.sponsor.v * 100),
+                 size: Math.round(state.sponsor.scale * 100) + "%" },
       contact: state.contact
     };
   }
@@ -1607,6 +1768,17 @@
       }
     });
     if (!STYLES[state.style]) state.style = 1;
+    [["crest", true, 0.188, 0.222, 0.17], ["sponsor", false, 0.25, 0.47, 0.30]]
+      .forEach(function (d) {
+        var b = (state[d[0]] && typeof state[d[0]] === "object") ? state[d[0]] : {};
+        state[d[0]] = {
+          on: b.on === undefined ? d[1] : !!b.on,
+          u: typeof b.u === "number" ? b.u : d[2],
+          v: typeof b.v === "number" ? b.v : d[3],
+          scale: typeof b.scale === "number" ? b.scale : d[4],
+          src: b.src || null
+        };
+      });
     if (!fontOf(state.font) || state.font === "wide") state.font = "block";
     $("#clubName").value = state.clubName;
     $("#textSize").value = Math.round(state.textSize * 100);
@@ -1615,6 +1787,16 @@
       var el = document.getElementById("f" + f.charAt(0).toUpperCase() + f.slice(1));
       if (el) el.value = state.contact[f] || "";
     });
+  }
+
+  function refreshArtwork(then) {
+    var pending = 0;
+    ["crest", "sponsor"].forEach(function (k) {
+      if (!state[k].src) { badgeImg[k] = null; return; }
+      pending++;
+      adoptArtwork(k, state[k].src, function () { if (--pending === 0 && then) then(); });
+    });
+    if (!pending && then) then();
   }
 
   function restore() {
@@ -1647,13 +1829,21 @@
       return Promise.resolve(null);
     }
     var code = newCode();
+    var slim = JSON.parse(JSON.stringify(state));
+    slim.crest.src = null;
+    slim.sponsor.src = null;
     return dbApi.doc("designs/" + code).set({
       code: code,
       status: status,
       spec: spec(),
-      state: JSON.parse(JSON.stringify(state)),
+      state: slim,
       production: { clubCode: clubCode() },
       createdAt: new Date().toISOString()
+    }).then(function () {
+      var art = ["crest", "sponsor"].filter(function (k) { return state[k].src; });
+      return Promise.all(art.map(function (k) {
+        return dbApi.doc("designs/" + code + "/art/" + k).set({ dataUrl: state[k].src });
+      }));
     }).then(function () {
       history.replaceState(null, "", "#d=" + code);
       return code;
@@ -1671,6 +1861,13 @@
       applyState(body && body.state);
       renderAll();
       showTab(state.tab);
+      ["crest", "sponsor"].forEach(function (k) {
+        dbApi.doc("designs/" + code + "/art/" + k).get().then(function (art) {
+          if (!art.exists) return;
+          var data = art.data();
+          if (data && data.dataUrl) adoptArtwork(k, data.dataUrl, renderAll);
+        }).catch(function () { /* no artwork stored */ });
+      });
       setStatus("Loaded design " + code + ".");
     }).catch(function () { setStatus("Couldn't open that design link.", true); });
   }
@@ -1692,9 +1889,32 @@
     if (host) boxRole[host.dataset.box] = v;
   });
   onPick("font",    function (v) { state.font = v; });
-  onPick("crest",   function (v) { state.crest = v; });
   onPick("front",   function (v) { state.frontText = v === "on"; });
-  onPick("sponsor", function (v) { state.sponsor = v; });
+  onPick("badge",   function (v) {
+    var parts = v.split(":");
+    state[parts[0]].on = parts[1] === "on";
+  });
+  onPick("upload",  function (v) { $("#" + v + "File").click(); });
+  onPick("clear",   function (v) { adoptArtwork(v, null, renderAll); });
+
+  ["crest", "sponsor"].forEach(function (key) {
+    var input = $("#" + key + "File");
+    if (!input) return;
+    input.addEventListener("change", function (e) {
+      var file = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!file) return;
+      setStatus("Reading artwork…");
+      loadArtwork(file, function (src) {
+        if (!src) { setStatus("That file could not be read as an image.", true); return; }
+        state[key].on = true;
+        adoptArtwork(key, src, function () {
+          setStatus("Artwork added. Drag it on the vest to place it.");
+          renderAll();
+        });
+      });
+    });
+  });
   onPick("back",    function (v) { state.backText = v === "on"; });
   onPick("style",   function (v) { state.style = parseInt(v, 10); });
   onPick("hex",     function (v, btn) {
@@ -1708,7 +1928,17 @@
     repaint();
   });
   document.addEventListener("input", function (e) {
-    if (!e.target || !e.target.dataset || !e.target.dataset.custom) return;
+    if (!e.target || !e.target.dataset) return;
+    if (e.target.dataset.badgesize) {
+      var bk = e.target.dataset.badgesize;
+      state[bk].scale = parseInt(e.target.value, 10) / 100;
+      var lbl = document.getElementById(bk + "SizeVal");
+      if (lbl) lbl.textContent = Math.round(state[bk].scale * 100) + "%";
+      queueRepaint();
+      save();
+      return;
+    }
+    if (!e.target.dataset.custom) return;
     var host = boxOf(e.target);
     if (!host) return;
     state[roleOfBox(host)] = e.target.value;
@@ -1789,6 +2019,8 @@
   if (!hashCode) restore();
   renderAll();
   showTab(state.tab);
+  bindBadgeDrag(document.querySelector(".stage"));
+  refreshArtwork(renderAll);
   window.addEventListener("resize", function () { renderStage(); syncSticky(); });
   window.addEventListener("orientationchange", syncSticky);
   if (window.ResizeObserver) {

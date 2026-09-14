@@ -70,9 +70,19 @@ active step right.
   flat list that long is a wall. Thumbnails are cached against the five colours, the strength
   and the club initials, since a noise style costs tens of thousands of samples and the gallery
   redraws on every colour change.
-- **Sponsor logo** is a placement the club chooses, drawn as a placeholder box on the chest,
-  back or hem. Per-runner name and number were built and then removed: this page settles one
-  club design, and what an individual runner adds belongs to the order, not the design.
+- **Crest and sponsor are uploadable and draggable.** Each is a badge: a position in texture
+  space, a size as a fraction of one panel, and optionally an image. With no image it draws as
+  a dashed placeholder, so a club without their logo to hand can still say where it goes. Drag
+  it anywhere on either panel; screen coordinates map back through the recorded panel layout.
+- **Uploads are scaled to 360px before anything else touches them.** A club's logo can be
+  4000px and this only has to look right on a mockup — the print file is the vector they send
+  with the proof. Artwork is stored in its own document under `designs/<code>/art/<key>`,
+  because a logo embedded in the main record would blow the 256 KiB document limit.
+- **Touch keeps the page scrollable.** The stage is `touch-action: pan-y`, and a non-passive
+  `touchstart` claims the gesture only when the touch lands on a badge — so dragging a crest
+  works without making a third of a phone screen unscrollable.
+- Per-runner name and number were built and then removed: this page settles one club design,
+  and what an individual runner adds belongs to the order, not the design.
 - **The tiled crest uses the club's own initials**, taken from the name they typed, so the
   mockup reads as their vest rather than a generic watermark.
 - **Halftones behave like a separation.** A screen's dot radius follows a ramp across the
