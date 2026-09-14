@@ -37,8 +37,6 @@ body = re.search(r"(<header class=\"masthead\">.*?)\n<script>", src, re.S).group
 IDS = ["palette", "styles", "colourDock", "opacity", "opacityVal", "clubName", "nameCount",
        "fontPicker", "stageHost", "status", "fClub", "fName", "fEmail", "fPhone",
        "fNotes", "submitBtn", "saveBtn", "crestFile", "sponsorFile",
-       "crestSizeRow", "crestSizeVal", "sponsorSizeRow", "sponsorSizeVal",
-       "frontSizeRow", "frontSizeVal", "backSizeRow", "backSizeVal",
        "p-colours", "p-style", "p-name", "p-send"]
 
 CLP = "kv-"
@@ -66,6 +64,12 @@ def rename_class_attrs(text):
                       (CLP + t if t in CLASSES else t) for t in m.group(1).split()),
                   text)
 
+def rename_selector(sel):
+    """Every class and id inside one selector string, not just the first."""
+    sel = CSS_CLASS_RE.sub(lambda m: "." + CLP + m.group(1), sel)
+    return CSS_ID_RE.sub(lambda m: "#" + IDP + m.group(1), sel)
+
+
 def rename_js_classes(js):
     js = rename_class_attrs(js)
     js = js.replace('el.className = "status" + (isError ? " err" : "");',
@@ -73,9 +77,8 @@ def rename_js_classes(js):
     js = re.sub(r'(classList\.(?:add|remove|toggle)\()"([\w-]+)"',
                 lambda m: '%s"%s"' % (m.group(1),
                                       CLP + m.group(2) if m.group(2) in CLASSES else m.group(2)), js)
-    js = re.sub(r'(\$\$?|querySelector|querySelectorAll|closest|matches)\((["\'])\.([\w-]+)',
-                lambda m: '%s(%s.%s' % (m.group(1), m.group(2),
-                                        CLP + m.group(3) if m.group(3) in CLASSES else m.group(3)), js)
+    js = re.sub(r'(\$\$?|querySelector|querySelectorAll|closest|matches)\((["\'])([^"\']*)\2',
+                lambda m: '%s(%s%s%s' % (m.group(1), m.group(2), rename_selector(m.group(3)), m.group(2)), js)
     return js
 
 style = rename_css(style)

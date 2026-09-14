@@ -137,8 +137,35 @@
     ["Warp chevron",    [{ t:"warp", r:"design" }], "print"]
   ];
 
+  /* Somewhere to start. A club landing on a blank vest has to invent a
+     design; a club landing on eight finished ones only has to pick. */
+  var PRESETS = [
+    ["Hoops",        "Hoops",
+      { base:"#F2F1EC", design:"#14284B", accent:"#CE2027", trim:"#14284B", text:"#14284B" }],
+    ["Sash",         "Sash",
+      { base:"#F2F1EC", design:"#0C3B2B", accent:"#F5C518", trim:"#0C3B2B", text:"#0C3B2B" }],
+    ["Chest band",   "Chest band",
+      { base:"#CE2027", design:"#F2F1EC", accent:"#15161A", trim:"#15161A", text:"#F2F1EC" }],
+    ["Halves",       "Halves",
+      { base:"#1B4FA8", design:"#F2F1EC", accent:"#F5C518", trim:"#F2F1EC", text:"#14284B" }],
+    ["Stripes",      "Vertical stripes",
+      { base:"#F5C518", design:"#15161A", accent:"#15161A", trim:"#15161A", text:"#15161A" }],
+    ["Yoke",         "Shoulder yoke",
+      { base:"#15161A", design:"#17875A", accent:"#F2F1EC", trim:"#17875A", text:"#F2F1EC" }],
+    ["Dip dye",      "Dip dye",
+      { base:"#4FA3D9", design:"#14284B", accent:"#F2F1EC", trim:"#14284B", text:"#F2F1EC" }],
+    ["Plain",         "Solid",
+      { base:"#6E1A2E", design:"#6E1A2E", accent:"#D9C9A3", trim:"#D9C9A3", text:"#D9C9A3" }]
+  ];
+
+  function styleIndex(name) {
+    for (var i = 0; i < STYLES.length; i++) if (STYLES[i][0] === name) return i;
+    return 0;
+  }
+
   var state = {
     tab: "colours",
+    view: "front",
     preview: "mens",
     base:   "#F5C518",
     design: "#14284B",
@@ -938,12 +965,84 @@
     reader.readAsDataURL(file);
   }
 
+  /* Clubs know their colours by sight, not by hex. Sampling the crest they
+     just uploaded turns "our green" into a swatch they can click. */
+  var crestColours = [];
+
+  function rgbToHex(r, g, b) {
+    return "#" + [r, g, b].map(function (n) {
+      return ("0" + Math.max(0, Math.min(255, Math.round(n))).toString(16)).slice(-2);
+    }).join("").toUpperCase();
+  }
+
+  function paletteFromImage(img, want) {
+    var n = 48;
+    var c = document.createElement("canvas");
+    c.width = n; c.height = n;
+    var x = c.getContext("2d", { willReadFrequently: true });
+    var data;
+    try {
+      x.drawImage(img, 0, 0, n, n);
+      data = x.getImageData(0, 0, n, n).data;
+    } catch (e) { return []; }
+    /* Bucket to 4 bits a channel, then average each bucket back: close
+       shades of the one colour count once, gradients do not shatter. */
+    var bins = {};
+    for (var i = 0; i < data.length; i += 4) {
+      if (data[i + 3] < 128) continue;
+      var r = data[i], g = data[i + 1], b = data[i + 2];
+      var k = (r >> 4) + "," + (g >> 4) + "," + (b >> 4);
+      var bin = bins[k] || (bins[k] = { n: 0, r: 0, g: 0, b: 0 });
+      bin.n++; bin.r += r; bin.g += g; bin.b += b;
+    }
+    var list = Object.keys(bins).map(function (k) {
+      var b = bins[k];
+      return { n: b.n, r: b.r / b.n, g: b.g / b.n, b: b.b / b.n };
+    }).sort(function (a, b) { return b.n - a.n; });
+    var out = [];
+    list.forEach(function (c0) {
+      if (out.length >= (want || 4)) return;
+      var apart = out.every(function (o) {
+        return Math.abs(o.r - c0.r) + Math.abs(o.g - c0.g) + Math.abs(o.b - c0.b) > 90;
+      });
+      if (apart) out.push(c0);
+    });
+    return out.map(function (c0) { return rgbToHex(c0.r, c0.g, c0.b); });
+  }
+
+  function luma(hex) {
+    var c = hexToRgb(hex);
+    return c[0] * 0.299 + c[1] * 0.587 + c[2] * 0.114;
+  }
+
+  function renderCrestColours() {
+    var host = $(".kv-crestcols");
+    if (!host) return;
+    host.hidden = !crestColours.length;
+    if (!crestColours.length) { host.innerHTML = ""; return; }
+    host.innerHTML =
+      '<span class="kv-label">From your crest</span>' +
+      '<div class="kv-palette">' + crestColours.map(function (hex) {
+        return '<button type="button" class="kv-swatch" data-cresthex="' + hex +
+               '" style="background:' + hex + '" title="' + hex +
+               '" aria-label="Use ' + hex + '"></button>';
+      }).join("") + '</div>' +
+      '<button type="button" class="kv-mini" data-clubcolours="1">Use these as the vest colours</button>';
+  }
+
   function adoptArtwork(key, src, then) {
-    if (!src) { badgeImg[key] = null; state[key].src = null; if (then) then(); return; }
+    if (!src) {
+      badgeImg[key] = null;
+      state[key].src = null;
+      if (key === "crest") crestColours = [];
+      if (then) then();
+      return;
+    }
     var img = new Image();
     img.onload = function () {
       badgeImg[key] = img;
       state[key].src = src;
+      if (key === "crest") crestColours = paletteFromImage(img, 4);
       if (then) then();
     };
     img.onerror = function () { badgeImg[key] = null; state[key].src = null; if (then) then(); };
@@ -954,6 +1053,9 @@
      Dragging a badge on the flat mockup
   ----------------------------------------------------------------*/
   var stageLayout = null, dragging = null, repaintQueued = false;
+  /* What the club last tapped on the vest. Not part of the design, so it
+     never reaches the spec or the save. */
+  var selected = null;
   /* While a drag is within a whisker of a panel's centre line it sticks
      there, and the guide shows why. */
   var SNAP = 0.012;
@@ -1019,13 +1121,33 @@
 
     stage.addEventListener("pointerdown", function (ev) {
       var p = toTexture(ev);
-      if (!p) return;
-      var key = badgeAt(p);
-      if (!key) return;
+      var key = p ? badgeAt(p) : null;
+      /* Tapping the vest selects what you tapped, and tapping bare fabric
+         lets it go — the controls follow the selection. */
+      if (key !== selected) {
+        selected = key;
+        renderInspector();
+      }
+      if (!key) { renderStage(); return; }
       ev.preventDefault();
+      try { stage.focus({ preventScroll: true }); } catch (e) { stage.focus(); }
       dragging = { key: key, du: state[key].u - p.u, dv: state[key].v - p.v };
       stage.classList.add("kv-grabbing");
+      renderStage();
       try { stage.setPointerCapture(ev.pointerId); } catch (e) { /* no capture */ }
+    });
+
+    /* Arrow keys place a print to the pixel, which a trackpad drag cannot. */
+    stage.addEventListener("keydown", function (ev) {
+      var d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[ev.key];
+      if (!d || !selected || !state[selected] || !state[selected].on) return;
+      ev.preventDefault();
+      var step = ev.shiftKey ? 0.02 : 0.004;
+      var b = state[selected];
+      b.u = Math.max(0.02, Math.min(0.98, b.u + d[0] * step * 0.5));
+      b.v = Math.max(0.03, Math.min(0.97, b.v + d[1] * step));
+      queueRepaint();
+      save();
     });
 
     stage.addEventListener("pointermove", function (ev) {
@@ -1051,6 +1173,7 @@
       dragging = null;
       snapGuide = null;
       stage.classList.remove("kv-grabbing");
+      renderInspector();
       renderStage();
       try { stage.releasePointerCapture(ev.pointerId); } catch (e) { /* gone */ }
       save();
@@ -1183,6 +1306,45 @@
 
   var stageCanvas = null, stageCtx = null;
 
+  /* Where a badge lands on screen, so the thing you picked can be outlined
+     on top of the vest rather than only in the texture underneath it. */
+  function badgeScreenRect(key) {
+    var r = badgeRect(key);
+    if (!r || !stageLayout) return null;
+    var side = (r.x + r.w / 2) < TW * 0.5 ? "front" : "back";
+    var L = stageLayout[side];
+    if (!L) return null;
+    var ox = side === "back" ? TW * 0.5 : 0;
+    return { x: L.x + ((r.x - ox) / (TW * 0.5)) * L.w, y: L.y + (r.y / TH) * L.h,
+             w: (r.w / (TW * 0.5)) * L.w, h: (r.h / TH) * L.h };
+  }
+
+  function drawSelection(ctx) {
+    if (!selected || !state[selected] || !state[selected].on) return;
+    var r = badgeScreenRect(selected);
+    if (!r) return;
+    var pad = 4, tick = Math.min(12, r.w * 0.28, r.h * 0.6);
+    var x = r.x - pad, y = r.y - pad, w = r.w + pad * 2, h = r.h + pad * 2;
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,.85)";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x, y, w, h);
+    ctx.strokeStyle = getComputedStyle(document.documentElement)
+      .getPropertyValue("--accent").trim() || "#2E5E5A";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x, y, w, h);
+    ctx.lineWidth = 3;
+    [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]]
+      .forEach(function (c) {
+        ctx.beginPath();
+        ctx.moveTo(c[0] + c[2] * tick, c[1]);
+        ctx.lineTo(c[0], c[1]);
+        ctx.lineTo(c[0], c[1] + c[3] * tick);
+        ctx.stroke();
+      });
+    ctx.restore();
+  }
+
   function renderStage() {
     var host = $("#kvd-stageHost");
     if (!host) return;
@@ -1202,28 +1364,44 @@
     ctx.clearRect(0, 0, w, h);
 
     var cut = CUTS[state.preview];
-    var gap = w * 0.05, side = w * 0.06, labelBand = 26;
-    var boxW = (w - gap - side * 2) / 2;
-    var boxH = boxW * cut.ratio;
-    var avail = h - labelBand - 22;
-    if (boxH > avail) { boxH = avail; boxW = boxH / cut.ratio; }
-    var totalW = boxW * 2 + gap;
+    /* One side fills the stage; both is there for the committee screenshot.
+       A vest at half the width is too small to judge a design on. */
+    var both = state.view === "both";
+    var sides = both ? ["front", "back"] : [state.view === "back" ? "back" : "front"];
+    var gap = w * 0.05, margin = w * 0.06, labelBand = both ? 26 : 8;
+    var avail = h - labelBand - 16;
+    var boxW, boxH;
+    if (both) {
+      boxW = (w - gap - margin * 2) / 2;
+      boxH = boxW * cut.ratio;
+      if (boxH > avail) { boxH = avail; boxW = boxH / cut.ratio; }
+    } else {
+      boxH = avail;
+      boxW = boxH / cut.ratio;
+      if (boxW > w - margin * 2) { boxW = w - margin * 2; boxH = boxW * cut.ratio; }
+    }
+    var totalW = boxW * sides.length + (both ? gap : 0);
     var x0 = (w - totalW) / 2;
-    var y0 = (h - labelBand - boxH) / 2 + 4;
+    var y0 = (h - labelBand - boxH) / 2 + (both ? 4 : 0);
 
-    drawVest(ctx, cut, x0, y0, boxW, boxH, false);
-    drawVest(ctx, cut, x0 + boxW + gap, y0, boxW, boxH, true);
-    stageLayout = {
-      front: { x: x0, y: y0, w: boxW, h: boxH },
-      back:  { x: x0 + boxW + gap, y: y0, w: boxW, h: boxH }
-    };
+    stageLayout = {};
+    sides.forEach(function (sd, i) {
+      var bx = x0 + i * (boxW + gap);
+      drawVest(ctx, cut, bx, y0, boxW, boxH, sd === "back");
+      stageLayout[sd] = { x: bx, y: y0, w: boxW, h: boxH };
+    });
 
-    ctx.fillStyle = "rgba(128,136,132,.95)";
-    ctx.font = "500 11px 'IBM Plex Mono', monospace";
-    ctx.textAlign = "center";
-    ctx.fillText("FRONT", x0 + boxW / 2, y0 + boxH + 18);
-    ctx.fillText("BACK", x0 + boxW + gap + boxW / 2, y0 + boxH + 18);
-    ctx.textAlign = "left";
+    if (both) {
+      ctx.fillStyle = "rgba(128,136,132,.95)";
+      ctx.font = "500 11px 'IBM Plex Mono', monospace";
+      ctx.textAlign = "center";
+      sides.forEach(function (sd, i) {
+        ctx.fillText(sd.toUpperCase(), x0 + i * (boxW + gap) + boxW / 2, y0 + boxH + 18);
+      });
+      ctx.textAlign = "left";
+    }
+
+    drawSelection(ctx);
 
     if (snapGuide !== null) {
       var side = snapGuide < 0.5 ? "front" : "back";
@@ -1241,28 +1419,56 @@
     }
   }
 
-  function styleThumb(spec) {
+  /* The texture a style would paint, at thumbnail size, in whatever
+     colours are asked for rather than always the club's own. */
+  function patternCanvas(spec, cols, w, h) {
     var c = document.createElement("canvas");
-    c.width = 288; c.height = 144;
+    c.width = w; c.height = h;
     var x = c.getContext("2d");
     var kw = TW, kh = TH;
-    TW = 288; TH = 144;
-    x.fillStyle = state.base;
-    x.fillRect(0, 0, TW, TH);
+    TW = w; TH = h;
+    x.fillStyle = cols.base;
+    x.fillRect(0, 0, w, h);
     spec.forEach(function (s, i) {
       var el = SHAPES[s.t].make();
       el.type = s.t;
-      el.colour = state[s.r] || state.design;
+      el.colour = cols[s.r] || cols.design;
       el.opacity = state.opacity;
       el.seed = i * 31 + 7;
       Object.keys(s).forEach(function (k) { if (k !== "t" && k !== "r") el[k] = s[k]; });
       paintElement(x, el);
     });
     TW = kw; TH = kh;
-    var t = document.createElement("canvas");
-    t.width = 176; t.height = 92;
-    t.getContext("2d").drawImage(c, 0, 14, 144, 75, 0, 0, 176, 92);
-    return t.toDataURL();
+    return c;
+  }
+
+  /* Tiles are vest-shaped. Twenty-seven rectangles in the same two colours
+     all look alike; twenty-seven vests are told apart at a glance. */
+  function vestThumb(spec, cols) {
+    var W = 132, H = 170, dpr = 2;
+    var c = document.createElement("canvas");
+    c.width = W * dpr; c.height = H * dpr;
+    var x = c.getContext("2d");
+    x.scale(dpr, dpr);
+    var pat = patternCanvas(spec, cols, 288, 144);
+    var cut = CUTS.mens;
+    var bw = W * 0.94, bh = bw * cut.ratio;
+    if (bh > H * 0.97) { bh = H * 0.97; bw = bh / cut.ratio; }
+    var bx = (W - bw) / 2, by = (H - bh) / 2;
+    var path = vestPath(cut, bx, by, bw, bh, false);
+    x.save();
+    x.clip(path);
+    x.fillStyle = cols.base;
+    x.fillRect(0, 0, W, H);
+    x.drawImage(pat, 0, 0, 144, 144, bx, by, bw, bh);
+    x.strokeStyle = cols.trim;
+    x.lineWidth = bw * 0.036;
+    x.stroke(path);
+    x.restore();
+    x.strokeStyle = "rgba(0,0,0,.30)";
+    x.lineWidth = 1;
+    x.stroke(path);
+    return c.toDataURL();
   }
 
   /* ---------------------------------------------------------------
@@ -1308,6 +1514,25 @@
     });
   }
 
+  var SEL_LABEL = { front: "Club name, front", back: "Club name, back",
+                    crest: "Club crest", sponsor: "Sponsor logo" };
+
+  function renderInspector() {
+    var host = $(".kv-inspector");
+    if (!host) return;
+    var key = selected && state[selected] && state[selected].on ? selected : null;
+    host.hidden = !key;
+    if (!key) { host.innerHTML = ""; return; }
+    var pct = Math.round(state[key].scale * 100);
+    host.innerHTML =
+      '<span class="kv-insp-name">' + esc(SEL_LABEL[key] || key) + '</span>' +
+      '<input type="range" data-badgesize="' + key + '" min="25" max="95" value="' + pct +
+      '" aria-label="' + esc(SEL_LABEL[key] || key) + ' size">' +
+      '<span class="kv-slider-val" data-sizeval="' + key + '">' + pct + '%</span>' +
+      '<button type="button" class="kv-mini" data-centre="' + key + '">Centre</button>' +
+      '<button type="button" class="kv-mini" data-badge="' + key + ':off">Remove</button>';
+  }
+
   function renderFontPicker() {
     $("#kvd-fontPicker").innerHTML = FONTS.map(function (f) {
       return '<button type="button" data-font="' + f.key + '" aria-pressed="' +
@@ -1324,36 +1549,60 @@
      tens of thousands of samples — so they are cached against everything
      that can change them. */
   var thumbCache = {};
-  function thumbFor(i) {
-    var key = i + "|" + [state.base, state.design, state.accent, state.trim, state.text]
+  function thumbFor(i, cols) {
+    cols = cols || state;
+    var key = i + "|" + [cols.base, cols.design, cols.accent, cols.trim, cols.text]
       .join(",") + "|" + state.opacity + "|" + clubInitials();
     if (!thumbCache[key]) {
       var keys = Object.keys(thumbCache);
       if (keys.length > 120) delete thumbCache[keys[0]];
-      thumbCache[key] = styleThumb(STYLES[i][1]);
+      thumbCache[key] = vestThumb(STYLES[i][1], cols);
     }
     return thumbCache[key];
   }
 
+  function renderPresets() {
+    var host = $(".kv-presets");
+    if (!host) return;
+    host.innerHTML = PRESETS.map(function (pre, i) {
+      return '<button type="button" class="kv-style" data-preset="' + i + '">' +
+             '<span class="kv-sw" style="background-image:url(' +
+             thumbFor(styleIndex(pre[1]), pre[2]) + ')"></span>' +
+             '<span class="kv-nm">' + esc(pre[0]) + '</span></button>';
+    }).join("");
+  }
+
+  /* Six of each to begin with. The whole wall of twenty-seven is a lot to
+     read, and the ones clubs actually ask for are at the front. */
+  var SHOW_PER_GROUP = 8;
+  var stylesOpen = false;
+
   function renderStyles() {
     var html = "";
     [["block", "Blocks and stripes"], ["print", "Prints and textures"]].forEach(function (g) {
-      var items = "";
-      STYLES.forEach(function (st, i) {
-        if (st[2] !== g[0]) return;
-        items += '<button type="button" class="kv-style" data-style="' + i + '" aria-pressed="' +
-                 (state.style === i) + '">' +
-                 '<span class="kv-sw" style="background-image:url(' + thumbFor(i) + ')"></span>' +
-                 '<span class="kv-nm">' + esc(st[0]) + '</span></button>';
-      });
+      var group = [];
+      STYLES.forEach(function (st, i) { if (st[2] === g[0]) group.push(i); });
+      var shown = stylesOpen ? group : group.slice(0, SHOW_PER_GROUP);
+      /* whatever is picked stays on show, even when it lives in the tail */
+      if (shown.indexOf(state.style) < 0 && group.indexOf(state.style) >= 0) {
+        shown = shown.slice(0, SHOW_PER_GROUP - 1).concat([state.style]);
+      }
+      var items = shown.map(function (i) {
+        return '<button type="button" class="kv-style" data-style="' + i + '" aria-pressed="' +
+               (state.style === i) + '">' +
+               '<span class="kv-sw" style="background-image:url(' + thumbFor(i) + ')"></span>' +
+               '<span class="kv-nm">' + esc(STYLES[i][0]) + '</span></button>';
+      }).join("");
       if (items) html += '<p class="kv-group-label">' + esc(g[1]) + '</p>' +
                          '<div class="kv-styles">' + items + '</div>';
     });
+    html += '<button type="button" class="kv-mini kv-morestyles" data-morestyles="1">' +
+            (stylesOpen ? "Show fewer" : "Show all " + STYLES.length + " styles") + '</button>';
     $("#kvd-styles").innerHTML = html;
   }
 
   function syncToggles() {
-    [["preview","preview"],["font","font"]].forEach(function (m) {
+    [["preview","preview"],["font","font"],["view","view"]].forEach(function (m) {
       $$("[data-" + m[0] + "]").forEach(function (b) {
         b.setAttribute("aria-pressed", String(b.dataset[m[0]] === state[m[1]]));
       });
@@ -1366,13 +1615,15 @@
       });
       var clear = ROOT.querySelector('[data-clear="' + key + '"]');
       if (clear) clear.hidden = !b.src;
-      var row = document.getElementById("kvd-" + key + "SizeRow");
-      if (row) row.hidden = !b.on;
-      var slider = ROOT.querySelector('[data-badgesize="' + key + '"]');
-      if (slider) slider.value = Math.round(b.scale * 100);
-      var val = document.getElementById("kvd-" + key + "SizeVal");
-      if (val) val.textContent = Math.round(b.scale * 100) + "%";
+      $$('[data-sizerow="' + key + '"]').forEach(function (row) { row.hidden = !b.on; });
+      $$('[data-badgesize="' + key + '"]').forEach(function (sl) {
+        sl.value = Math.round(b.scale * 100);
+      });
+      $$('[data-sizeval="' + key + '"]').forEach(function (val) {
+        val.textContent = Math.round(b.scale * 100) + "%";
+      });
     });
+    if (selected && (!state[selected] || !state[selected].on)) selected = null;
     var stageEl2 = ROOT.querySelector(".kv-stage");
     if (stageEl2) {
       stageEl2.classList.toggle("kv-live", BADGES.some(function (k) { return state[k].on; }));
@@ -1391,6 +1642,9 @@
 
   function renderAll() {
     renderColourBoxes();
+    renderCrestColours();
+    renderPresets();
+    renderInspector();
     renderFontPicker();
     renderStyles();
     paintTexture();
@@ -1444,6 +1698,126 @@
 
   function save() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* private mode */ }
+    pushHistory();
+  }
+
+  /* ---------------------------------------------------------------
+     Undo. A club that can take a step back tries things; one that
+     cannot pokes at it. Only the design is remembered — not which
+     step is open, not which way the vest is turned, not the contact
+     details, none of which anyone means to undo.
+  ----------------------------------------------------------------*/
+  var HIST_KEYS = ["base", "design", "accent", "trim", "text", "style", "opacity",
+                   "clubName", "font", "front", "back", "crest", "sponsor"];
+  var undoStack = [], redoStack = [], lastPush = 0, applyingHistory = false;
+
+  /* Canonical shape, not whatever shape the state happens to be in: a
+     restored badge gains a src key, and a snapshot that differs only in
+     key order would read as a change and throw the redo away. */
+  function snapshot() {
+    var o = {};
+    HIST_KEYS.forEach(function (k) {
+      var v = state[k];
+      o[k] = (v && typeof v === "object")
+        ? { on: !!v.on, u: v.u, v: v.v, scale: v.scale, src: v.src || null }
+        : v;
+    });
+    return JSON.stringify(o);
+  }
+
+  function syncHistory() {
+    var u = document.querySelector('[data-history="undo"]');
+    var r = document.querySelector('[data-history="redo"]');
+    if (u) u.disabled = undoStack.length < 2;
+    if (r) r.disabled = !redoStack.length;
+  }
+
+  function pushHistory() {
+    if (applyingHistory) return;
+    var snap = snapshot();
+    var top = undoStack[undoStack.length - 1];
+    if (top === snap) return;
+    var now = Date.now();
+    /* A slider dragged for two seconds is one thing done, not forty —
+       but two clicks a third of a second apart are two things. */
+    if (undoStack.length > 1 && now - lastPush < 350) undoStack[undoStack.length - 1] = snap;
+    else {
+      undoStack.push(snap);
+      if (undoStack.length > 50) undoStack.shift();
+    }
+    lastPush = now;
+    redoStack.length = 0;
+    syncHistory();
+  }
+
+  function applyHistory(snap) {
+    applyingHistory = true;
+    applyState(JSON.parse(snap));
+    lastPush = 0;
+    refreshArtwork(function () {
+      applyingHistory = false;
+      renderAll();
+      syncHistory();
+    });
+  }
+
+  function undo() {
+    if (undoStack.length < 2) return;
+    redoStack.push(undoStack.pop());
+    applyHistory(undoStack[undoStack.length - 1]);
+  }
+
+  function redo() {
+    if (!redoStack.length) return;
+    var snap = redoStack.pop();
+    undoStack.push(snap);
+    applyHistory(snap);
+  }
+
+  /* ---------------------------------------------------------------
+     A picture to send round before anyone fills in a form.
+  ----------------------------------------------------------------*/
+  function downloadPNG() {
+    var cut = CUTS[state.preview];
+    var W = 1800, pad = 80, gap = 90, band = 96;
+    var boxW = (W - pad * 2 - gap) / 2;
+    var boxH = boxW * cut.ratio;
+    var H = Math.round(boxH + pad * 2 + band);
+    var c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    var x = c.getContext("2d");
+    var paper = getComputedStyle(document.documentElement)
+      .getPropertyValue("--paper").trim() || "#FAFAF7";
+    x.fillStyle = paper;
+    x.fillRect(0, 0, W, H);
+
+    var y0 = pad + band * 0.45;
+    drawVest(x, cut, pad, y0, boxW, boxH, false);
+    drawVest(x, cut, pad + boxW + gap, y0, boxW, boxH, true);
+
+    x.fillStyle = "rgba(20,20,20,.55)";
+    x.font = "500 26px 'IBM Plex Mono', ui-monospace, monospace";
+    x.textAlign = "center";
+    x.fillText("FRONT", pad + boxW / 2, y0 + boxH + 46);
+    x.fillText("BACK", pad + boxW + gap + boxW / 2, y0 + boxH + 46);
+
+    x.textAlign = "left";
+    x.fillStyle = "rgba(20,20,20,.9)";
+    x.font = "700 34px 'Archivo', system-ui, sans-serif";
+    x.fillText((state.clubName || "Club vest").toUpperCase(), pad, pad + 14);
+    x.fillStyle = "rgba(20,20,20,.5)";
+    x.font = "500 22px 'IBM Plex Mono', ui-monospace, monospace";
+    x.textAlign = "right";
+    x.fillText(STYLES[state.style][0] + " · " + CUTS[state.preview].label +
+               " · koru", W - pad, pad + 12);
+
+    var a = document.createElement("a");
+    a.href = c.toDataURL("image/png");
+    a.download = ((state.clubName || "koru").trim().toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "koru") + "-vest.png";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   }
 
   function applyState(next) {
@@ -1570,6 +1944,7 @@
     });
   }
   onPick("preview", function (v) { state.preview = v; });
+  onPick("view",    function (v) { state.view = v; });
   onPick("role",    function (v, btn) {
     var host = boxOf(btn);
     if (host) boxRole[host.dataset.box] = v;
@@ -1602,6 +1977,30 @@
     });
   });
   onPick("style",   function (v) { state.style = parseInt(v, 10); });
+  onPick("morestyles", function () { stylesOpen = !stylesOpen; });
+  onPick("history", function (v) { if (v === "undo") undo(); else redo(); });
+  onPick("download", function () { downloadPNG(); });
+  onPick("preset",  function (v) {
+    var pre = PRESETS[parseInt(v, 10)];
+    if (!pre) return;
+    state.style = styleIndex(pre[1]);
+    Object.keys(pre[2]).forEach(function (k) { state[k] = pre[2][k]; });
+    state.opacity = 1;
+  });
+  /* A crest swatch fills whichever colour the Body/Trim chips have armed,
+     the same as the stock swatches beside it. */
+  onPick("cresthex", function (v) { state[boxRole.garment || "base"] = v; });
+  onPick("clubcolours", function () {
+    var cs = crestColours.slice(0, 4);
+    if (!cs.length) return;
+    var byLight = cs.slice().sort(function (a, b) { return luma(b) - luma(a); });
+    var light = byLight[0], dark = byLight[byLight.length - 1];
+    state.base = light;
+    state.design = dark;
+    state.trim = dark;
+    state.accent = byLight[1] || dark;
+    state.text = luma(light) > 140 ? dark : light;
+  });
   onPick("hex",     function (v, btn) {
     var host = boxOf(btn);
     if (host) state[roleOfBox(host)] = v;
@@ -1617,8 +2016,11 @@
     if (e.target.dataset.badgesize) {
       var bk = e.target.dataset.badgesize;
       state[bk].scale = parseInt(e.target.value, 10) / 100;
-      var lbl = document.getElementById("kvd-" + bk + "SizeVal");
-      if (lbl) lbl.textContent = Math.round(state[bk].scale * 100) + "%";
+      var pct = Math.round(state[bk].scale * 100) + "%";
+      $$('[data-sizeval="' + bk + '"]').forEach(function (l) { l.textContent = pct; });
+      $$('[data-badgesize="' + bk + '"]').forEach(function (sl) {
+        if (sl !== e.target) sl.value = parseInt(e.target.value, 10);
+      });
       queueRepaint();
       save();
       return;
@@ -1706,6 +2108,7 @@
       panel.classList.toggle("kv-on", panel.dataset.panel === id);
     });
     dockColours();
+    $$(".kv-sendbar, .kv-sendcta").forEach(function (el) { el.classList.toggle("kv-gone", id === "send"); });
     syncSticky();
     save();
   }

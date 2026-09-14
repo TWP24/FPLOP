@@ -27,6 +27,26 @@ The harness loads `dawn-base.css` (from `Shopify/dawn`, `main`) so the next
 collision shows up locally instead of on the store. It is vendored rather than linked
 because GitHub serves it as `text/plain` and a browser refuses to apply it.
 
+## Designing
+
+- **Start from a look.** Eight finished colourways on the first step. A club that lands
+  on a blank vest has to invent a design; one that lands on eight only has to pick.
+- **One vest, large.** Front, back or both, from the bar over the preview. A vest at half
+  the width is too small to judge a design on.
+- **Tap the vest.** Whatever you tap — a print, the crest, the sponsor — is outlined, and
+  its size, centre and remove controls appear directly under the preview. Arrow keys nudge
+  it; shift moves it further.
+- **Colours from the crest.** Uploading a crest samples it and offers those colours as
+  swatches, with one button to make them the vest's colours. Clubs know their colours by
+  sight, not by hex.
+- **Vest-shaped style tiles**, eight per group with the rest behind a toggle. Twenty-seven
+  rectangles in the same two colours all look alike; twenty-seven vests do not.
+- **Undo and redo**, coalesced so a dragged slider is one step, and covering the design
+  only — not which step is open or which way the vest is turned.
+- **Download** the mockup as a PNG, front and back, before filling in anything.
+- **Send design to Koru** stands under the preview on desktop and in a fixed bar on a
+  phone, so the ask is never more than one tap away.
+
 ## Layout
 
 One column on a phone: vest on top, steps under it. From 880px the vest takes the left

@@ -15,8 +15,26 @@
 
   <div class="kv-tool">
     <div class="kv-stagewrap">
-      <div class="kv-stage"><div id="kvd-stageHost"></div></div>
+      <div class="kv-stagebar">
+        <div class="kv-seg kv-sides" role="group" aria-label="Which side to show">
+          <button type="button" data-view="front" aria-pressed="true">Front</button>
+          <button type="button" data-view="back" aria-pressed="false">Back</button>
+          <button type="button" data-view="both" aria-pressed="false">Both</button>
+        </div>
+        <div class="kv-stagetools">
+          <button type="button" class="kv-mini" data-history="undo" title="Undo" aria-label="Undo">&#8630;</button>
+          <button type="button" class="kv-mini" data-history="redo" title="Redo" aria-label="Redo">&#8631;</button>
+          <button type="button" class="kv-mini" data-download="png" aria-label="Download the mockup">
+            <span class="kv-wide-only">Download</span><span class="kv-narrow-only" aria-hidden="true">&#8615;</span>
+          </button>
+        </div>
+      </div>
+      <div class="kv-stage" tabindex="0" aria-label="Vest preview — tap something on the vest to select it">
+        <div id="kvd-stageHost"></div>
+      </div>
+      <div class="kv-inspector" hidden></div>
       <div class="kv-colourdock" id="kvd-colourDock"></div>
+      <button type="button" class="kv-btn kv-sendcta" data-goto="send">Send design to Koru</button>
     </div>
 
     <nav class="kv-tabs" role="tablist" aria-label="Design steps">
@@ -31,9 +49,14 @@
         <h2>Colours and cut</h2>
         <p class="kv-note">Everything is sublimated, so colour is free — a five-colour vest costs
           the same as a plain one. The rest of the colours sit with the things they colour.</p>
+        <div class="kv-field">
+          <span class="kv-label">Start from a look</span>
+          <div class="kv-presets kv-styles"></div>
+        </div>
         <div class="kv-field" data-dock>
           <span class="kv-label">Vest colours</span>
           <div class="kv-colourbox" data-box="garment" data-roles="base,trim"></div>
+          <div class="kv-crestcols" hidden></div>
         </div>
         <div class="kv-field">
           <span class="kv-label">See it on</span>
@@ -77,10 +100,10 @@
               <button type="button" data-badge="front:on" aria-pressed="true">Club name</button>
               <button type="button" data-badge="front:off" aria-pressed="false">None</button>
             </div>
-            <div class="kv-slider-row kv-with-action" id="kvd-frontSizeRow" style="margin-top:12px">
+            <div class="kv-slider-row kv-with-action" data-sizerow="front" style="margin-top:12px">
               <input type="range" data-badgesize="front" min="25" max="95" value="58"
                      aria-label="Front print size">
-              <span class="kv-slider-val" id="kvd-frontSizeVal">58%</span>
+              <span class="kv-slider-val" data-sizeval="front">58%</span>
               <button type="button" class="kv-mini" data-centre="front">Centre</button>
             </div>
           </div>
@@ -91,10 +114,10 @@
               <button type="button" data-badge="back:on" aria-pressed="true">Club name</button>
               <button type="button" data-badge="back:off" aria-pressed="false">None</button>
             </div>
-            <div class="kv-slider-row kv-with-action" id="kvd-backSizeRow" style="margin-top:12px">
+            <div class="kv-slider-row kv-with-action" data-sizerow="back" style="margin-top:12px">
               <input type="range" data-badgesize="back" min="25" max="95" value="50"
                      aria-label="Back print size">
-              <span class="kv-slider-val" id="kvd-backSizeVal">50%</span>
+              <span class="kv-slider-val" data-sizeval="back">50%</span>
               <button type="button" class="kv-mini" data-centre="back">Centre</button>
             </div>
           </div>
@@ -120,9 +143,9 @@
             <button type="button" data-clear="sponsor" hidden>Remove image</button>
           </div>
           <input type="file" id="kvd-sponsorFile" accept="image/*" hidden>
-          <div class="kv-slider-row kv-with-action" id="kvd-sponsorSizeRow" style="margin-top:12px">
+          <div class="kv-slider-row kv-with-action" data-sizerow="sponsor" style="margin-top:12px">
             <input type="range" data-badgesize="sponsor" min="6" max="70" value="30" aria-label="Sponsor logo size">
-            <span class="kv-slider-val" id="kvd-sponsorSizeVal">30%</span>
+            <span class="kv-slider-val" data-sizeval="sponsor">30%</span>
             <button type="button" class="kv-mini" data-centre="sponsor">Centre</button>
           </div>
         </div>
@@ -142,9 +165,9 @@
             <button type="button" data-clear="crest" hidden>Remove image</button>
           </div>
           <input type="file" id="kvd-crestFile" accept="image/*" hidden>
-          <div class="kv-slider-row kv-with-action" id="kvd-crestSizeRow" style="margin-top:12px">
+          <div class="kv-slider-row kv-with-action" data-sizerow="crest" style="margin-top:12px">
             <input type="range" data-badgesize="crest" min="6" max="70" value="17" aria-label="Club crest size">
-            <span class="kv-slider-val" id="kvd-crestSizeVal">17%</span>
+            <span class="kv-slider-val" data-sizeval="crest">17%</span>
             <button type="button" class="kv-mini" data-centre="crest">Centre</button>
           </div>
         </div>
@@ -183,6 +206,10 @@
         <div class="kv-fineprint">{{ section.settings.fineprint }}</div>
       </section>
     </div>
+  </div>
+
+  <div class="kv-sendbar">
+    <button type="button" class="kv-btn" data-goto="send">Send design to Koru</button>
   </div>
 </div>
 </div>

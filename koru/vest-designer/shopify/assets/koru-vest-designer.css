@@ -59,13 +59,44 @@
     background:linear-gradient(180deg,var(--stage-2),var(--stage));
     border:1px solid var(--rule);border-radius:0;
     position:relative;overflow:hidden;
-    height:clamp(180px,33vh,300px);
+    height:clamp(220px,38vh,340px);
   }
   .kv-stage.kv-live{touch-action:pan-y}
+  .kv-stage:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .kv-stage.kv-over{cursor:grab}
   .kv-stage.kv-grabbing{cursor:grabbing}
   #kvd-stageHost{position:absolute;inset:0}
   #kvd-stageHost canvas{display:block;width:100%;height:100%}
+
+  /* The bar over the preview: which side you are looking at, and the
+     actions that apply to the whole design rather than to one step. */
+  .kv-stagebar{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .kv-stagebar .kv-seg{gap:5px}
+  .kv-stagebar .kv-seg button{min-height:36px;padding:7px 12px;font-size:13px}
+  .kv-stagetools{margin-left:auto;display:flex;gap:5px}
+  .kv-stagetools .kv-mini{min-height:36px;padding:7px 10px}
+  .kv-stagetools .kv-mini[disabled]{opacity:.38;cursor:default}
+  .kv-wide-only{display:none}
+
+  /* What you tapped on the vest, with its own controls, so placing a print
+     does not mean hunting for the matching row in the steps. */
+  .koru-vd .kv-inspector{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    margin-top:10px;padding:10px 12px;
+    background:var(--surface-2);border:1px solid var(--rule);border-radius:0;
+  }
+  .kv-inspector[hidden]{display:none}
+  .kv-inspector input[type="range"]{flex:1;min-width:110px}
+  .kv-insp-name{font-size:13px;font-weight:600}
+  .kv-inspector .kv-slider-val{min-width:4ch}
+
+  .kv-sendcta{display:none}
+  .koru-vd .kv-sendbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
+    background:var(--paper);border-top:1px solid var(--rule);
+  }
+  .kv-sendbar.kv-gone{display:none}
 
   .koru-vd .kv-tabs{
     position:sticky;top:var(--tabTop);z-index:4;
@@ -113,15 +144,17 @@
   .kv-group-label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;
     text-transform:uppercase;color:var(--ink-3);margin:20px 0 9px}
   .kv-group-label:first-child{margin-top:0}
-  .kv-styles{display:grid;grid-template-columns:repeat(auto-fill,minmax(102px,1fr));gap:9px}
+  .kv-styles{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .kv-morestyles{margin-top:14px}
+  .kv-crestcols{margin-top:16px}
   .koru-vd .kv-style{
     padding:8px 8px 8px;cursor:pointer;background:var(--surface-2);
     border:1px solid var(--rule);border-radius:0;
     display:flex;flex-direction:column;gap:7px;align-items:center;
   }
   .kv-style[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
-  .kv-style span.kv-sw{display:block;width:100%;aspect-ratio:176/92;border-radius:0;
-    background-size:cover;background-position:center}
+  .kv-style span.kv-sw{display:block;width:100%;aspect-ratio:132/170;border-radius:0;
+    background-size:contain;background-position:center;background-repeat:no-repeat}
   .kv-style span.kv-nm{font-size:12px;font-weight:500;color:var(--ink-2);text-align:center}
 
   input[type="range"]{width:100%;accent-color:var(--accent);cursor:pointer;height:30px;margin:0}
@@ -155,6 +188,7 @@
   .kv-status.kv-err{color:var(--warn)}
   .kv-nextbar{margin-top:26px}
 
+  .kv-panels{padding-bottom:64px}
   .kv-fineprint{margin-top:28px;padding-top:18px;border-top:1px solid var(--rule);
     color:var(--ink-3);font-size:13px}
   .kv-fineprint p + p{margin-top:9px}
@@ -181,15 +215,22 @@
       padding-block:28px 56px;
     }
     .kv-stagewrap{grid-area:stage;position:sticky;top:20px;padding-block:0;background:none}
+    .kv-sendbar{display:none}
+    .kv-stagewrap .kv-sendcta{display:block;margin-top:20px;width:100%}
+    .kv-stagewrap .kv-sendcta.kv-gone{display:none}
+    .kv-panels{padding-bottom:0}
     .kv-stage{height:auto;aspect-ratio:3/2}
     .kv-colourdock{display:block;margin-top:22px;padding-top:20px;border-top:1px solid var(--rule-2)}
     .kv-colourdock:empty{display:none}
     .kv-colourdock .kv-field{margin-top:0}
     .kv-tabs{grid-area:tabs;position:static;background:none}
     .kv-tabs button{font-size:14.5px}
+    .kv-wide-only{display:inline}
+    .kv-narrow-only{display:none}
     .kv-panels{grid-area:panels}
     .kv-panel{padding-block:22px 10px}
     .kv-two-up{grid-template-columns:1fr 1fr}
+    .kv-styles{grid-template-columns:repeat(4,1fr)}
     .kv-btn{width:auto}
     .kv-actions{flex-direction:row;flex-wrap:wrap;align-items:center}
     .kv-nextbar{display:none}
