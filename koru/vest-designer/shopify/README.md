@@ -30,7 +30,24 @@ gone (the brand has no accent — selection is the button colour, as Dawn does i
 radius is 0, and the two extra typefaces are gone. Dark mode needs no media query: drop
 the section into `scheme-3` and the variables invert it.
 
-## Install
+## Installed preview
+
+Live on an unpublished duplicate of the main theme — the live theme is untouched.
+
+| | |
+|---|---|
+| Theme | **Koru — vest designer preview** (`204481134940`, unpublished) |
+| Editor | `https://admin.shopify.com/store/zt0fr5-1z/themes/204481134940/editor` |
+| Preview | `https://korusports.ie/?preview_theme_id=204481134940` |
+
+The section is on that theme's **homepage**, under the hero, so it can be seen without
+creating a page. `templates/page.vest-designer.json` is also installed: create a page and
+assign that template when you want it at its own URL.
+
+Files were uploaded by URL from this repo's raw GitHub paths, and the theme's MD5s were
+checked against the local build — all three match.
+
+## Install (from scratch)
 
 1. **Assets.** Upload `koru-vest-designer.css` and `koru-vest-designer.js` in
    *Online Store → Themes → ⋯ → Edit code → Assets → Add a new asset*.
