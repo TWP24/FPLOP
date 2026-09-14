@@ -88,6 +88,10 @@
     caustic: { group:"print", make:function(){ return {size:0.34, sharp:0.55, lean:0.45}; } },
     marble:  { group:"print", make:function(){ return {size:0.20, coverage:0.50, swirl:0.62}; } },
     flame:   { group:"print", make:function(){ return {w:0.14, h:0.07, band:0.038}; } },
+    weave:   { group:"print", make:function(){ return {size:0.26, levels:5, star:true}; } },
+    dotcamo: { group:"print", make:function(){ return {size:0.18, coverage:0.50, dot:0.28}; } },
+    ikatband:{ group:"print", make:function(){ return {w:0.17, density:0.55, soft:0.55}; } },
+    bolt:    { group:"print", make:function(){ return {w:0.30, h:0.10, thick:0.045, lean:0.55}; } },
 
     /* The standard club-kit templates, laid out per panel. */
     vstripes:{ group:"kit", make:function(){ return {w:0.055, gap:0.055}; } },
@@ -95,7 +99,7 @@
     quarters:{ group:"kit", make:function(){ return {v:0.42, u:0.5}; } },
     shoulders:{group:"kit", make:function(){ return {h:0.26, w:0.085}; } },
     piping:  { group:"kit", make:function(){ return {v:0.35, gap:0.155, w:0.011}; } },
-    topo:    { group:"kit", make:function(){ return {size:0.40, density:0.45, w:0.16}; } },
+    topo:    { group:"kit", make:function(){ return {size:0.50, density:0.35, w:0.24}; } },
     monogram:{ group:"kit", make:function(){ return {size:0.28}; } },
     terrazzo:{ group:"kit", make:function(){ return {size:0.55, density:0.45}; } },
     tartan:  { group:"kit", make:function(){ return {size:0.11, w:0.34, offset:0}; } }
@@ -145,7 +149,12 @@
                          { t:"cubes", r:"accent", face:0, hatch:true }], "print"],
     ["Water",           [{ t:"caustic", r:"design" }], "print"],
     ["Marble",          [{ t:"marble", r:"design" }], "print"],
-    ["Flame stitch",    [{ t:"flame", r:"design" }], "print"]
+    ["Flame stitch",    [{ t:"flame", r:"design" }], "print"],
+    ["Woven diamond",   [{ t:"weave", r:"design" },
+                         { t:"weave", r:"accent", size:0.26, levels:2, star:false }], "print"],
+    ["Dot camo",        [{ t:"dotcamo", r:"design" }], "print"],
+    ["Ikat stripe",     [{ t:"ikatband", r:"design" }], "print"],
+    ["Lightning",       [{ t:"bolt", r:"design" }], "print"]
   ];
 
   /* Somewhere to start. A club landing on a blank vest has to invent a
@@ -637,6 +646,71 @@
       });
   }
 
+  /* Camo read through a dot screen: the blobs are made of dots that merge
+     where the shape is solid and thin out where it is not, which is how the
+     reference is printed. */
+  function dotCamoCanvas(el) {
+    return cached("dc|" + el.colour + "|" + [el.size, el.coverage, el.dot, el.seed].join("|"),
+      function () {
+        var w = 900, h = Math.max(2, Math.round(900 * TH / TW));
+        var c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        var x = c.getContext("2d");
+        var noise = makeNoise(el.seed);
+        var freq = 2 + el.size * 22;
+        var cut = 1 - el.coverage;
+        var pitch = Math.max(4, el.dot * 34);
+        x.fillStyle = el.colour;
+        for (var gy = pitch / 2; gy < h + pitch; gy += pitch) {
+          for (var gx = pitch / 2; gx < w + pitch; gx += pitch) {
+            var u = gx / w, v = gy / h;
+            var warp = noise(u * freq * 0.6, v * freq * 0.6, 2);
+            var n = noise(u * freq + warp * 1.2, v * freq + warp * 1.2, 3);
+            /* inside the shape the dots overlap, outside they are pinpricks */
+            var k = (n - cut + 0.12) / 0.24;
+            k = k < 0 ? 0 : k > 1 ? 1 : k;
+            var r = pitch * (0.16 + 0.55 * smooth(k));
+            x.beginPath();
+            x.arc(gx, gy, r, 0, Math.PI * 2);
+            x.fill();
+          }
+        }
+        return c;
+      });
+  }
+
+  /* Warp ikat: vertical bands whose edges feather into ragged horizontal
+     ticks, the way the dye bleeds along the warp threads. */
+  function ikatBandCanvas(el) {
+    return cached("ib|" + el.colour + "|" + [el.w, el.density, el.soft, el.seed].join("|"),
+      function () {
+        var w = 640, h = Math.max(2, Math.round(640 * TH / TW));
+        var c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        var x = c.getContext("2d"), rand = rng(el.seed + 13);
+        var noise = makeNoise(el.seed);
+        var pitch = Math.max(10, el.w * w * 0.26);
+        var core = pitch * (0.10 + el.density * 0.22);
+        var feather = pitch * 0.5 * el.soft;
+        x.fillStyle = el.colour;
+        for (var y = 0; y < h; y += 2) {
+          for (var bx = pitch / 2; bx < w + pitch; bx += pitch) {
+            var wob = (noise(bx / w * 3, y / h * 9, 2) - 0.5) * feather;
+            var half = core + wob;
+            if (half > 0) x.fillRect(bx - half, y, half * 2, 2);
+            /* ticks that stray out from the band and make the ikat edge */
+            var reach = feather * (0.4 + rand() * 1.6);
+            if (rand() < 0.7) {
+              var side = rand() < 0.5 ? -1 : 1;
+              var len = pitch * 0.06 + rand() * pitch * 0.14;
+              x.fillRect(bx + side * (half + reach), y, len, 2);
+            }
+          }
+        }
+        return c;
+      });
+  }
+
   /* Soft-edged effects are generated small and scaled up smoothly; the
      hard-edged ones keep their pixels (drawPixels). */
   function drawSoft(ctx, canvas) {
@@ -676,14 +750,14 @@
   function topoCanvas(el) {
     return cached("tp|" + el.colour + "|" + el.size.toFixed(3) + "|" + el.density.toFixed(3) +
                   "|" + el.w.toFixed(3) + "|" + el.seed, function () {
-      var w = 420, h = Math.max(2, Math.round(420 * TH / TW));
+      var w = 640, h = Math.max(2, Math.round(640 * TH / TW));
       var c = document.createElement("canvas");
       c.width = w; c.height = h;
       var x = c.getContext("2d"), img = x.createImageData(w, h);
       var noise = makeNoise(el.seed), rgb = hexToRgb(el.colour);
-      var freq = 1.5 + el.size * 16;
-      var levels = 4 + el.density * 30;
-      var line = 0.03 + el.w * 0.45;
+      var freq = 1.5 + el.size * 10;
+      var levels = 3 + el.density * 9;
+      var line = 0.06 + el.w * 0.5;
       for (var py = 0; py < h; py++) {
         for (var px = 0; px < w; px++) {
           var n = noise((px / w) * freq, (py / h) * freq, 4);
@@ -765,7 +839,9 @@
         break;
 
       case "topo":
-        drawPixels(ctx, topoCanvas(el));
+        /* smoothed on the way up: a contour line is a curve, and nearest
+           neighbour turns it into a staircase */
+        drawSoft(ctx, topoCanvas(el));
         break;
 
       case "monogram": {
@@ -877,6 +953,87 @@
       case "bleach":
         drawSoft(ctx, bleachCanvas(el));
         break;
+
+      case "dotcamo":
+        drawSoft(ctx, dotCamoCanvas(el));
+        break;
+
+      case "ikatband":
+        drawSoft(ctx, ikatBandCanvas(el));
+        break;
+
+      /* A woven diamond lattice: nested diamonds for the chevron hatching
+         the weave makes, and a star where the lattice crosses. */
+      case "weave": {
+        var cell = Math.max(32, el.size * TW * 0.30);
+        var rings = Math.max(2, Math.round(el.levels));
+        var line = Math.max(1.2, cell * 0.035);
+        ctx.save();
+        ctx.strokeStyle = c;
+        ctx.fillStyle = c;
+        ctx.lineWidth = line;
+        ctx.lineJoin = "miter";
+        for (var wRow = -1; wRow * cell * 0.5 < TH + cell; wRow++) {
+          var wy = wRow * cell * 0.5;
+          var wOff = (wRow % 2) ? cell * 0.5 : 0;
+          for (var wCol = -1; wCol * cell < TW + cell; wCol++) {
+            var wx = wCol * cell + wOff;
+            for (var r = 1; r <= rings; r++) {
+              var rad = (cell * 0.5) * (r / rings);
+              ctx.beginPath();
+              ctx.moveTo(wx, wy - rad);
+              ctx.lineTo(wx + rad, wy);
+              ctx.lineTo(wx, wy + rad);
+              ctx.lineTo(wx - rad, wy);
+              ctx.closePath();
+              ctx.stroke();
+            }
+            if (el.star) {
+              var sr = cell * 0.13;
+              ctx.beginPath();
+              for (var sp = 0; sp < 8; sp++) {
+                var sa = (sp / 8) * Math.PI * 2;
+                var srad = sp % 2 ? sr * 0.36 : sr;
+                var sxp = wx + Math.cos(sa) * srad, syp = wy + Math.sin(sa) * srad;
+                if (sp) ctx.lineTo(sxp, syp); else ctx.moveTo(sxp, syp);
+              }
+              ctx.closePath();
+              ctx.fill();
+            }
+          }
+        }
+        ctx.restore();
+        break;
+      }
+
+      /* Lightning: thick zigzag bars leaning across the vest, with the
+         gaps between them as wide as the bars themselves. */
+      case "bolt": {
+        var run = Math.max(30, el.w * TW * 0.22);
+        var rise = el.h * TH;
+        var thick = Math.max(6, el.thick * TH);
+        var gap = rise + thick * 2.1;
+        var slide = run * el.lean;
+        ctx.save();
+        ctx.strokeStyle = c;
+        ctx.lineWidth = thick;
+        ctx.lineJoin = "miter";
+        ctx.lineCap = "butt";
+        ctx.miterLimit = 8;
+        for (var by = -gap * 2; by < TH + gap * 2; by += gap) {
+          ctx.beginPath();
+          var step = 0;
+          for (var bx2 = -run * 2; bx2 <= TW + run * 2; bx2 += run) {
+            var byy = by + (step % 2 ? rise : 0) + (bx2 / run) * 0 ;
+            var bxx = bx2 + (by / gap) * slide * 0.15;
+            if (step) ctx.lineTo(bxx, byy); else ctx.moveTo(bxx, byy);
+            step++;
+          }
+          ctx.stroke();
+        }
+        ctx.restore();
+        break;
+      }
 
       case "caustic":
         drawSoft(ctx, causticCanvas(el));
