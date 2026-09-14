@@ -113,6 +113,9 @@
     border:1px solid var(--rule);border-radius:4px;cursor:pointer}
 
   .fonts button{font-size:17px;line-height:1.2;padding:9px 15px}
+  .group-label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-3);margin:20px 0 9px}
+  .group-label:first-child{margin-top:0}
   .styles{display:grid;grid-template-columns:repeat(auto-fill,minmax(102px,1fr));gap:9px}
   .style{
     padding:8px 8px 8px;cursor:pointer;background:var(--surface-2);
@@ -220,7 +223,7 @@
         <h2>Your style</h2>
         <p class="note">Each one uses the colours you picked, so change a colour and they all
           change with it.</p>
-        <div class="styles" id="styles"></div>
+        <div id="styles"></div>
         <div class="field">
           <label class="label" for="opacity">Strength</label>
           <div class="slider-row">
@@ -281,6 +284,26 @@
             <span class="slider-val" id="textSizeVal">100%</span>
           </div>
         </div>
+        <div class="field">
+          <span class="label">Sponsor logo</span>
+          <div class="seg" role="group" aria-label="Sponsor logo placement">
+            <button type="button" data-sponsor="none" aria-pressed="true">None</button>
+            <button type="button" data-sponsor="chest" aria-pressed="false">Chest</button>
+            <button type="button" data-sponsor="back" aria-pressed="false">Back</button>
+            <button type="button" data-sponsor="hem" aria-pressed="false">Hem</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label">Runner personalisation</span>
+          <p class="note" style="margin:-4px 0 10px">Each runner adds their own at checkout.</p>
+          <div class="seg" role="group" aria-label="Runner personalisation">
+            <button type="button" data-runner="none" aria-pressed="true">None</button>
+            <button type="button" data-runner="name" aria-pressed="false">Name on back</button>
+            <button type="button" data-runner="number" aria-pressed="false">Number on back</button>
+          </div>
+        </div>
+
         <div class="field">
           <span class="label">Lettering colour</span>
           <div class="colourbox" data-box="lettering" data-roles="text"></div>
@@ -408,34 +431,59 @@
     smear:   { group:"print", make:function(){ return {size:0.12, soft:0.28, grain:0.30}; } },
     snake:   { group:"print", make:function(){ return {size:0.12, coverage:0.55}; } },
     mosaic:  { group:"print", make:function(){ return {size:0.16, coverage:0.40, v:0.55}; } },
-    warp:    { group:"print", make:function(){ return {w:0.20, lean:0.30, density:0.60}; } }
+    warp:    { group:"print", make:function(){ return {w:0.20, lean:0.30, density:0.60}; } },
+
+    /* The standard club-kit templates, laid out per panel. */
+    vstripes:{ group:"kit", make:function(){ return {w:0.055, gap:0.055}; } },
+    halves:  { group:"kit", make:function(){ return {v:0.5}; } },
+    quarters:{ group:"kit", make:function(){ return {v:0.42, u:0.5}; } },
+    shoulders:{group:"kit", make:function(){ return {h:0.26, w:0.085}; } },
+    piping:  { group:"kit", make:function(){ return {v:0.35, gap:0.155, w:0.011}; } },
+    topo:    { group:"kit", make:function(){ return {size:0.40, density:0.45, w:0.16}; } },
+    monogram:{ group:"kit", make:function(){ return {size:0.28}; } },
+    terrazzo:{ group:"kit", make:function(){ return {size:0.55, density:0.45}; } },
+    tartan:  { group:"kit", make:function(){ return {size:0.11, w:0.34, offset:0}; } }
   };
 
   /* Styles name a colour ROLE rather than a hex, so changing one of the
      club's colours restyles the whole gallery at once. */
   var STYLES = [
-    ["Solid",        []],
-    ["Chest band",   [{ t:"band", r:"design" }]],
-    ["Hoops",        [{ t:"hoops", r:"design" }]],
-    ["Sash",         [{ t:"sash", r:"design" }]],
-    ["Side panels",  [{ t:"panels", r:"design" }]],
-    ["Chevron",      [{ t:"chevron", r:"design" }]],
-    ["Shoulder yoke",[{ t:"yoke", r:"design" }]],
-    ["Hem band",     [{ t:"hem", r:"design" }, { t:"stripe", r:"accent", w:0.05 }]],
-    ["Dip dye",      [{ t:"gradient", r:"design", v:0.58, soft:0.30 }]],
-    ["Halftone",     [{ t:"halftone", r:"design", angle:0.07, v:0.46, soft:0.34 },
-                      { t:"halftone", r:"accent", angle:0.21, v:0.62, soft:0.40 }]],
-    ["Ikat",         [{ t:"ikat", r:"design", density:0.55, soft:0.85 }]],
-    ["Geo blocks",   [{ t:"blocks", r:"design" },
-                      { t:"grain", r:"accent", density:0.34, soft:0.9 }]],
-    ["Tiger camo",   [{ t:"camo", r:"design", stretch:0.72, coverage:0.52 }]],
-    ["Smear",        [{ t:"smear", r:"design", size:0.14, soft:0.22 }]],
-    ["Snakeskin",    [{ t:"snake", r:"design", coverage:1 },
-                      { t:"snake", r:"accent", coverage:0.42 }]],
-    ["Mosaic",       [{ t:"mosaic", r:"design", coverage:0.5 },
-                      { t:"mosaic", r:"accent", coverage:0.3 },
-                      { t:"mosaic", r:"trim", coverage:0.28 }]],
-    ["Warp chevron", [{ t:"warp", r:"design" }]]
+    ["Solid",           [], "block"],
+    ["Chest band",      [{ t:"band", r:"design" }], "block"],
+    ["Piped band",      [{ t:"band", r:"design" },
+                         { t:"piping", r:"accent" }], "block"],
+    ["Hoops",           [{ t:"hoops", r:"design" }], "block"],
+    ["Vertical stripes",[{ t:"vstripes", r:"design" }], "block"],
+    ["Pinstripes",      [{ t:"vstripes", r:"design", w:0.009, gap:0.046 }], "block"],
+    ["Halves",          [{ t:"halves", r:"design" }], "block"],
+    ["Quarters",        [{ t:"quarters", r:"design" }], "block"],
+    ["Sash",            [{ t:"sash", r:"design" }], "block"],
+    ["Chevron",         [{ t:"chevron", r:"design" }], "block"],
+    ["Side panels",     [{ t:"panels", r:"design" }], "block"],
+    ["Shoulder yoke",   [{ t:"yoke", r:"design" }], "block"],
+    ["Shoulder stripes",[{ t:"shoulders", r:"design" }], "block"],
+    ["Hem band",        [{ t:"hem", r:"design" },
+                         { t:"stripe", r:"accent", w:0.05 }], "block"],
+    ["Dip dye",         [{ t:"gradient", r:"design", v:0.58, soft:0.30 }], "print"],
+    ["Halftone",        [{ t:"halftone", r:"design", angle:0.07, v:0.46, soft:0.34 },
+                         { t:"halftone", r:"accent", angle:0.21, v:0.62, soft:0.40 }], "print"],
+    ["Contours",        [{ t:"topo", r:"design" }], "print"],
+    ["Tiled crest",     [{ t:"monogram", r:"design" }], "print"],
+    ["Terrazzo",        [{ t:"terrazzo", r:"design", density:0.40 },
+                         { t:"terrazzo", r:"accent", density:0.22 }], "print"],
+    ["Tartan",          [{ t:"tartan", r:"design" },
+                         { t:"tartan", r:"accent", size:0.11, offset:0.45 }], "print"],
+    ["Ikat",            [{ t:"ikat", r:"design", density:0.55, soft:0.85 }], "print"],
+    ["Geo blocks",      [{ t:"blocks", r:"design" },
+                         { t:"grain", r:"accent", density:0.34, soft:0.9 }], "print"],
+    ["Tiger camo",      [{ t:"camo", r:"design", stretch:0.72, coverage:0.52 }], "print"],
+    ["Smear",           [{ t:"smear", r:"design", size:0.14, soft:0.22 }], "print"],
+    ["Snakeskin",       [{ t:"snake", r:"design", coverage:1 },
+                         { t:"snake", r:"accent", coverage:0.42 }], "print"],
+    ["Mosaic",          [{ t:"mosaic", r:"design", coverage:0.5 },
+                         { t:"mosaic", r:"accent", coverage:0.3 },
+                         { t:"mosaic", r:"trim", coverage:0.28 }], "print"],
+    ["Warp chevron",    [{ t:"warp", r:"design" }], "print"]
   ];
 
   var state = {
@@ -454,6 +502,8 @@
     font: "block",
     textSize: 1,
     crest: "left",
+    sponsor: "none",
+    runner: "none",
     contact: { club:"", name:"", email:"", phone:"", notes:"" }
   };
 
@@ -805,6 +855,172 @@
     });
   }
 
+  /* Most kit shapes are per PANEL, not per texture: a vest with four
+     vertical stripes has four on the front and four on the back, not
+     eight spread across the pair. These helpers work a panel at a time. */
+  var PANELS = [0.25, 0.75];
+  function panelEdges(centre) { return [centre - 0.25, centre + 0.25]; }
+
+  function topoCanvas(el) {
+    return cached("tp|" + el.colour + "|" + el.size.toFixed(3) + "|" + el.density.toFixed(3) +
+                  "|" + el.w.toFixed(3) + "|" + el.seed, function () {
+      var w = 420, h = Math.max(2, Math.round(420 * TH / TW));
+      var c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      var x = c.getContext("2d"), img = x.createImageData(w, h);
+      var noise = makeNoise(el.seed), rgb = hexToRgb(el.colour);
+      var freq = 1.5 + el.size * 16;
+      var levels = 4 + el.density * 30;
+      var line = 0.03 + el.w * 0.45;
+      for (var py = 0; py < h; py++) {
+        for (var px = 0; px < w; px++) {
+          var n = noise((px / w) * freq, (py / h) * freq, 4);
+          var band = (n * levels) % 1;
+          var o = (py * w + px) * 4;
+          img.data[o] = rgb[0]; img.data[o + 1] = rgb[1]; img.data[o + 2] = rgb[2];
+          img.data[o + 3] = band < line ? 255 : 0;
+        }
+      }
+      x.putImageData(img, 0, 0);
+      return c;
+    });
+  }
+
+  /* The club's own initials, tiled — a stand-in for their crest until we
+     have the file, and it reads as their vest rather than a generic one. */
+  function clubInitials() {
+    var src = (state.clubName || "K").toUpperCase().replace(/[^A-Z ]/g, " ").trim();
+    var parts = src.split(/\s+/).filter(Boolean);
+    if (!parts.length) return "K";
+    if (parts.length === 1) return parts[0].slice(0, 2);
+    return parts.map(function (p) { return p.charAt(0); }).join("").slice(0, 3);
+  }
+
+  function paintKitShape(ctx, el) {
+    var c = el.colour, i, k;
+    switch (el.type) {
+
+      case "vstripes": {
+        var period = el.w + el.gap;
+        if (period < 0.004) break;
+        ctx.fillStyle = c;
+        PANELS.forEach(function (centre) {
+          var e = panelEdges(centre);
+          for (k = -8; k <= 8; k++) {
+            var a = centre + k * period - el.w / 2;
+            var b = a + el.w;
+            if (b <= e[0] || a >= e[1]) continue;
+            a = Math.max(a, e[0]); b = Math.min(b, e[1]);
+            ctx.fillRect(a * TW, 0, (b - a) * TW, TH);
+          }
+        });
+        break;
+      }
+
+      case "halves":
+        ctx.fillStyle = c;
+        PANELS.forEach(function (centre) {
+          var e = panelEdges(centre);
+          var split = Math.max(e[0], Math.min(e[1], centre + (el.v - 0.5) * 0.4));
+          if (e[1] > split) ctx.fillRect(split * TW, 0, (e[1] - split) * TW, TH);
+        });
+        break;
+
+      case "quarters":
+        ctx.fillStyle = c;
+        PANELS.forEach(function (centre) {
+          var e = panelEdges(centre);
+          var split = Math.max(e[0], Math.min(e[1], centre + (el.u - 0.5) * 0.4));
+          var vy = el.v * TH;
+          if (split > e[0]) ctx.fillRect(e[0] * TW, 0, (split - e[0]) * TW, vy);
+          if (e[1] > split) ctx.fillRect(split * TW, vy, (e[1] - split) * TW, TH - vy);
+        });
+        break;
+
+      case "shoulders": {
+        var sh = el.h * TH, wIn = el.w * TW;
+        PANELS.forEach(function (centre) {
+          var e = panelEdges(centre), l = e[0] * TW, r = e[1] * TW;
+          polyPx(ctx, c, [[l, 0], [l + wIn, 0], [l + wIn * 0.5, sh], [l, sh]]);
+          polyPx(ctx, c, [[r, 0], [r - wIn, 0], [r - wIn * 0.5, sh], [r, sh]]);
+        });
+        break;
+      }
+
+      case "piping":
+        vBox(ctx, c, el.v - el.gap / 2 - el.w, el.v - el.gap / 2);
+        vBox(ctx, c, el.v + el.gap / 2, el.v + el.gap / 2 + el.w);
+        break;
+
+      case "topo":
+        drawPixels(ctx, topoCanvas(el));
+        break;
+
+      case "monogram": {
+        var cell = Math.max(46, el.size * TW * 0.42);
+        var txt = clubInitials();
+        ctx.save();
+        ctx.strokeStyle = c;
+        ctx.fillStyle = c;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = "700 " + (cell * 0.24).toFixed(1) + "px Archivo, sans-serif";
+        ctx.lineWidth = Math.max(1, cell * 0.022);
+        for (var row = 0; row * cell * 0.88 < TH + cell; row++) {
+          var cy = row * cell * 0.88;
+          var off = (row % 2) ? cell * 0.5 : 0;
+          for (var col = 0; col * cell < TW + cell; col++) {
+            var cx = col * cell + off;
+            ctx.beginPath();
+            ctx.arc(cx, cy, cell * 0.30, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillText(txt, cx, cy);
+          }
+        }
+        ctx.restore();
+        break;
+      }
+
+      case "terrazzo": {
+        var rnd = rng(el.seed);
+        var count = Math.round(180 + el.density * 1500);
+        var chip = el.size * TW * 0.022;
+        ctx.fillStyle = c;
+        for (i = 0; i < count; i++) {
+          var px = rnd() * TW, py = rnd() * TH, rr = chip * (0.4 + rnd());
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.rotate(rnd() * Math.PI);
+          ctx.beginPath();
+          for (k = 0; k < 5; k++) {
+            var ang = (k / 5) * Math.PI * 2, rad = rr * (0.55 + rnd() * 0.8);
+            var qx = Math.cos(ang) * rad, qy = Math.sin(ang) * rad * 0.72;
+            if (k) ctx.lineTo(qx, qy); else ctx.moveTo(qx, qy);
+          }
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+        break;
+      }
+
+      case "tartan": {
+        var pitch = Math.max(24, el.size * TW * 0.5);
+        var bar = pitch * el.w;
+        var shift = el.offset * pitch;
+        ctx.save();
+        /* enough overprint for the crossings to read, not so much that a
+           club's navy comes out olive over yellow */
+        ctx.globalAlpha = ctx.globalAlpha * 0.82;
+        ctx.fillStyle = c;
+        for (var gx = shift - pitch; gx < TW; gx += pitch) ctx.fillRect(gx, 0, bar, TH);
+        for (var gy = shift - pitch; gy < TH; gy += pitch) ctx.fillRect(0, gy, TW, bar);
+        ctx.restore();
+        break;
+      }
+    }
+  }
+
   function paintEffect(ctx, el) {
     var c = el.colour;
     switch (el.type) {
@@ -913,6 +1129,7 @@
 
   function paintLayer(ctx, el) {
     var def = SHAPES[el.type];
+    if (def && def.group === "kit") { paintKitShape(ctx, el); return; }
     if (def && def.group === "print") { paintEffect(ctx, el); return; }
     var c = el.colour, o;
     switch (el.type) {
@@ -984,6 +1201,30 @@
       ctx.fillText(c, x, cyPx);
       x += widths[i] + tracking * size;
     });
+  }
+
+  var SPONSOR_POS = {
+    chest: [FRONT_U, 0.47, 0.20, 0.052],
+    back:  [BACK_U,  0.52, 0.20, 0.052],
+    hem:   [FRONT_U, 0.80, 0.16, 0.042]
+  };
+
+  function paintSponsor(ctx, pos, colour) {
+    var w = pos[2] * TW, h = pos[3] * TH;
+    var x = pos[0] * TW - w / 2, y = pos[1] * TH - h / 2;
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.strokeStyle = colour;
+    ctx.fillStyle = colour;
+    ctx.lineWidth = 4;
+    ctx.setLineDash([13, 11]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.setLineDash([]);
+    ctx.font = "500 " + (h * 0.30).toFixed(1) + "px 'IBM Plex Mono', monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("SPONSOR", pos[0] * TW, pos[1] * TH);
+    ctx.restore();
   }
 
   var CREST_POS = {
@@ -1069,6 +1310,13 @@
     }
     var cp = CREST_POS[state.crest];
     if (cp) paintCrest(ctx, cp[0], cp[1], cp[2], state.text);
+    var sp = SPONSOR_POS[state.sponsor];
+    if (sp) paintSponsor(ctx, sp, state.text);
+    if (state.runner === "name") {
+      trackedText(ctx, "RUNNER NAME", BACK_U * TW, 0.47 * TH, span * 0.62, state.text, 90, font);
+    } else if (state.runner === "number") {
+      trackedText(ctx, "00", BACK_U * TW, 0.56 * TH, span * 0.40, state.text, 300, font);
+    }
   }
 
   /* ---------------------------------------------------------------
@@ -1256,17 +1504,41 @@
     input.style.textTransform = cur.upper ? "uppercase" : "none";
   }
 
+  /* Thumbnails are the expensive part of a render — a noise style costs
+     tens of thousands of samples — so they are cached against everything
+     that can change them. */
+  var thumbCache = {};
+  function thumbFor(i) {
+    var key = i + "|" + [state.base, state.design, state.accent, state.trim, state.text]
+      .join(",") + "|" + state.opacity + "|" + clubInitials();
+    if (!thumbCache[key]) {
+      var keys = Object.keys(thumbCache);
+      if (keys.length > 120) delete thumbCache[keys[0]];
+      thumbCache[key] = styleThumb(STYLES[i][1]);
+    }
+    return thumbCache[key];
+  }
+
   function renderStyles() {
-    $("#styles").innerHTML = STYLES.map(function (st, i) {
-      return '<button type="button" class="style" data-style="' + i + '" aria-pressed="' +
-             (state.style === i) + '">' +
-             '<span class="sw" style="background-image:url(' + styleThumb(st[1]) + ')"></span>' +
-             '<span class="nm">' + esc(st[0]) + '</span></button>';
-    }).join("");
+    var html = "";
+    [["block", "Blocks and stripes"], ["print", "Prints and textures"]].forEach(function (g) {
+      var items = "";
+      STYLES.forEach(function (st, i) {
+        if (st[2] !== g[0]) return;
+        items += '<button type="button" class="style" data-style="' + i + '" aria-pressed="' +
+                 (state.style === i) + '">' +
+                 '<span class="sw" style="background-image:url(' + thumbFor(i) + ')"></span>' +
+                 '<span class="nm">' + esc(st[0]) + '</span></button>';
+      });
+      if (items) html += '<p class="group-label">' + esc(g[1]) + '</p>' +
+                         '<div class="styles">' + items + '</div>';
+    });
+    $("#styles").innerHTML = html;
   }
 
   function syncToggles() {
-    [["preview","preview"],["font","font"],["crest","crest"]].forEach(function (m) {
+    [["preview","preview"],["font","font"],["crest","crest"],
+     ["sponsor","sponsor"],["runner","runner"]].forEach(function (m) {
       $$("[data-" + m[0] + "]").forEach(function (b) {
         b.setAttribute("aria-pressed", String(b.dataset[m[0]] === state[m[1]]));
       });
@@ -1329,6 +1601,8 @@
       lettering: fontOf(state.font).label,
       letteringSize: Math.round(state.textSize * 100) + "%",
       crest: state.crest,
+      sponsorLogo: state.sponsor,
+      runnerPersonalisation: state.runner,
       contact: state.contact
     };
   }
@@ -1437,6 +1711,8 @@
   onPick("font",    function (v) { state.font = v; });
   onPick("crest",   function (v) { state.crest = v; });
   onPick("front",   function (v) { state.frontText = v === "on"; });
+  onPick("sponsor", function (v) { state.sponsor = v; });
+  onPick("runner",  function (v) { state.runner = v; });
   onPick("back",    function (v) { state.backText = v === "on"; });
   onPick("style",   function (v) { state.style = parseInt(v, 10); });
   onPick("hex",     function (v, btn) {
