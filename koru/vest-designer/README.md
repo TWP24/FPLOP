@@ -74,6 +74,10 @@ active step right.
   and the sponsor. Each carries a position, a size as a fraction of its panel, and an on/off.
   Text rects come from the last paint rather than being predicted, because only the painter
   knows how wide a name ended up at a given size once it has been fitted.
+- **Centre, by button or by snap.** Every badge has a Centre button that puts it on its panel's
+  centre line without touching its height, and a drag that comes within about a percent of that
+  line sticks to it, with a dashed guide showing why. Free placement is only usable if getting
+  back to true is one gesture.
 - **Crest and sponsor are uploadable and draggable.** Each is a badge: a position in texture
   space, a size as a fraction of one panel, and optionally an image. With no image it draws as
   a dashed placeholder, so a club without their logo to hand can still say where it goes. Drag

@@ -132,6 +132,13 @@
 
   input[type="range"]{width:100%;accent-color:var(--accent);cursor:pointer;height:30px;margin:0}
   .slider-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+  .slider-row.with-action{grid-template-columns:1fr auto auto}
+  .mini{
+    min-height:38px;padding:8px 12px;cursor:pointer;font-size:12.5px;font-weight:500;
+    background:var(--surface-2);color:var(--ink-2);
+    border:1px solid var(--rule);border-radius:4px;
+  }
+  .mini:hover{border-color:var(--ink-3);color:var(--ink)}
   .slider-val{font-family:var(--mono);font-size:13px;color:var(--ink-3);min-width:4ch;text-align:right}
 
   /* 16px keeps iOS from zooming the page on focus */
@@ -255,15 +262,16 @@
         <div class="field">
           <span class="label">Front print</span>
           <p class="note" style="margin:-4px 0 10px">Drag anything on the vest — prints, crest,
-            sponsor — to place it.</p>
+            sponsor — to place it. It snaps to the centre line, or use Centre.</p>
           <div class="seg" role="group" aria-label="Print on the front">
             <button type="button" data-badge="front:on" aria-pressed="true">Club name</button>
             <button type="button" data-badge="front:off" aria-pressed="false">None</button>
           </div>
-          <div class="slider-row" id="frontSizeRow" style="margin-top:12px">
+          <div class="slider-row with-action" id="frontSizeRow" style="margin-top:12px">
             <input type="range" data-badgesize="front" min="25" max="95" value="58"
                    aria-label="Front print size">
             <span class="slider-val" id="frontSizeVal">58%</span>
+            <button type="button" class="mini" data-centre="front">Centre</button>
           </div>
         </div>
 
@@ -273,10 +281,11 @@
             <button type="button" data-badge="back:on" aria-pressed="true">Club name</button>
             <button type="button" data-badge="back:off" aria-pressed="false">None</button>
           </div>
-          <div class="slider-row" id="backSizeRow" style="margin-top:12px">
+          <div class="slider-row with-action" id="backSizeRow" style="margin-top:12px">
             <input type="range" data-badgesize="back" min="25" max="95" value="50"
                    aria-label="Back print size">
             <span class="slider-val" id="backSizeVal">50%</span>
+            <button type="button" class="mini" data-centre="back">Centre</button>
           </div>
         </div>
 
@@ -300,9 +309,10 @@
             <button type="button" data-clear="sponsor" hidden>Remove image</button>
           </div>
           <input type="file" id="sponsorFile" accept="image/*" hidden>
-          <div class="slider-row" id="sponsorSizeRow" style="margin-top:12px">
+          <div class="slider-row with-action" id="sponsorSizeRow" style="margin-top:12px">
             <input type="range" data-badgesize="sponsor" min="6" max="70" value="30" aria-label="Sponsor logo size">
             <span class="slider-val" id="sponsorSizeVal">30%</span>
+            <button type="button" class="mini" data-centre="sponsor">Centre</button>
           </div>
         </div>
 
@@ -321,9 +331,10 @@
             <button type="button" data-clear="crest" hidden>Remove image</button>
           </div>
           <input type="file" id="crestFile" accept="image/*" hidden>
-          <div class="slider-row" id="crestSizeRow" style="margin-top:12px">
+          <div class="slider-row with-action" id="crestSizeRow" style="margin-top:12px">
             <input type="range" data-badgesize="crest" min="6" max="70" value="17" aria-label="Club crest size">
             <span class="slider-val" id="crestSizeVal">17%</span>
+            <button type="button" class="mini" data-centre="crest">Centre</button>
           </div>
         </div>
         <div class="nextbar"><button type="button" class="btn ghost" data-goto="send">Next: Send</button></div>
@@ -1312,6 +1323,19 @@
      Dragging a badge on the flat mockup
   ----------------------------------------------------------------*/
   var stageLayout = null, dragging = null, repaintQueued = false;
+  /* While a drag is within a whisker of a panel's centre line it sticks
+     there, and the guide shows why. */
+  var SNAP = 0.012;
+  var snapGuide = null;
+
+  function panelCentreFor(u) { return u < 0.5 ? FRONT_U : BACK_U; }
+
+  function centreBadge(key) {
+    var b = state[key];
+    if (!b) return;
+    b.u = panelCentreFor(b.u);
+    save();
+  }
 
   function queueRepaint() {
     if (repaintQueued) return;
@@ -1382,7 +1406,11 @@
       var p = toTexture(ev);
       if (!p) return;
       var b = state[dragging.key];
-      b.u = Math.max(0.02, Math.min(0.98, p.u + dragging.du));
+      var u = Math.max(0.02, Math.min(0.98, p.u + dragging.du));
+      var centre = panelCentreFor(u);
+      if (Math.abs(u - centre) < SNAP) { u = centre; snapGuide = centre; }
+      else { snapGuide = null; }
+      b.u = u;
       b.v = Math.max(0.03, Math.min(0.97, p.v + dragging.dv));
       queueRepaint();
     });
@@ -1390,7 +1418,9 @@
     function release(ev) {
       if (!dragging) return;
       dragging = null;
+      snapGuide = null;
       stage.classList.remove("grabbing");
+      renderStage();
       try { stage.releasePointerCapture(ev.pointerId); } catch (e) { /* gone */ }
       save();
     }
@@ -1563,6 +1593,21 @@
     ctx.fillText("FRONT", x0 + boxW / 2, y0 + boxH + 18);
     ctx.fillText("BACK", x0 + boxW + gap + boxW / 2, y0 + boxH + 18);
     ctx.textAlign = "left";
+
+    if (snapGuide !== null) {
+      var side = snapGuide < 0.5 ? "front" : "back";
+      var L = stageLayout[side];
+      var gx = L.x + ((snapGuide - (side === "back" ? 0.5 : 0)) / 0.5) * L.w;
+      ctx.save();
+      ctx.strokeStyle = "rgba(46,94,90,.8)";
+      ctx.setLineDash([6, 5]);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(gx, L.y - 8);
+      ctx.lineTo(gx, L.y + L.h + 8);
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 
   function styleThumb(spec) {
@@ -1915,6 +1960,7 @@
     var parts = v.split(":");
     state[parts[0]].on = parts[1] === "on";
   });
+  onPick("centre",  function (v) { centreBadge(v); });
   onPick("upload",  function (v) { $("#" + v + "File").click(); });
   onPick("clear",   function (v) { adoptArtwork(v, null, renderAll); });
 
