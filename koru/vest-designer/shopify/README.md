@@ -48,20 +48,35 @@ the section into `scheme-3` and the variables invert it.
 
 ## Installed preview
 
-Live on an unpublished duplicate of the main theme — the live theme is untouched.
+On an unpublished duplicate of the live theme. Apart from the designer, it is that theme
+byte for byte — the homepage placement that was there for the first look has been taken
+back out, so publishing this theme changes nothing else on the store.
 
 | | |
 |---|---|
 | Theme | **Koru — vest designer preview** (`204481134940`, unpublished) |
 | Editor | `https://admin.shopify.com/store/zt0fr5-1z/themes/204481134940/editor` |
 | Preview | `https://korusports.ie/?preview_theme_id=204481134940` |
+| Page | **Design your vest** (`/pages/design-your-vest`, hidden), on the `vest-designer` template |
 
-The section is on that theme's **homepage**, under the hero, so it can be seen without
-creating a page. `templates/page.vest-designer.json` is also installed: create a page and
-assign that template when you want it at its own URL.
+Four files sit on that theme: the section, the two assets, and
+`templates/page.vest-designer.json`. They were uploaded by URL from this repo's raw
+GitHub paths and the theme's MD5s check out against the local build.
 
-Files were uploaded by URL from this repo's raw GitHub paths, and the theme's MD5s were
-checked against the local build — all three match.
+## Going live
+
+The live theme cannot be written to from here — the Shopify connector blocks theme file
+writes against the published storefront, by design. Shipping is therefore two clicks in
+admin, both reversible:
+
+1. **Publish the theme** — *Online Store → Themes → Koru — vest designer preview →
+   Publish*. The old theme stays in the library to roll back to.
+2. **Publish the page** — *Online Store → Pages → Design your vest*, set it visible. It
+   is already assigned the `vest-designer` template. Add it to a menu when you want it
+   found.
+
+Publishing the theme alone shows nothing to anyone: the page is hidden and the template
+is reached by nothing else.
 
 ## Install (from scratch)
 
