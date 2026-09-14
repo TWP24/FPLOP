@@ -295,16 +295,6 @@
         </div>
 
         <div class="field">
-          <span class="label">Runner personalisation</span>
-          <p class="note" style="margin:-4px 0 10px">Each runner adds their own at checkout.</p>
-          <div class="seg" role="group" aria-label="Runner personalisation">
-            <button type="button" data-runner="none" aria-pressed="true">None</button>
-            <button type="button" data-runner="name" aria-pressed="false">Name on back</button>
-            <button type="button" data-runner="number" aria-pressed="false">Number on back</button>
-          </div>
-        </div>
-
-        <div class="field">
           <span class="label">Lettering colour</span>
           <div class="colourbox" data-box="lettering" data-roles="text"></div>
         </div>
@@ -503,7 +493,6 @@
     textSize: 1,
     crest: "left",
     sponsor: "none",
-    runner: "none",
     contact: { club:"", name:"", email:"", phone:"", notes:"" }
   };
 
@@ -1312,11 +1301,6 @@
     if (cp) paintCrest(ctx, cp[0], cp[1], cp[2], state.text);
     var sp = SPONSOR_POS[state.sponsor];
     if (sp) paintSponsor(ctx, sp, state.text);
-    if (state.runner === "name") {
-      trackedText(ctx, "RUNNER NAME", BACK_U * TW, 0.47 * TH, span * 0.62, state.text, 90, font);
-    } else if (state.runner === "number") {
-      trackedText(ctx, "00", BACK_U * TW, 0.56 * TH, span * 0.40, state.text, 300, font);
-    }
   }
 
   /* ---------------------------------------------------------------
@@ -1538,7 +1522,7 @@
 
   function syncToggles() {
     [["preview","preview"],["font","font"],["crest","crest"],
-     ["sponsor","sponsor"],["runner","runner"]].forEach(function (m) {
+     ["sponsor","sponsor"]].forEach(function (m) {
       $$("[data-" + m[0] + "]").forEach(function (b) {
         b.setAttribute("aria-pressed", String(b.dataset[m[0]] === state[m[1]]));
       });
@@ -1602,7 +1586,6 @@
       letteringSize: Math.round(state.textSize * 100) + "%",
       crest: state.crest,
       sponsorLogo: state.sponsor,
-      runnerPersonalisation: state.runner,
       contact: state.contact
     };
   }
@@ -1712,7 +1695,6 @@
   onPick("crest",   function (v) { state.crest = v; });
   onPick("front",   function (v) { state.frontText = v === "on"; });
   onPick("sponsor", function (v) { state.sponsor = v; });
-  onPick("runner",  function (v) { state.runner = v; });
   onPick("back",    function (v) { state.backText = v === "on"; });
   onPick("style",   function (v) { state.style = parseInt(v, 10); });
   onPick("hex",     function (v, btn) {

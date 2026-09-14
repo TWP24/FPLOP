@@ -70,9 +70,9 @@ active step right.
   flat list that long is a wall. Thumbnails are cached against the five colours, the strength
   and the club initials, since a noise style costs tens of thousands of samples and the gallery
   redraws on every colour change.
-- **Sponsor logo and runner personalisation** are placements the club chooses, drawn as
-  placeholders: a sponsor box on the chest, back or hem, and a name or number on the back that
-  each runner fills in at checkout.
+- **Sponsor logo** is a placement the club chooses, drawn as a placeholder box on the chest,
+  back or hem. Per-runner name and number were built and then removed: this page settles one
+  club design, and what an individual runner adds belongs to the order, not the design.
 - **The tiled crest uses the club's own initials**, taken from the name they typed, so the
   mockup reads as their vest rather than a generic watermark.
 - **Halftones behave like a separation.** A screen's dot radius follows a ramp across the
