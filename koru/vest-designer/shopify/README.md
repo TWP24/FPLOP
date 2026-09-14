@@ -9,7 +9,7 @@ assets/koru-vest-designer.css     styles, bound to the theme's colour scheme
 assets/koru-vest-designer.js      the designer itself
 test-harness.html                 the three files stitched together with a stand-in
                                   for Dawn, so it can be opened in a browser
-vendor/dawn-base.css              Dawn's own stylesheet, loaded by the harness
+dawn-base.css                     Dawn's own stylesheet, loaded by the harness
 ```
 
 ## Names
@@ -23,7 +23,7 @@ Namespacing alone is not enough, which is why the classes are prefixed too. Dawn
 selector only wins for the properties we set; everything we leave alone still comes from
 the theme. That is what made the first install render with overlapping labels.
 
-The harness loads `vendor/dawn-base.css` (from `Shopify/dawn`, `main`) so the next
+The harness loads `dawn-base.css` (from `Shopify/dawn`, `main`) so the next
 collision shows up locally instead of on the store. It is vendored rather than linked
 because GitHub serves it as `text/plain` and a browser refuses to apply it.
 
@@ -104,7 +104,7 @@ plumbing exists.
 Run in `test-harness.html` against Dawn's own stylesheet, headless, at 390px and 1200px:
 no console errors, every panel laid out, the canvas sized (the first install rendered it
 0×0), all 27 styles, the colour card read from the section setting. Class names were
-diffed against `vendor/dawn-base.css` — no collisions.
+diffed against `dawn-base.css` — no collisions.
 
 ## Not yet verified
 

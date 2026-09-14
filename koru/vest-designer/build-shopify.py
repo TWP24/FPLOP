@@ -378,7 +378,7 @@ print("section %d bytes" % len(liquid))
 # theme's is invisible in isolation, and namespacing does not prevent it.
 # Dawn's stylesheet is vendored rather than linked: GitHub serves it as
 # text/plain with nosniff, so a browser would refuse to apply it.
-DAWN_BASE = "vendor/dawn-base.css"
+DAWN_BASE = "dawn-base.css"
 
 def fake_liquid(text, dawn_css):
     defaults = {}
@@ -399,7 +399,7 @@ def fake_liquid(text, dawn_css):
 <title>Vest designer — theme harness</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap">
-<!-- Dawn's own stylesheet (vendor/dawn-base.css, from Shopify/dawn main),
+<!-- Dawn's own stylesheet (dawn-base.css, from Shopify/dawn main),
      so a collision with the theme shows up here before it ships. -->
 <link rel="stylesheet" href="%s">
 <style>
