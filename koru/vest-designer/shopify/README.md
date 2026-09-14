@@ -47,6 +47,17 @@ because GitHub serves it as `text/plain` and a browser refuses to apply it.
 - **Send design to Koru** stands under the preview on desktop and in a fixed bar on a
   phone, so the ask is never more than one tap away.
 
+## Live edits to carry forward
+
+The section on the store was edited by hand to render the theme's Irish-owned badge under
+the intro. The build now emits that `{% render 'koru-irish-owned' %}` itself, so a rebuild
+no longer wipes it — the generated file matches the live one byte for byte. Any further
+hand-edit of the section on the store needs the same treatment or it dies at the next build.
+
+The page template carries the designer **only**: Dawn's `main-page` section was taken out,
+because it printed the page title above the section's own heading with a screenful of space
+between the two.
+
 ## Layout
 
 One column on a phone: vest on top, steps under it. From 880px the vest takes the left

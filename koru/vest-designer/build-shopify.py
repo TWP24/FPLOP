@@ -372,9 +372,12 @@ print("css %d bytes, js %d bytes" % (len(css), len(script)))
 # The theme already has a header, so the designer's own masthead goes, and the
 # heading/intro/fineprint become settings the merchant edits in the theme editor.
 body = re.sub(r"<header class=\"masthead\">.*?</header>\n\n", "", body, count=1, flags=re.S)
+# The theme's own Irish-owned badge sits under the intro. It was added to the
+# live section by hand; carrying it here means a rebuild no longer wipes it.
 body = re.sub(r"  <section class=\"intro\">.*?</section>\n", """  <section class="intro">
     <h1>{{ section.settings.heading | escape }}</h1>
     <div class="intro-copy">{{ section.settings.intro }}</div>
+    {% render 'koru-irish-owned' %}
   </section>
 """, body, count=1, flags=re.S)
 body = re.sub(r"      <div class=\"fineprint\">.*?</div>\n", """      <div class="fineprint">{{ section.settings.fineprint }}</div>
