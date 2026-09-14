@@ -199,7 +199,7 @@
         </div>
         <div class="kv-actions">
           <button type="button" class="kv-btn" id="kvd-submitBtn">Send design to Koru</button>
-          <button type="button" class="kv-btn kv-ghost" id="kvd-saveBtn">Save my design</button>
+          <button type="button" class="kv-btn kv-ghost" id="kvd-saveBtn">Copy design link</button>
         </div>
         <p class="kv-status" id="kvd-status" role="status" aria-live="polite"></p>
 
@@ -266,12 +266,13 @@
       "type": "text",
       "id": "endpoint",
       "label": "Submission endpoint",
-      "info": "A URL that accepts a JSON POST \u2014 a Make webhook, or an app proxy. Leave blank and the form tells clubs to email instead."
+      "info": "Optional. A URL that accepts a JSON POST \u2014 a Make webhook, or an app proxy \u2014 which also carries the mockup PNG and any uploaded artwork. Leave it blank and designs come through the store's own contact form instead, to whichever address Settings \u2192 Store details uses for customer email."
     },
     {
       "type": "text",
       "id": "contact_email",
-      "label": "Fallback email",
+      "label": "Address shown to clubs",
+      "info": "Where a club is told to send artwork files, which a contact form cannot carry.",
       "default": "koruathletic@gmail.com"
     },
     {

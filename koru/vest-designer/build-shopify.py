@@ -233,22 +233,22 @@ script = script.replace('''  function colourName(hex) {''',
 
 # --- saving: the artifact database is gone; post to the merchant's endpoint ---
 old_persist = re.search(r"  function persist\(status\) \{.*?\n  \}\n", script, re.S).group(0)
-new_persist = '''  /* The theme has no database. Designs are posted to whatever endpoint the
-     merchant configures (a Make webhook, an app proxy, anything that takes
-     JSON), together with a PNG of the mockup so the reply has a picture. */
+new_persist = '''  /* Where a design goes. With an endpoint set (a Make webhook, an app
+     proxy, anything that takes JSON) it is posted there with a PNG of the
+     mockup and the artwork. With no endpoint it goes through the store's
+     own contact form — a plain form POST, the way every Shopify theme
+     sends one, so it needs no key, no app and no CORS, and it lands in
+     whichever inbox the store already uses for customer email. */
   function persist(status) {
     var endpoint = ROOT.getAttribute("data-endpoint");
-    if (!endpoint) {
-      setStatus("This form isn't connected yet — email " + contactEmail() +
-                " and we'll pick it up.", true);
-      return Promise.resolve(null);
-    }
+    if (!endpoint) return sendByContactForm(status);
     var code = newCode();
     var payload = {
       code: code,
       status: status,
       spec: spec(),
       production: { clubCode: clubCode() },
+      link: designLink(),
       mockup: stageCanvas ? stageCanvas.toDataURL("image/png") : null,
       artwork: { crest: state.crest.src || null, sponsor: state.sponsor.src || null },
       shop: ROOT.getAttribute("data-shop") || "",
@@ -267,6 +267,75 @@ new_persist = '''  /* The theme has no database. Designs are posted to whatever 
     });
   }
 
+  /* The design as words, because a contact-form email carries no files.
+     The link at the end reopens the design itself. */
+  function designSummary() {
+    var c = state.contact;
+    var colour = function (role) {
+      return colourName(state[role]) + " " + String(state[role]).toUpperCase();
+    };
+    var print = function (key, label) {
+      var b = state[key];
+      if (!b.on) return label + ": none";
+      return label + ": " + Math.round(b.scale * 100) + "% at " +
+             b.u.toFixed(3) + "," + b.v.toFixed(3);
+    };
+    var lines = [
+      "Club: " + (c.club || "(not given)"),
+      "Contact: " + (c.name || "(not given)") + " · " + (c.email || "") +
+        (c.phone ? " · " + c.phone : ""),
+      "",
+      "Style: " + STYLES[state.style][0] + " at " + Math.round(state.opacity * 100) + "%",
+      "Cut shown: " + CUTS[state.preview].label,
+      "Body: " + colour("base"),
+      "Trim: " + colour("trim"),
+      "Design: " + colour("design"),
+      "Accent: " + colour("accent"),
+      "Lettering: " + colour("text") + " in " + fontOf(state.font).label,
+      "",
+      "Name across the chest: " + (state.clubName || "(none)"),
+      print("front", "Front print"),
+      print("back", "Back print"),
+      "Crest: " + (state.crest.on ? (state.crest.src ? "artwork uploaded — ask the club to email the file"
+                                                     : "placed, no artwork yet") : "none"),
+      "Sponsor: " + (state.sponsor.on ? (state.sponsor.src ? "artwork uploaded — ask the club to email the file"
+                                                           : "placed, no artwork yet") : "none"),
+      "",
+      "Notes: " + (c.notes || "(none)"),
+      "",
+      "Open this design: " + designLink()
+    ];
+    return lines.join("\\n");
+  }
+
+  function sendByContactForm(status) {
+    var c = state.contact;
+    var form = document.createElement("form");
+    form.method = "post";
+    form.action = "/contact#contact_form";
+    form.acceptCharset = "UTF-8";
+    form.hidden = true;
+    [["form_type", "contact"],
+     ["utf8", "\\u2713"],
+     ["contact[name]", (c.name || c.club || "Club vest designer")],
+     ["contact[email]", c.email],
+     ["contact[phone]", c.phone],
+     ["contact[body]", "Vest design " + (status === "saved" ? "saved" : "submitted") +
+                       " from the designer.\\n\\n" + designSummary()]
+    ].forEach(function (kv) {
+      var input = document.createElement("input");
+      input.type = "hidden";
+      input.name = kv[0];
+      input.value = kv[1] || "";
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+    /* The page is on its way to the contact endpoint and back; nothing
+       here resolves, and the message on return is picked up at boot. */
+    return new Promise(function () {});
+  }
+
   function contactEmail() {
     return ROOT.getAttribute("data-contact") || "us";
   }
@@ -275,13 +344,23 @@ script = script.replace(old_persist, new_persist)
 
 # no shared-link loading without a database
 script = re.sub(r"  function loadCode\(code\) \{.*?\n  \}\n", "", script, count=1, flags=re.S)
-script = re.sub(r"  var hashCode = .*?\n  if \(!hashCode\) restore\(\);\n", "  restore();\n", script, count=1, flags=re.S)
+script = re.sub(r"  var hashCode = .*?\n  var linked = openLinkedDesign\(\);\n  if \(!hashCode && !linked\) restore\(\);\n",
+                "  var linked = openLinkedDesign();\n  if (!linked) restore();\n", script, count=1, flags=re.S)
 script = re.sub(r"  if \(window\.claude && window\.claude\.use\) \{.*?\n  \}\n", "", script, count=1, flags=re.S)
 script = script.replace('  var dbApi = null;\n', '')
-script = script.replace('''      if (code) setStatus("Saved as " + code + ". Share this page's link with your committee.");''',
-                        '''      if (code) setStatus("Saved as " + code + ". We have your design.");''')
-script = script.replace('''  var stageCanvas = null, stageCtx = null;''',
-                        '''  var stageCanvas = null, stageCtx = null;''')
+# Shopify sends the page back here after a contact-form post, so the word
+# that it worked is picked up on the way back in rather than before leaving.
+script = script.replace("""  if (!linked) restore();
+  renderAll();""", """  if (!linked) restore();
+  if (/[?&]contact_posted=true/.test(location.search)) {
+    setTimeout(function () {
+      showTab("send");
+      setStatus("Sent." + (state.crest.src || state.sponsor.src
+        ? " Now email your artwork files to " + contactEmail() + " and we'll match them up."
+        : " We'll come back to you within two working days."));
+    }, 0);
+  }
+  renderAll();""")
 
 script = rename_js_classes(script)
 
@@ -329,8 +408,9 @@ SCHEMA = {
      "default": DEFAULT_PALETTE},
     {"type": "header", "content": "Where designs go"},
     {"type": "text", "id": "endpoint", "label": "Submission endpoint",
-     "info": "A URL that accepts a JSON POST \u2014 a Make webhook, or an app proxy. Leave blank and the form tells clubs to email instead."},
-    {"type": "text", "id": "contact_email", "label": "Fallback email",
+     "info": "Optional. A URL that accepts a JSON POST \u2014 a Make webhook, or an app proxy \u2014 which also carries the mockup PNG and any uploaded artwork. Leave it blank and designs come through the store's own contact form instead, to whichever address Settings \u2192 Store details uses for customer email."},
+    {"type": "text", "id": "contact_email", "label": "Address shown to clubs",
+     "info": "Where a club is told to send artwork files, which a contact form cannot carry.",
      "default": "koruathletic@gmail.com"},
     {"type": "header", "content": "Small print"},
     {"type": "richtext", "id": "fineprint", "label": "Small print",

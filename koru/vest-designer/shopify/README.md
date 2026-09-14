@@ -120,26 +120,39 @@ Do all of this on a **duplicate of the live theme** and preview it before publis
 
 ## Where designs go
 
-The artifact draft wrote to its own database. A theme has none, so the section posts
-JSON to whatever endpoint is set in *Submission endpoint*:
+**With no endpoint set — which is how it ships — a design goes through the store's own
+contact form.** A plain form POST to `/contact`, the way every Shopify theme sends one:
+no app, no key, no CORS, no third party. It lands wherever the store already sends
+customer email (*Settings → Store details*), today `koruathletic@gmail.com`. The page
+comes back with `?contact_posted=true` and says so.
+
+A contact form carries no files, so the email carries the design as words — club, contact,
+style, every colour by name and hex, print sizes and positions, what artwork was placed —
+and ends with a link that **reopens the exact design** in the designer. The whole design
+is a few hundred bytes, so it travels in the URL (`?vd=…`) rather than needing a database.
+That is also what the *Copy design link* button hands a club for its committee.
+
+Uploaded crest and sponsor files cannot ride along. When a club has uploaded one, the page
+tells them to email it, and the email to Koru says to expect it.
+
+**With an endpoint set** (*Submission endpoint* in the theme editor) the design is POSTed
+there as JSON instead, and that path carries everything — the mockup PNG and the artwork
+files included:
 
 ```json
 {
   "code": "TXKM47", "status": "submitted",
   "spec": { "style": "...", "colours": {...}, "frontPrint": {...}, "crest": {...} },
   "production": { "clubCode": "BAN" },
+  "link": "https://korusports.ie/pages/design-your-vest?vd=...",
   "mockup": "data:image/png;base64,...",
   "artwork": { "crest": "data:image/png;base64,...", "sponsor": null },
   "shop": "korusports.ie"
 }
 ```
 
-Make is already connected to this stack, so a Make webhook is the shortest path: email
-Koru, drop the row in a sheet, create the club contact in Klaviyo. With no endpoint set,
-the form tells clubs to email instead — so the page is safe to publish before the
-plumbing exists.
-
-`mockup` is the preview canvas as a PNG, so the reply to a club can show their own vest.
+A Make webhook is the shortest path to that: email Koru with the mockup attached, drop the
+row in a sheet, create the club contact. It needs a sender address before it can email.
 
 ## Verified
 
@@ -153,5 +166,6 @@ diffed against `dawn-base.css` — no collisions.
 The schema has not been parsed by Liquid on a real theme, and nothing here has been seen
 in the theme editor since the rename.
 
-The share-by-link feature is not in this build. It depended on the artifact database;
-reinstating it needs the endpoint to hand a code back.
+The contact-form post has been exercised in the harness — the form, its fields and the
+body are what Shopify expects — but not against the live storefront, which this session
+cannot reach. Worth one test submission on the preview theme before it goes out.

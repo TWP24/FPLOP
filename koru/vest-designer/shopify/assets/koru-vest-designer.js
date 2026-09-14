@@ -1775,6 +1775,56 @@
   }
 
   /* ---------------------------------------------------------------
+     A design in a link. The whole design is a few hundred bytes, so
+     it can travel in the URL instead of needing somewhere to live:
+     a club sends it to its committee, and whoever opens it sees
+     exactly what the club saw. Artwork is the one thing too big to
+     carry, so a crest is named rather than packed.
+  ----------------------------------------------------------------*/
+  var LINK_KEYS = HIST_KEYS.concat(["preview"]);
+
+  function b64url(str) {
+    var bytes = new TextEncoder().encode(str), bin = "";
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function unb64url(str) {
+    var s = str.replace(/-/g, "+").replace(/_/g, "/");
+    while (s.length % 4) s += "=";
+    var bin = atob(s), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+
+  function round(n, places) {
+    var f = Math.pow(10, places);
+    return Math.round(n * f) / f;
+  }
+
+  function encodeDesign() {
+    var o = {};
+    LINK_KEYS.forEach(function (k) {
+      var v = state[k];
+      o[k] = (v && typeof v === "object")
+        ? { on: !!v.on, u: round(v.u, 4), v: round(v.v, 4), scale: round(v.scale, 3) }
+        : v;
+    });
+    return b64url(JSON.stringify(o));
+  }
+
+  function designLink() {
+    return location.href.split("#")[0].split("?")[0] + "?vd=" + encodeDesign();
+  }
+
+  function openLinkedDesign() {
+    var packed = (location.search.match(/[?&]vd=([A-Za-z0-9\-_]+)/) || [])[1];
+    if (!packed) return false;
+    try { applyState(JSON.parse(unb64url(packed))); return true; }
+    catch (e) { return false; }
+  }
+
+  /* ---------------------------------------------------------------
      A picture to send round before anyone fills in a form.
   ----------------------------------------------------------------*/
   function downloadPNG() {
@@ -1893,22 +1943,22 @@
     el.className = "kv-status" + (isError ? " kv-err" : "");
   }
 
-  /* The theme has no database. Designs are posted to whatever endpoint the
-     merchant configures (a Make webhook, an app proxy, anything that takes
-     JSON), together with a PNG of the mockup so the reply has a picture. */
+  /* Where a design goes. With an endpoint set (a Make webhook, an app
+     proxy, anything that takes JSON) it is posted there with a PNG of the
+     mockup and the artwork. With no endpoint it goes through the store's
+     own contact form — a plain form POST, the way every Shopify theme
+     sends one, so it needs no key, no app and no CORS, and it lands in
+     whichever inbox the store already uses for customer email. */
   function persist(status) {
     var endpoint = ROOT.getAttribute("data-endpoint");
-    if (!endpoint) {
-      setStatus("This form isn't connected yet — email " + contactEmail() +
-                " and we'll pick it up.", true);
-      return Promise.resolve(null);
-    }
+    if (!endpoint) return sendByContactForm(status);
     var code = newCode();
     var payload = {
       code: code,
       status: status,
       spec: spec(),
       production: { clubCode: clubCode() },
+      link: designLink(),
       mockup: stageCanvas ? stageCanvas.toDataURL("image/png") : null,
       artwork: { crest: state.crest.src || null, sponsor: state.sponsor.src || null },
       shop: ROOT.getAttribute("data-shop") || "",
@@ -1925,6 +1975,75 @@
       setStatus("That didn't send. Email " + contactEmail() + " and we'll pick it up.", true);
       return null;
     });
+  }
+
+  /* The design as words, because a contact-form email carries no files.
+     The link at the end reopens the design itself. */
+  function designSummary() {
+    var c = state.contact;
+    var colour = function (role) {
+      return colourName(state[role]) + " " + String(state[role]).toUpperCase();
+    };
+    var print = function (key, label) {
+      var b = state[key];
+      if (!b.on) return label + ": none";
+      return label + ": " + Math.round(b.scale * 100) + "% at " +
+             b.u.toFixed(3) + "," + b.v.toFixed(3);
+    };
+    var lines = [
+      "Club: " + (c.club || "(not given)"),
+      "Contact: " + (c.name || "(not given)") + " · " + (c.email || "") +
+        (c.phone ? " · " + c.phone : ""),
+      "",
+      "Style: " + STYLES[state.style][0] + " at " + Math.round(state.opacity * 100) + "%",
+      "Cut shown: " + CUTS[state.preview].label,
+      "Body: " + colour("base"),
+      "Trim: " + colour("trim"),
+      "Design: " + colour("design"),
+      "Accent: " + colour("accent"),
+      "Lettering: " + colour("text") + " in " + fontOf(state.font).label,
+      "",
+      "Name across the chest: " + (state.clubName || "(none)"),
+      print("front", "Front print"),
+      print("back", "Back print"),
+      "Crest: " + (state.crest.on ? (state.crest.src ? "artwork uploaded — ask the club to email the file"
+                                                     : "placed, no artwork yet") : "none"),
+      "Sponsor: " + (state.sponsor.on ? (state.sponsor.src ? "artwork uploaded — ask the club to email the file"
+                                                           : "placed, no artwork yet") : "none"),
+      "",
+      "Notes: " + (c.notes || "(none)"),
+      "",
+      "Open this design: " + designLink()
+    ];
+    return lines.join("\n");
+  }
+
+  function sendByContactForm(status) {
+    var c = state.contact;
+    var form = document.createElement("form");
+    form.method = "post";
+    form.action = "/contact#contact_form";
+    form.acceptCharset = "UTF-8";
+    form.hidden = true;
+    [["form_type", "contact"],
+     ["utf8", "\u2713"],
+     ["contact[name]", (c.name || c.club || "Club vest designer")],
+     ["contact[email]", c.email],
+     ["contact[phone]", c.phone],
+     ["contact[body]", "Vest design " + (status === "saved" ? "saved" : "submitted") +
+                       " from the designer.\n\n" + designSummary()]
+    ].forEach(function (kv) {
+      var input = document.createElement("input");
+      input.type = "hidden";
+      input.name = kv[0];
+      input.value = kv[1] || "";
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+    /* The page is on its way to the contact endpoint and back; nothing
+       here resolves, and the message on return is picked up at boot. */
+    return new Promise(function () {});
   }
 
   function contactEmail() {
@@ -2047,10 +2166,14 @@
   });
 
   $("#kvd-saveBtn").addEventListener("click", function () {
-    setStatus("Saving…");
-    persist("saved").then(function (code) {
-      if (code) setStatus("Saved as " + code + ". We have your design.");
-    });
+    var link = designLink();
+    var shown = function () {
+      setStatus("Link copied. Whoever opens it sees this exact design.");
+    };
+    var spelled = function () { setStatus("Copy this link: " + link); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(shown, spelled);
+    } else spelled();
   });
 
   $("#kvd-submitBtn").addEventListener("click", function () {
@@ -2126,7 +2249,16 @@
   /* ---------------------------------------------------------------
      Boot
   ----------------------------------------------------------------*/
-  restore();
+  var linked = openLinkedDesign();
+  if (!linked) restore();
+  if (/[?&]contact_posted=true/.test(location.search)) {
+    setTimeout(function () {
+      showTab("send");
+      setStatus("Sent." + (state.crest.src || state.sponsor.src
+        ? " Now email your artwork files to " + contactEmail() + " and we'll match them up."
+        : " We'll come back to you within two working days."));
+    }, 0);
+  }
   renderAll();
   showTab(state.tab);
   bindBadgeDrag(ROOT.querySelector(".kv-stage"));

@@ -444,7 +444,7 @@
         </div>
         <div class="actions">
           <button type="button" class="btn" id="submitBtn">Send design to Koru</button>
-          <button type="button" class="btn ghost" id="saveBtn">Save &amp; get a link</button>
+          <button type="button" class="btn ghost" id="saveBtn">Copy design link</button>
         </div>
         <p class="status" id="status" role="status" aria-live="polite"></p>
 
@@ -2227,6 +2227,56 @@
   }
 
   /* ---------------------------------------------------------------
+     A design in a link. The whole design is a few hundred bytes, so
+     it can travel in the URL instead of needing somewhere to live:
+     a club sends it to its committee, and whoever opens it sees
+     exactly what the club saw. Artwork is the one thing too big to
+     carry, so a crest is named rather than packed.
+  ----------------------------------------------------------------*/
+  var LINK_KEYS = HIST_KEYS.concat(["preview"]);
+
+  function b64url(str) {
+    var bytes = new TextEncoder().encode(str), bin = "";
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function unb64url(str) {
+    var s = str.replace(/-/g, "+").replace(/_/g, "/");
+    while (s.length % 4) s += "=";
+    var bin = atob(s), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+
+  function round(n, places) {
+    var f = Math.pow(10, places);
+    return Math.round(n * f) / f;
+  }
+
+  function encodeDesign() {
+    var o = {};
+    LINK_KEYS.forEach(function (k) {
+      var v = state[k];
+      o[k] = (v && typeof v === "object")
+        ? { on: !!v.on, u: round(v.u, 4), v: round(v.v, 4), scale: round(v.scale, 3) }
+        : v;
+    });
+    return b64url(JSON.stringify(o));
+  }
+
+  function designLink() {
+    return location.href.split("#")[0].split("?")[0] + "?vd=" + encodeDesign();
+  }
+
+  function openLinkedDesign() {
+    var packed = (location.search.match(/[?&]vd=([A-Za-z0-9\-_]+)/) || [])[1];
+    if (!packed) return false;
+    try { applyState(JSON.parse(unb64url(packed))); return true; }
+    catch (e) { return false; }
+  }
+
+  /* ---------------------------------------------------------------
      A picture to send round before anyone fills in a form.
   ----------------------------------------------------------------*/
   function downloadPNG() {
@@ -2511,10 +2561,14 @@
   });
 
   $("#saveBtn").addEventListener("click", function () {
-    setStatus("Saving…");
-    persist("saved").then(function (code) {
-      if (code) setStatus("Saved as " + code + ". Share this page's link with your committee.");
-    });
+    var link = designLink();
+    var shown = function () {
+      setStatus("Link copied. Whoever opens it sees this exact design.");
+    };
+    var spelled = function () { setStatus("Copy this link: " + link); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(shown, spelled);
+    } else spelled();
   });
 
   $("#submitBtn").addEventListener("click", function () {
@@ -2591,7 +2645,8 @@
      Boot
   ----------------------------------------------------------------*/
   var hashCode = (location.hash.match(/^#d=([A-Z0-9]{4,12})$/i) || [])[1];
-  if (!hashCode) restore();
+  var linked = openLinkedDesign();
+  if (!hashCode && !linked) restore();
   renderAll();
   showTab(state.tab);
   bindBadgeDrag(document.querySelector(".stage"));
