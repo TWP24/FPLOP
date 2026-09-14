@@ -1669,6 +1669,33 @@
     if (sw) document.documentElement.style.setProperty("--tabTop", sw.offsetHeight + "px");
   }
 
+  /* Wide enough for two columns and the swatches move under the vest: the
+     colours belong beside the thing they colour, and it keeps the steps
+     column from running long. Only the step you are on docks its box, so
+     each colour still sits with the step it belongs to. */
+  var wideMQ = window.matchMedia("(min-width:880px)");
+  var dockable = null;
+
+  function dockColours() {
+    var dock = $("#kvd-colourDock");
+    if (!dock) return;
+    if (!dockable) {
+      dockable = $$("[data-dock]").map(function (el) {
+        var panel = el.closest ? el.closest(".kv-panel") : null;
+        return { el: el, panel: panel ? panel.dataset.panel : null,
+                 parent: el.parentNode, next: el.nextSibling };
+      });
+    }
+    dockable.forEach(function (f) {
+      var wanted = wideMQ.matches && f.panel === state.tab;
+      if (wanted && f.el.parentNode !== dock) dock.appendChild(f.el);
+      else if (!wanted && f.el.parentNode === dock) f.parent.insertBefore(f.el, f.next);
+    });
+  }
+
+  if (wideMQ.addEventListener) wideMQ.addEventListener("change", dockColours);
+  else if (wideMQ.addListener) wideMQ.addListener(dockColours);
+
   function showTab(id) {
     if (!document.getElementById("kvd-p-" + id)) id = "colours";
     state.tab = id;
@@ -1678,6 +1705,7 @@
     $$(".kv-panel").forEach(function (panel) {
       panel.classList.toggle("kv-on", panel.dataset.panel === id);
     });
+    dockColours();
     syncSticky();
     save();
   }

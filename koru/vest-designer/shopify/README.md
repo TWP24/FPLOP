@@ -27,6 +27,13 @@ The harness loads `dawn-base.css` (from `Shopify/dawn`, `main`) so the next
 collision shows up locally instead of on the store. It is vendored rather than linked
 because GitHub serves it as `text/plain` and a browser refuses to apply it.
 
+## Layout
+
+One column on a phone: vest on top, steps under it. From 880px the vest takes the left
+column and the steps the right — and the swatches for the step you are on move under the
+vest, where the colours sit beside the thing they colour and the steps column stops
+running long. Front and back print pair off on one row there too.
+
 ## Brand
 
 Nothing here carries its own palette. Tokens are bound to Dawn's colour-scheme

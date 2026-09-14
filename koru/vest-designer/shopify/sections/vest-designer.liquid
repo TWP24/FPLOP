@@ -16,6 +16,7 @@
   <div class="kv-tool">
     <div class="kv-stagewrap">
       <div class="kv-stage"><div id="kvd-stageHost"></div></div>
+      <div class="kv-colourdock" id="kvd-colourDock"></div>
     </div>
 
     <nav class="kv-tabs" role="tablist" aria-label="Design steps">
@@ -27,11 +28,21 @@
 
     <div class="kv-panels">
       <section class="kv-panel kv-on" id="kvd-p-colours" data-panel="colours" role="tabpanel">
-        <h2>Body and trim</h2>
+        <h2>Colours and cut</h2>
         <p class="kv-note">Everything is sublimated, so colour is free — a five-colour vest costs
           the same as a plain one. The rest of the colours sit with the things they colour.</p>
-        <div class="kv-field">
+        <div class="kv-field" data-dock>
+          <span class="kv-label">Vest colours</span>
           <div class="kv-colourbox" data-box="garment" data-roles="base,trim"></div>
+        </div>
+        <div class="kv-field">
+          <span class="kv-label">See it on</span>
+          <div class="kv-seg" role="group" aria-label="Show the design on a different cut">
+            <button type="button" data-preview="mens" aria-pressed="true">Men's</button>
+            <button type="button" data-preview="womens" aria-pressed="false">Women's</button>
+            <button type="button" data-preview="kids" aria-pressed="false">Kids</button>
+            <button type="button" data-preview="crop" aria-pressed="false">Crop</button>
+          </div>
         </div>
         <div class="kv-nextbar"><button type="button" class="kv-btn kv-ghost" data-goto="style">Next: Style</button></div>
       </section>
@@ -48,51 +59,44 @@
             <span class="kv-slider-val" id="kvd-opacityVal">100%</span>
           </div>
         </div>
-        <div class="kv-field">
+        <div class="kv-field" data-dock>
           <span class="kv-label">Style colours</span>
           <div class="kv-colourbox" data-box="style" data-roles="design,accent"></div>
-        </div>
-        <div class="kv-field">
-          <span class="kv-label">See it on</span>
-          <div class="kv-seg" role="group" aria-label="Show the design on a different cut">
-            <button type="button" data-preview="mens" aria-pressed="true">Men's</button>
-            <button type="button" data-preview="womens" aria-pressed="false">Women's</button>
-            <button type="button" data-preview="kids" aria-pressed="false">Kids</button>
-            <button type="button" data-preview="crop" aria-pressed="false">Crop</button>
-          </div>
         </div>
         <div class="kv-nextbar"><button type="button" class="kv-btn kv-ghost" data-goto="name">Next: Name</button></div>
       </section>
 
       <section class="kv-panel" id="kvd-p-name" data-panel="name" role="tabpanel">
         <h2>Club name and crest</h2>
-        <div class="kv-field">
-          <span class="kv-label">Front print</span>
-          <p class="kv-note" style="margin:-4px 0 10px">Drag anything on the vest — prints, crest,
-            sponsor — to place it. It snaps to the centre line, or use Centre.</p>
-          <div class="kv-seg" role="group" aria-label="Print on the front">
-            <button type="button" data-badge="front:on" aria-pressed="true">Club name</button>
-            <button type="button" data-badge="front:off" aria-pressed="false">None</button>
+        <p class="kv-note">Drag anything on the vest — prints, crest, sponsor — to place it.
+          It snaps to the centre line, or use Centre.</p>
+        <div class="kv-two-up">
+          <div class="kv-field">
+            <span class="kv-label">Front print</span>
+            <div class="kv-seg" role="group" aria-label="Print on the front">
+              <button type="button" data-badge="front:on" aria-pressed="true">Club name</button>
+              <button type="button" data-badge="front:off" aria-pressed="false">None</button>
+            </div>
+            <div class="kv-slider-row kv-with-action" id="kvd-frontSizeRow" style="margin-top:12px">
+              <input type="range" data-badgesize="front" min="25" max="95" value="58"
+                     aria-label="Front print size">
+              <span class="kv-slider-val" id="kvd-frontSizeVal">58%</span>
+              <button type="button" class="kv-mini" data-centre="front">Centre</button>
+            </div>
           </div>
-          <div class="kv-slider-row kv-with-action" id="kvd-frontSizeRow" style="margin-top:12px">
-            <input type="range" data-badgesize="front" min="25" max="95" value="58"
-                   aria-label="Front print size">
-            <span class="kv-slider-val" id="kvd-frontSizeVal">58%</span>
-            <button type="button" class="kv-mini" data-centre="front">Centre</button>
-          </div>
-        </div>
 
-        <div class="kv-field">
-          <span class="kv-label">Back print</span>
-          <div class="kv-seg" role="group" aria-label="Print on the back">
-            <button type="button" data-badge="back:on" aria-pressed="true">Club name</button>
-            <button type="button" data-badge="back:off" aria-pressed="false">None</button>
-          </div>
-          <div class="kv-slider-row kv-with-action" id="kvd-backSizeRow" style="margin-top:12px">
-            <input type="range" data-badgesize="back" min="25" max="95" value="50"
-                   aria-label="Back print size">
-            <span class="kv-slider-val" id="kvd-backSizeVal">50%</span>
-            <button type="button" class="kv-mini" data-centre="back">Centre</button>
+          <div class="kv-field">
+            <span class="kv-label">Back print</span>
+            <div class="kv-seg" role="group" aria-label="Print on the back">
+              <button type="button" data-badge="back:on" aria-pressed="true">Club name</button>
+              <button type="button" data-badge="back:off" aria-pressed="false">None</button>
+            </div>
+            <div class="kv-slider-row kv-with-action" id="kvd-backSizeRow" style="margin-top:12px">
+              <input type="range" data-badgesize="back" min="25" max="95" value="50"
+                     aria-label="Back print size">
+              <span class="kv-slider-val" id="kvd-backSizeVal">50%</span>
+              <button type="button" class="kv-mini" data-centre="back">Centre</button>
+            </div>
           </div>
         </div>
 
@@ -123,7 +127,7 @@
           </div>
         </div>
 
-        <div class="kv-field">
+        <div class="kv-field" data-dock>
           <span class="kv-label">Lettering colour</span>
           <div class="kv-colourbox" data-box="lettering" data-roles="text"></div>
         </div>

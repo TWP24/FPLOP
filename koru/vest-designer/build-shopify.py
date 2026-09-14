@@ -34,7 +34,7 @@ body = re.search(r"(<header class=\"masthead\">.*?)\n<script>", src, re.S).group
 # stay generic. Ids take a kvd- prefix and classes a kv- one: Dawn styles a
 # .field of its own, and namespacing a selector under .koru-vd does not stop
 # Dawn's own rules matching our elements.
-IDS = ["palette", "styles", "opacity", "opacityVal", "clubName", "nameCount",
+IDS = ["palette", "styles", "colourDock", "opacity", "opacityVal", "clubName", "nameCount",
        "fontPicker", "stageHost", "status", "fClub", "fName", "fEmail", "fPhone",
        "fNotes", "submitBtn", "saveBtn", "crestFile", "sponsorFile",
        "crestSizeRow", "crestSizeVal", "sponsorSizeRow", "sponsorSizeVal",
