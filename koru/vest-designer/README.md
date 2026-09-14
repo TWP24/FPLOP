@@ -49,10 +49,10 @@ active step right.
   because it reads badly in capitals. A webfont used only on a canvas is never requested by the
   document, so `loadFonts` asks for each face explicitly before painting — otherwise the canvas
   silently falls back and every face looks the same.
-- **Front and back print independently.** Either can be dropped to nothing, so a club can put
-  its name on the chest only, on the back only, or run a plain vest with just a crest.
+- **Front and back print independently** — each with its own on/off, size and position, so a
+  club can run a big chest print and a smaller one across the shoulder blades, or drop either.
 - **Print size is a fraction of the panel, not a font size.** The slider sets how much of the
-  chest the name spans, so a three-letter club and a twelve-letter one both fill the same
+  panel the name spans, so a three-letter club and a twelve-letter one both fill the same
   width — which is how a chest print actually works. A cap stops short names ballooning.
 - **Styles name a colour role, not a hex.** A style says "design" or "accent" where a colour
   goes, so changing one of the club's five colours restyles the whole gallery at once. That
@@ -70,6 +70,10 @@ active step right.
   flat list that long is a wall. Thumbnails are cached against the five colours, the strength
   and the club initials, since a noise style costs tens of thousands of samples and the gallery
   redraws on every colour change.
+- **Everything on the vest is a draggable badge** — the front print, the back print, the crest
+  and the sponsor. Each carries a position, a size as a fraction of its panel, and an on/off.
+  Text rects come from the last paint rather than being predicted, because only the painter
+  knows how wide a name ended up at a given size once it has been fitted.
 - **Crest and sponsor are uploadable and draggable.** Each is a badge: a position in texture
   space, a size as a fraction of one panel, and optionally an image. With no image it draws as
   a dashed placeholder, so a club without their logo to hand can still say where it goes. Drag

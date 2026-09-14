@@ -252,20 +252,31 @@
 
       <section class="panel" id="p-name" data-panel="name" role="tabpanel">
         <h2>Club name and crest</h2>
-        <div class="field two-up">
-          <div>
-            <span class="label">Front print</span>
-            <div class="seg" role="group" aria-label="Print on the front">
-              <button type="button" data-front="on" aria-pressed="true">Club name</button>
-              <button type="button" data-front="off" aria-pressed="false">None</button>
-            </div>
+        <div class="field">
+          <span class="label">Front print</span>
+          <p class="note" style="margin:-4px 0 10px">Drag anything on the vest — prints, crest,
+            sponsor — to place it.</p>
+          <div class="seg" role="group" aria-label="Print on the front">
+            <button type="button" data-badge="front:on" aria-pressed="true">Club name</button>
+            <button type="button" data-badge="front:off" aria-pressed="false">None</button>
           </div>
-          <div>
-            <span class="label">Back print</span>
-            <div class="seg" role="group" aria-label="Print on the back">
-              <button type="button" data-back="on" aria-pressed="true">Club name</button>
-              <button type="button" data-back="off" aria-pressed="false">None</button>
-            </div>
+          <div class="slider-row" id="frontSizeRow" style="margin-top:12px">
+            <input type="range" data-badgesize="front" min="25" max="95" value="58"
+                   aria-label="Front print size">
+            <span class="slider-val" id="frontSizeVal">58%</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label">Back print</span>
+          <div class="seg" role="group" aria-label="Print on the back">
+            <button type="button" data-badge="back:on" aria-pressed="true">Club name</button>
+            <button type="button" data-badge="back:off" aria-pressed="false">None</button>
+          </div>
+          <div class="slider-row" id="backSizeRow" style="margin-top:12px">
+            <input type="range" data-badgesize="back" min="25" max="95" value="50"
+                   aria-label="Back print size">
+            <span class="slider-val" id="backSizeVal">50%</span>
           </div>
         </div>
 
@@ -280,13 +291,6 @@
           <div class="seg fonts" id="fontPicker" role="group" aria-label="Lettering face"></div>
         </div>
 
-        <div class="field">
-          <label class="label" for="textSize">Print size</label>
-          <div class="slider-row">
-            <input type="range" id="textSize" min="60" max="160" value="100">
-            <span class="slider-val" id="textSizeVal">100%</span>
-          </div>
-        </div>
         <div class="field">
           <span class="label">Sponsor logo</span>
           <div class="seg" role="group" aria-label="Sponsor logo">
@@ -502,10 +506,9 @@
     style: 1,
     opacity: 1,
     clubName: "KORU AC",
-    frontText: true,
-    backText: true,
+    front: { on:true, u:0.250, v:0.345, scale:0.58 },
+    back:  { on:true, u:0.750, v:0.330, scale:0.50 },
     font: "block",
-    textSize: 1,
     crest:   { on:true,  u:0.188, v:0.222, scale:0.17, src:null },
     sponsor: { on:false, u:0.250, v:0.470, scale:0.30, src:null },
     contact: { club:"", name:"", email:"", phone:"", notes:"" }
@@ -1181,7 +1184,7 @@
   }
 
   function trackedText(ctx, text, cxPx, cyPx, maxPx, colour, capSize, font) {
-    if (!text) return;
+    if (!text) return null;
     var face = "'" + font.family + "', 'Arial Narrow', 'Helvetica Neue', sans-serif";
     var tracking = font.track;
     var size = capSize;
@@ -1205,6 +1208,7 @@
       ctx.fillText(c, x, cyPx);
       x += widths[i] + tracking * size;
     });
+    return { w: total, h: size };
   }
 
   /* ---------------------------------------------------------------
@@ -1214,6 +1218,10 @@
      logo to hand can still say where it goes.
   ----------------------------------------------------------------*/
   var badgeImg = { crest: null, sponsor: null };
+  /* Text rects come from the last paint rather than being predicted: only
+     the painter knows how wide a name ended up at a given size. */
+  var lastTextRect = { front: null, back: null };
+  var BADGES = ["sponsor", "crest", "back", "front"];
 
   function badgeAspect(key) {
     var img = badgeImg[key];
@@ -1222,6 +1230,12 @@
   }
 
   function badgeRect(key) {
+    if (key === "front" || key === "back") {
+      var t = lastTextRect[key];
+      if (!t) return null;
+      var pad = Math.max(10, t.h * 0.25);
+      return { x: t.x - pad, y: t.y - pad, w: t.w + pad * 2, h: t.h + pad * 2 };
+    }
     var b = state[key];
     var w = b.scale * TW * 0.5;
     var h = w * badgeAspect(key);
@@ -1329,9 +1343,10 @@
 
   function badgeAt(p) {
     var found = null;
-    ["sponsor", "crest"].forEach(function (key) {
+    BADGES.forEach(function (key) {
       if (found || !state[key].on) return;
       var r = badgeRect(key);
+      if (!r) return;
       var x = p.u * TW, y = p.v * TH;
       if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) found = key;
     });
@@ -1413,11 +1428,8 @@
     var font = fontOf(state.font);
     var raw = (state.clubName || "").trim();
     var name = font.upper ? raw.toUpperCase() : raw;
-    /* The slider sets what fraction of the panel the print spans, so a
-       short name fills the same width a long one does. The garment is
-       about 83% of the panel box at chest height, so even the widest
-       setting stays inside the cloth. */
-    var span = TW * 0.5 * (0.18 + state.textSize * 0.40);
+    /* Each print spans a fraction of its panel, so a short club name and
+       a long one fill the same width. */
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 1;
@@ -1430,12 +1442,15 @@
     ctx.fillStyle = meshPattern;
     ctx.fillRect(0, 0, TW, TH);
 
-    if (state.frontText) {
-      trackedText(ctx, name, FRONT_U * TW, 0.345 * TH, span, state.text, 200, font);
-    }
-    if (state.backText) {
-      trackedText(ctx, name, BACK_U * TW, 0.33 * TH, span * 0.86, state.text, 180, font);
-    }
+    ["front", "back"].forEach(function (key) {
+      var b = state[key];
+      if (!b.on) { lastTextRect[key] = null; return; }
+      var m = trackedText(ctx, name, b.u * TW, b.v * TH, b.scale * TW * 0.5,
+                          state.text, key === "front" ? 200 : 180, font);
+      lastTextRect[key] = m
+        ? { x: b.u * TW - m.w / 2, y: b.v * TH - m.h / 2, w: m.w, h: m.h }
+        : null;
+    });
     paintBadge(ctx, "sponsor", state.text);
     paintBadge(ctx, "crest", state.text);
   }
@@ -1667,13 +1682,7 @@
         b.setAttribute("aria-pressed", String(b.dataset[m[0]] === state[m[1]]));
       });
     });
-    $$("[data-front]").forEach(function (b) {
-      b.setAttribute("aria-pressed", String((b.dataset.front === "on") === !!state.frontText));
-    });
-    $$("[data-back]").forEach(function (b) {
-      b.setAttribute("aria-pressed", String((b.dataset.back === "on") === !!state.backText));
-    });
-    ["crest", "sponsor"].forEach(function (key) {
+    BADGES.forEach(function (key) {
       var b = state[key];
       $$('[data-badge^="' + key + ':"]').forEach(function (btn) {
         btn.setAttribute("aria-pressed",
@@ -1689,12 +1698,13 @@
       if (val) val.textContent = Math.round(b.scale * 100) + "%";
     });
     var stageEl2 = document.querySelector(".stage");
-    if (stageEl2) stageEl2.classList.toggle("live", !!(state.crest.on || state.sponsor.on));
+    if (stageEl2) {
+      stageEl2.classList.toggle("live", BADGES.some(function (k) { return state[k].on; }));
+    }
     var n = (state.clubName || "").trim().length;
     $("#nameCount").textContent = n + " of 20 characters" +
       (n > 13 ? " · set smaller to fit the print area" : "");
     $("#opacityVal").textContent = Math.round(state.opacity * 100) + "%";
-    $("#textSizeVal").textContent = Math.round(state.textSize * 100) + "%";
   }
 
   function repaint() {
@@ -1737,10 +1747,15 @@
         lettering: { hex: state.text, name: colourName(state.text) }
       },
       chestPrint: state.clubName.trim().toUpperCase(),
-      frontPrint: state.frontText ? "club name" : "none",
-      backPrint: state.backText ? "club name" : "none",
+      frontPrint: state.front.on
+        ? { text: "club name", at: Math.round(state.front.u * 100) + "," +
+            Math.round(state.front.v * 100), size: Math.round(state.front.scale * 100) + "%" }
+        : "none",
+      backPrint: state.back.on
+        ? { text: "club name", at: Math.round(state.back.u * 100) + "," +
+            Math.round(state.back.v * 100), size: Math.round(state.back.scale * 100) + "%" }
+        : "none",
       lettering: fontOf(state.font).label,
-      letteringSize: Math.round(state.textSize * 100) + "%",
       crest: { shown: state.crest.on, artwork: !!state.crest.src,
                at: Math.round(state.crest.u * 100) + "," + Math.round(state.crest.v * 100),
                size: Math.round(state.crest.scale * 100) + "%" },
@@ -1768,7 +1783,15 @@
       }
     });
     if (!STYLES[state.style]) state.style = 1;
-    [["crest", true, 0.188, 0.222, 0.17], ["sponsor", false, 0.25, 0.47, 0.30]]
+    /* Older saves carried booleans and one shared size; fold them in. */
+    if (next.frontText !== undefined && typeof next.front !== "object") {
+      state.front = { on: !!next.frontText, u: 0.25, v: 0.345, scale: 0.58 };
+    }
+    if (next.backText !== undefined && typeof next.back !== "object") {
+      state.back = { on: !!next.backText, u: 0.75, v: 0.33, scale: 0.50 };
+    }
+    [["front", true, 0.25, 0.345, 0.58], ["back", true, 0.75, 0.33, 0.50],
+     ["crest", true, 0.188, 0.222, 0.17], ["sponsor", false, 0.25, 0.47, 0.30]]
       .forEach(function (d) {
         var b = (state[d[0]] && typeof state[d[0]] === "object") ? state[d[0]] : {};
         state[d[0]] = {
@@ -1781,7 +1804,6 @@
       });
     if (!fontOf(state.font) || state.font === "wide") state.font = "block";
     $("#clubName").value = state.clubName;
-    $("#textSize").value = Math.round(state.textSize * 100);
     $("#opacity").value = Math.round(state.opacity * 100);
     ["club","name","email","phone","notes"].forEach(function (f) {
       var el = document.getElementById("f" + f.charAt(0).toUpperCase() + f.slice(1));
@@ -1889,7 +1911,6 @@
     if (host) boxRole[host.dataset.box] = v;
   });
   onPick("font",    function (v) { state.font = v; });
-  onPick("front",   function (v) { state.frontText = v === "on"; });
   onPick("badge",   function (v) {
     var parts = v.split(":");
     state[parts[0]].on = parts[1] === "on";
@@ -1915,7 +1936,6 @@
       });
     });
   });
-  onPick("back",    function (v) { state.backText = v === "on"; });
   onPick("style",   function (v) { state.style = parseInt(v, 10); });
   onPick("hex",     function (v, btn) {
     var host = boxOf(btn);
@@ -1948,11 +1968,6 @@
     repaint();
   });
 
-  $("#textSize").addEventListener("input", function (e) {
-    state.textSize = parseInt(e.target.value, 10) / 100;
-    $("#textSizeVal").textContent = Math.round(state.textSize * 100) + "%";
-    repaint();
-  });
   $("#opacity").addEventListener("input", function (e) {
     state.opacity = parseInt(e.target.value, 10) / 100;
     $("#opacityVal").textContent = Math.round(state.opacity * 100) + "%";
