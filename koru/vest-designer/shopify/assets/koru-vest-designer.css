@@ -1,0 +1,196 @@
+/* Bound to Dawn's colour scheme variables, so the designer inherits whatever
+   scheme it is placed in. Fallbacks are korusports.ie as configured today:
+   #0A0A0A on #FAFAF7, warm sand #F1EEE4, no accent colour, every radius 0. */
+.koru-vd{
+  --paper: rgb(var(--color-background, 250,250,247));
+  --surface: rgb(var(--color-background, 250,250,247));
+  --surface-2: rgba(var(--color-foreground, 10,10,10), .045);
+  --ink: rgb(var(--color-foreground, 10,10,10));
+  --ink-2: rgba(var(--color-foreground, 10,10,10), .68);
+  --ink-3: rgba(var(--color-foreground, 10,10,10), .5);
+  --rule: rgba(var(--color-foreground, 10,10,10), .18);
+  --rule-2: rgba(var(--color-foreground, 10,10,10), .1);
+  /* The brand has no accent: selection is the button colour, as Dawn does it. */
+  --accent: rgb(var(--color-button, 10,10,10));
+  --accent-ink: rgb(var(--color-button-text, 250,250,247));
+  --accent-soft: rgba(var(--color-foreground, 10,10,10), .07);
+  --warn: #8C5410;
+  --stage: rgba(var(--color-foreground, 10,10,10), .07);
+  --stage-2: rgba(var(--color-foreground, 10,10,10), .025);
+  --tabTop: 0px;
+  --sans: var(--font-body-family, "Archivo", ui-sans-serif, system-ui, sans-serif);
+  --display: var(--font-heading-family, "Archivo", ui-sans-serif, system-ui, sans-serif);
+  /* No mono in the brand; small readouts use the body face with tracking. */
+  --mono: var(--font-body-family, "Archivo", ui-sans-serif, system-ui, sans-serif);
+  --radius: var(--buttons-radius, 0px);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+
+
+  *{box-sizing:border-box}
+  h1,h2{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.015em}
+  p{margin:0}
+  button,input,textarea{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:0}
+  .wrap{padding-inline:16px}
+
+  /* ---------- masthead + pitch ---------- */
+  .masthead{border-bottom:1px solid var(--rule);background:var(--surface)}
+  .masthead .wrap{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding-block:13px}
+  .mark{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase}
+  .mark span{color:var(--accent)}
+  .masthead-title{font-size:13px;color:var(--ink-2);margin-right:auto}
+  .window-flag{display:none}
+  .intro{padding-block:20px 16px}
+  .intro h1{font-size:clamp(22px,6vw,32px);font-weight:700;line-height:1.08;max-width:17ch}
+  .intro p{margin-top:9px;color:var(--ink-2);font-size:15px;max-width:46ch}
+
+  /* ---------- preview sticks; the steps scroll under it ---------- */
+  .koru-vd .stagewrap{
+    position:sticky;top:0;z-index:5;
+    background:var(--paper);
+    padding-block:6px 8px;
+  }
+  .koru-vd .stage{
+    background:linear-gradient(180deg,var(--stage-2),var(--stage));
+    border:1px solid var(--rule);border-radius:0;
+    position:relative;overflow:hidden;
+    height:clamp(180px,33vh,300px);
+  }
+  .stage.live{touch-action:pan-y}
+  .stage.over{cursor:grab}
+  .stage.grabbing{cursor:grabbing}
+  #stageHost{position:absolute;inset:0}
+  #stageHost canvas{display:block;width:100%;height:100%}
+
+  .koru-vd .tabs{
+    position:sticky;top:var(--tabTop);z-index:4;
+    display:flex;gap:2px;background:var(--paper);
+    border-bottom:1px solid var(--rule);
+  }
+  .koru-vd .tabs button{
+    flex:1;min-height:46px;padding:10px 4px;cursor:pointer;
+    background:none;border:0;border-bottom:2px solid transparent;
+    font-size:13.5px;font-weight:500;color:var(--ink-3);
+  }
+  .tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+
+  .panel{display:none;padding-block:20px 30px}
+  .panel.on{display:block}
+  .panel h2{font-size:19px;font-weight:600;margin-bottom:6px}
+  .panel .note{color:var(--ink-2);font-size:14px;margin-bottom:18px;max-width:50ch}
+  .field{margin-top:20px}
+  .field:first-of-type{margin-top:0}
+  .label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;
+    letter-spacing:.14em;color:var(--ink-3);margin-bottom:9px}
+
+  /* ---------- controls sized for thumbs ---------- */
+  .seg{display:flex;flex-wrap:wrap;gap:7px}
+  .koru-vd .seg button{
+    min-height:44px;padding:10px 15px;cursor:pointer;
+    font-size:14.5px;font-weight:500;background:var(--surface-2);color:var(--ink-2);
+    border:1px solid var(--rule);border-radius:0;
+    transition:background .14s,border-color .14s,color .14s;
+  }
+  .seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+  .palette{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:8px;margin-top:12px}
+  .koru-vd .swatch{
+    aspect-ratio:1;border-radius:0;cursor:pointer;padding:0;
+    border:1px solid rgba(128,128,128,.4);
+  }
+  .swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--accent)}
+  .custom-row{display:flex;align-items:center;gap:11px;margin-top:14px;
+    font-family:var(--mono);font-size:12.5px;color:var(--ink-3)}
+  .custom-row input[type="color"]{width:46px;height:34px;padding:2px;background:var(--surface-2);
+    border:1px solid var(--rule);border-radius:0;cursor:pointer}
+
+  .fonts button{font-size:17px;line-height:1.2;padding:9px 15px}
+  .group-label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-3);margin:20px 0 9px}
+  .group-label:first-child{margin-top:0}
+  .styles{display:grid;grid-template-columns:repeat(auto-fill,minmax(102px,1fr));gap:9px}
+  .koru-vd .style{
+    padding:8px 8px 8px;cursor:pointer;background:var(--surface-2);
+    border:1px solid var(--rule);border-radius:0;
+    display:flex;flex-direction:column;gap:7px;align-items:center;
+  }
+  .style[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+  .style span.sw{display:block;width:100%;aspect-ratio:176/92;border-radius:0;
+    background-size:cover;background-position:center}
+  .style span.nm{font-size:12px;font-weight:500;color:var(--ink-2);text-align:center}
+
+  input[type="range"]{width:100%;accent-color:var(--accent);cursor:pointer;height:30px;margin:0}
+  .slider-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+  .slider-row.with-action{grid-template-columns:1fr auto auto}
+  .koru-vd .mini{
+    min-height:38px;padding:8px 12px;cursor:pointer;font-size:12.5px;font-weight:500;
+    background:var(--surface-2);color:var(--ink-2);
+    border:1px solid var(--rule);border-radius:0;
+  }
+  .mini:hover{border-color:var(--ink-3);color:var(--ink)}
+  .slider-val{font-family:var(--mono);font-size:13px;color:var(--ink-3);min-width:4ch;text-align:right}
+
+  /* 16px keeps iOS from zooming the page on focus */
+  .text-input{width:100%;padding:12px 13px;background:var(--surface-2);
+    border:1px solid var(--rule);border-radius:0;font-size:16px}
+  .text-input::placeholder{color:var(--ink-3)}
+  .chest-input{font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+  .counter{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:7px;display:block}
+  .two-up{display:grid;gap:14px}
+
+  .koru-vd .btn{
+    width:100%;min-height:50px;font-size:15.5px;font-weight:600;
+    padding:13px 20px;border-radius:0;cursor:pointer;
+    border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);
+  }
+  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--rule)}
+  .actions{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+  .status{font-family:var(--mono);font-size:13px;color:var(--ink-2);min-height:1.4em;margin-top:12px}
+  .status.err{color:var(--warn)}
+  .nextbar{margin-top:26px}
+
+  .fineprint{margin-top:28px;padding-top:18px;border-top:1px solid var(--rule);
+    color:var(--ink-3);font-size:13px}
+  .fineprint p + p{margin-top:9px}
+
+  /* ---------- from tablet up, the preview sits beside the steps ---------- */
+  @media (min-width:880px){
+    .wrap{max-width:1140px;margin-inline:auto;padding-inline:24px}
+    .window-flag{display:inline-flex;align-items:center;gap:8px;
+      font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+    .intro{padding-block:34px 26px;border-bottom:1px solid var(--rule)}
+    .intro h1{font-size:40px;max-width:15ch}
+    .intro p{font-size:16px;max-width:58ch}
+    .koru-vd .tool{
+      display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      column-gap:44px;align-items:start;
+      grid-template-areas:"stage tabs" "stage panels";
+      padding-block:28px 56px;
+    }
+    .stagewrap{grid-area:stage;position:sticky;top:20px;padding-block:0;background:none}
+    .stage{height:auto;aspect-ratio:3/2}
+    .tabs{grid-area:tabs;position:static;background:none}
+    .tabs button{font-size:14.5px}
+    .panels{grid-area:panels}
+    .panel{padding-block:22px 10px}
+    .two-up{grid-template-columns:1fr 1fr}
+    .btn{width:auto}
+    .actions{flex-direction:row;flex-wrap:wrap;align-items:center}
+    .nextbar{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+
+/* Sitting inside a theme rather than owning the page: Dawn's page-width
+   already provides the gutter, and the heading has more room here. */
+.koru-vd .wrap{max-width:var(--page-width, 1200px)}
+.koru-vd .intro h1{max-width:20ch}
+.koru-vd .intro-copy p{margin:0}
+.koru-vd .intro-copy p + p{margin-top:.5em}
+.koru-vd .fineprint p{margin:0}
+.koru-vd .fineprint p + p{margin-top:8px}
