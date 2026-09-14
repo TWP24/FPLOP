@@ -39,43 +39,23 @@
     </div>
 
     <nav class="kv-tabs" role="tablist" aria-label="Design steps">
-      <button type="button" role="tab" data-tab="colours" aria-selected="true" aria-controls="kvd-p-colours">Vest</button>
-      <button type="button" role="tab" data-tab="style" aria-selected="false" aria-controls="kvd-p-style">Style</button>
+      <button type="button" role="tab" data-tab="colours" aria-selected="true" aria-controls="kvd-p-colours">Design</button>
       <button type="button" role="tab" data-tab="name" aria-selected="false" aria-controls="kvd-p-name">Name</button>
       <button type="button" role="tab" data-tab="send" aria-selected="false" aria-controls="kvd-p-send">Send</button>
     </nav>
 
     <div class="kv-panels">
       <section class="kv-panel kv-on" id="kvd-p-colours" data-panel="colours" role="tabpanel">
-        <h2>Colours and cut</h2>
-        <p class="kv-note">Everything is sublimated, so colour is free — a five-colour vest costs
-          the same as a plain one. The rest of the colours sit with the things they colour.</p>
+        <h2>Colours and style</h2>
+        <p class="kv-note">Everything is sublimated, so colour is free. Start from a look, then
+          change anything — every style uses your colours.</p>
         <div class="kv-field">
           <span class="kv-label">Start from a look</span>
           <div class="kv-presets kv-styles"></div>
         </div>
-        <div class="kv-field" data-dock>
-          <span class="kv-label">Vest colours</span>
-          <div class="kv-colourbox" data-box="garment" data-roles="base,trim"></div>
-          <div class="kv-crestcols" hidden></div>
-        </div>
         <div class="kv-field">
-          <span class="kv-label">See it on</span>
-          <div class="kv-seg" role="group" aria-label="Show the design on a different cut">
-            <button type="button" data-preview="mens" aria-pressed="true">Men's</button>
-            <button type="button" data-preview="womens" aria-pressed="false">Women's</button>
-            <button type="button" data-preview="kids" aria-pressed="false">Kids</button>
-            <button type="button" data-preview="crop" aria-pressed="false">Crop</button>
-          </div>
+          <div id="kvd-styles"></div>
         </div>
-        <div class="kv-nextbar"><button type="button" class="kv-btn kv-ghost" data-goto="style">Next: Style</button></div>
-      </section>
-
-      <section class="kv-panel" id="kvd-p-style" data-panel="style" role="tabpanel">
-        <h2>Your style</h2>
-        <p class="kv-note">Each one uses the colours you picked, so change a colour and they all
-          change with it.</p>
-        <div id="kvd-styles"></div>
         <div class="kv-field">
           <label class="kv-label" for="kvd-opacity">Strength</label>
           <div class="kv-slider-row">
@@ -84,8 +64,18 @@
           </div>
         </div>
         <div class="kv-field" data-dock>
-          <span class="kv-label">Style colours</span>
-          <div class="kv-colourbox" data-box="style" data-roles="design,accent"></div>
+          <span class="kv-label">Colours</span>
+          <div class="kv-colourbox" data-box="garment" data-roles="base,trim,design,accent"></div>
+          <div class="kv-crestcols" hidden></div>
+        </div>
+        <div class="kv-field">
+          <span class="kv-label">Cut</span>
+          <div class="kv-seg" role="group" aria-label="Show the design on a different cut">
+            <button type="button" data-preview="mens" aria-pressed="true">Men's</button>
+            <button type="button" data-preview="womens" aria-pressed="false">Women's</button>
+            <button type="button" data-preview="kids" aria-pressed="false">Kids</button>
+            <button type="button" data-preview="crop" aria-pressed="false">Crop</button>
+          </div>
         </div>
         <div class="kv-nextbar"><button type="button" class="kv-btn kv-ghost" data-goto="name">Next: Name</button></div>
       </section>
@@ -177,8 +167,7 @@
 
       <section class="kv-panel" id="kvd-p-send" data-panel="send" role="tabpanel">
         <h2>Send it to Koru</h2>
-        <p class="kv-note">We come back within two working days with a proof, the cuts and sizes
-          we'd run, and a date for your window.</p>
+        <p class="kv-note">A proof back within two working days, with the cuts and sizes we'd run.</p>
         <div class="kv-field kv-two-up">
           <div><label class="kv-label" for="kvd-fClub">Club</label>
             <input type="text" id="kvd-fClub" class="kv-text-input" placeholder="Bandon AC" autocomplete="organization"></div>

@@ -1937,7 +1937,7 @@
 
   /* Six of each to begin with. The whole wall of twenty-seven is a lot to
      read, and the ones clubs actually ask for are at the front. */
-  var SHOW_PER_GROUP = 8;
+  var SHOW_PER_GROUP = 6;
   var stylesOpen = false;
 
   function renderStyles() {

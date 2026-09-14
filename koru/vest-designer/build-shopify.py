@@ -37,7 +37,7 @@ body = re.search(r"(<header class=\"masthead\">.*?)\n<script>", src, re.S).group
 IDS = ["palette", "styles", "colourDock", "opacity", "opacityVal", "clubName", "nameCount",
        "fontPicker", "stageHost", "status", "fClub", "fName", "fEmail", "fPhone",
        "fNotes", "submitBtn", "saveBtn", "crestFile", "sponsorFile",
-       "p-colours", "p-style", "p-name", "p-send"]
+       "p-colours", "p-name", "p-send"]
 
 CLP = "kv-"
 CLASSES = set(re.findall(r"\.([A-Za-z][\w-]*)", style))
