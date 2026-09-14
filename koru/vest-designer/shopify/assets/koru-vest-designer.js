@@ -1024,14 +1024,14 @@
       if (!key) return;
       ev.preventDefault();
       dragging = { key: key, du: state[key].u - p.u, dv: state[key].v - p.v };
-      stage.classList.add("grabbing");
+      stage.classList.add("kv-grabbing");
       try { stage.setPointerCapture(ev.pointerId); } catch (e) { /* no capture */ }
     });
 
     stage.addEventListener("pointermove", function (ev) {
       if (!dragging) {
         var hover = toTexture(ev);
-        stage.classList.toggle("over", !!(hover && badgeAt(hover)));
+        stage.classList.toggle("kv-over", !!(hover && badgeAt(hover)));
         return;
       }
       var p = toTexture(ev);
@@ -1050,7 +1050,7 @@
       if (!dragging) return;
       dragging = null;
       snapGuide = null;
-      stage.classList.remove("grabbing");
+      stage.classList.remove("kv-grabbing");
       renderStage();
       try { stage.releasePointerCapture(ev.pointerId); } catch (e) { /* gone */ }
       save();
@@ -1273,7 +1273,7 @@
   var boxRole = {};
 
   function boxOf(node) {
-    return node && node.closest ? node.closest(".colourbox") : null;
+    return node && node.closest ? node.closest(".kv-colourbox") : null;
   }
   function roleOfBox(host) {
     var roles = host.dataset.roles.split(",");
@@ -1283,25 +1283,25 @@
   }
 
   function renderColourBoxes() {
-    $$(".colourbox").forEach(function (host) {
+    $$(".kv-colourbox").forEach(function (host) {
       var roles = host.dataset.roles.split(",");
       var id = host.dataset.box;
       var active = roleOfBox(host);
       var current = state[active];
       var chips = roles.length < 2 ? "" :
-        '<div class="seg" role="group" aria-label="Which colour to change">' +
+        '<div class="kv-seg" role="group" aria-label="Which colour to change">' +
         roles.map(function (r) {
           return '<button type="button" data-role="' + r + '" aria-pressed="' +
                  (r === active) + '">' + esc(ROLE_LABELS[r]) + '</button>';
         }).join("") + '</div>';
       host.innerHTML = chips +
-        '<div class="palette">' + PALETTE.map(function (p) {
+        '<div class="kv-palette">' + PALETTE.map(function (p) {
           var sel = p[1].toLowerCase() === String(current).toLowerCase();
-          return '<button type="button" class="swatch" data-hex="' + p[1] + '" title="' +
+          return '<button type="button" class="kv-swatch" data-hex="' + p[1] + '" title="' +
                  esc(p[0]) + '" aria-label="' + esc(p[0]) + '" aria-pressed="' + sel +
                  '" style="background:' + p[1] + '"></button>';
         }).join("") + '</div>' +
-        '<div class="custom-row"><label for="cc-' + id + '">Any other colour</label>' +
+        '<div class="kv-custom-row"><label for="cc-' + id + '">Any other colour</label>' +
         '<input type="color" id="cc-' + id + '" data-custom="' + id + '" value="' +
         (/^#[0-9a-f]{6}$/i.test(current) ? current : "#F5C518") + '">' +
         '<span>' + esc(String(current).toUpperCase()) + '</span></div>';
@@ -1341,13 +1341,13 @@
       var items = "";
       STYLES.forEach(function (st, i) {
         if (st[2] !== g[0]) return;
-        items += '<button type="button" class="style" data-style="' + i + '" aria-pressed="' +
+        items += '<button type="button" class="kv-style" data-style="' + i + '" aria-pressed="' +
                  (state.style === i) + '">' +
-                 '<span class="sw" style="background-image:url(' + thumbFor(i) + ')"></span>' +
-                 '<span class="nm">' + esc(st[0]) + '</span></button>';
+                 '<span class="kv-sw" style="background-image:url(' + thumbFor(i) + ')"></span>' +
+                 '<span class="kv-nm">' + esc(st[0]) + '</span></button>';
       });
-      if (items) html += '<p class="group-label">' + esc(g[1]) + '</p>' +
-                         '<div class="styles">' + items + '</div>';
+      if (items) html += '<p class="kv-group-label">' + esc(g[1]) + '</p>' +
+                         '<div class="kv-styles">' + items + '</div>';
     });
     $("#kvd-styles").innerHTML = html;
   }
@@ -1373,9 +1373,9 @@
       var val = document.getElementById("kvd-" + key + "SizeVal");
       if (val) val.textContent = Math.round(b.scale * 100) + "%";
     });
-    var stageEl2 = ROOT.querySelector(".stage");
+    var stageEl2 = ROOT.querySelector(".kv-stage");
     if (stageEl2) {
-      stageEl2.classList.toggle("live", BADGES.some(function (k) { return state[k].on; }));
+      stageEl2.classList.toggle("kv-live", BADGES.some(function (k) { return state[k].on; }));
     }
     var n = (state.clubName || "").trim().length;
     $("#kvd-nameCount").textContent = n + " of 20 characters" +
@@ -1482,7 +1482,7 @@
     $("#kvd-clubName").value = state.clubName;
     $("#kvd-opacity").value = Math.round(state.opacity * 100);
     ["club","name","email","phone","notes"].forEach(function (f) {
-      var el = document.getElementById("f" + f.charAt(0).toUpperCase() + f.slice(1));
+      var el = document.getElementById("kvd-f" + f.charAt(0).toUpperCase() + f.slice(1));
       if (el) el.value = state.contact[f] || "";
     });
   }
@@ -1516,7 +1516,7 @@
   function setStatus(msg, isError) {
     var el = $("#kvd-status");
     el.textContent = msg;
-    el.className = "status" + (isError ? " err" : "");
+    el.className = "kv-status" + (isError ? " kv-err" : "");
   }
 
   /* The theme has no database. Designs are posted to whatever endpoint the
@@ -1584,7 +1584,7 @@
   onPick("clear",   function (v) { adoptArtwork(v, null, renderAll); });
 
   ["crest", "sponsor"].forEach(function (key) {
-    var input = $("#" + key + "File");
+    var input = $("#kvd-" + key + "File");
     if (!input) return;
     input.addEventListener("change", function (e) {
       var file = e.target.files && e.target.files[0];
@@ -1627,7 +1627,7 @@
     var host = boxOf(e.target);
     if (!host) return;
     state[roleOfBox(host)] = e.target.value;
-    var hex = host.querySelector(".custom-row span");
+    var hex = host.querySelector(".kv-custom-row span");
     if (hex) hex.textContent = e.target.value.toUpperCase();
     renderStyles();
     repaint();
@@ -1639,7 +1639,7 @@
     repaint();
   });
   ["club","name","email","phone","notes"].forEach(function (f) {
-    var el = document.getElementById("f" + f.charAt(0).toUpperCase() + f.slice(1));
+    var el = document.getElementById("kvd-f" + f.charAt(0).toUpperCase() + f.slice(1));
     if (!el) return;
     el.addEventListener("input", function (e) { state.contact[f] = e.target.value; save(); });
   });
@@ -1665,18 +1665,18 @@
   /* The tab bar parks itself directly under the preview, so the vest
      stays on screen while the steps scroll beneath it. */
   function syncSticky() {
-    var sw = ROOT.querySelector(".stagewrap");
+    var sw = ROOT.querySelector(".kv-stagewrap");
     if (sw) document.documentElement.style.setProperty("--tabTop", sw.offsetHeight + "px");
   }
 
   function showTab(id) {
     if (!document.getElementById("kvd-p-" + id)) id = "colours";
     state.tab = id;
-    $$(".tabs [data-tab]").forEach(function (b) {
+    $$(".kv-tabs [data-tab]").forEach(function (b) {
       b.setAttribute("aria-selected", String(b.dataset.tab === id));
     });
-    $$(".panel").forEach(function (panel) {
-      panel.classList.toggle("on", panel.dataset.panel === id);
+    $$(".kv-panel").forEach(function (panel) {
+      panel.classList.toggle("kv-on", panel.dataset.panel === id);
     });
     syncSticky();
     save();
@@ -1687,7 +1687,7 @@
     if (!t) return;
     showTab(t.dataset.tab || t.dataset.goto);
     if (t.dataset.goto) {
-      var tabs = ROOT.querySelector(".tabs");
+      var tabs = ROOT.querySelector(".kv-tabs");
       if (tabs) tabs.scrollIntoView({ block: "start", behavior: "smooth" });
     }
   });
@@ -1698,7 +1698,7 @@
   restore();
   renderAll();
   showTab(state.tab);
-  bindBadgeDrag(ROOT.querySelector(".stage"));
+  bindBadgeDrag(ROOT.querySelector(".kv-stage"));
   refreshArtwork(renderAll);
   window.addEventListener("resize", function () { renderStage(); syncSticky(); });
   window.addEventListener("orientationchange", syncSticky);

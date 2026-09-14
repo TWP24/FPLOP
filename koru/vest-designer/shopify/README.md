@@ -9,7 +9,23 @@ assets/koru-vest-designer.css     styles, bound to the theme's colour scheme
 assets/koru-vest-designer.js      the designer itself
 test-harness.html                 the three files stitched together with a stand-in
                                   for Dawn, so it can be opened in a browser
+vendor/dawn-base.css              Dawn's own stylesheet, loaded by the harness
 ```
+
+## Names
+
+A section shares its page with the rest of the theme, so nothing generic stays generic:
+the build prefixes every id `kvd-` and every class `kv-`, and namespaces every selector
+under `.koru-vd`.
+
+Namespacing alone is not enough, which is why the classes are prefixed too. Dawn styles a
+`.field` of its own — `display:flex` plus `:before`/`:after` borders — and an ancestor
+selector only wins for the properties we set; everything we leave alone still comes from
+the theme. That is what made the first install render with overlapping labels.
+
+The harness loads `vendor/dawn-base.css` (from `Shopify/dawn`, `main`) so the next
+collision shows up locally instead of on the store. It is vendored rather than linked
+because GitHub serves it as `text/plain` and a browser refuses to apply it.
 
 ## Brand
 
@@ -83,13 +99,17 @@ plumbing exists.
 
 `mockup` is the preview canvas as a PNG, so the reply to a club can show their own vest.
 
+## Verified
+
+Run in `test-harness.html` against Dawn's own stylesheet, headless, at 390px and 1200px:
+no console errors, every panel laid out, the canvas sized (the first install rendered it
+0×0), all 27 styles, the colour card read from the section setting. Class names were
+diffed against `vendor/dawn-base.css` — no collisions.
+
 ## Not yet verified
 
-The generated files have been run in `test-harness.html` — no console errors, all 27
-styles, the colour card read from the section setting, controls and canvas rendering.
-They have **not** been rendered by Liquid on a real theme. Worth checking on a duplicate
-theme first: that the schema parses, that `.koru-vd` doesn't collide with anything in
-Dawn, and that the section behaves in the theme editor.
+The schema has not been parsed by Liquid on a real theme, and nothing here has been seen
+in the theme editor since the rename.
 
 The share-by-link feature is not in this build. It depended on the artifact database;
 reinstating it needs the endpoint to hand a code back.

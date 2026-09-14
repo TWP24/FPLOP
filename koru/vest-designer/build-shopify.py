@@ -29,6 +29,57 @@ style = re.search(r"<style>(.*?)</style>", src, re.S).group(1)
 script = re.search(r"<script>\n(\(function \(\).*?)\n</script>", src, re.S).group(1)
 body = re.search(r"(<header class=\"masthead\">.*?)\n<script>", src, re.S).group(1)
 
+# ------------------------------------------------------------- names
+# A section shares its page with the rest of the theme, so nothing generic can
+# stay generic. Ids take a kvd- prefix and classes a kv- one: Dawn styles a
+# .field of its own, and namespacing a selector under .koru-vd does not stop
+# Dawn's own rules matching our elements.
+IDS = ["palette", "styles", "opacity", "opacityVal", "clubName", "nameCount",
+       "fontPicker", "stageHost", "status", "fClub", "fName", "fEmail", "fPhone",
+       "fNotes", "submitBtn", "saveBtn", "crestFile", "sponsorFile",
+       "crestSizeRow", "crestSizeVal", "sponsorSizeRow", "sponsorSizeVal",
+       "frontSizeRow", "frontSizeVal", "backSizeRow", "backSizeVal",
+       "p-colours", "p-style", "p-name", "p-send"]
+
+CLP = "kv-"
+CLASSES = set(re.findall(r"\.([A-Za-z][\w-]*)", style))
+for m in re.finditer(r'class="([^"]+)"', body):
+    CLASSES.update(m.group(1).split())
+CLASSES.discard(ROOT)
+# classes this build introduces, so they are named like the rest
+CLASSES.update(["intro", "intro-copy", "fineprint"])
+
+def alt(names):
+    return "|".join(re.escape(n) for n in sorted(names, key=len, reverse=True))
+
+CSS_ID_RE = re.compile(r"#(%s)(?![\w-])" % alt(IDS))
+CSS_CLASS_RE = re.compile(r"\.(%s)(?![\w-])" % alt(CLASSES))
+
+def rename_css(text):
+    text = CSS_ID_RE.sub(lambda m: "#" + IDP + m.group(1), text)
+    return CSS_CLASS_RE.sub(lambda m: "." + CLP + m.group(1), text)
+
+def rename_class_attrs(text):
+    """Rewrite class="a b" wherever it appears, markup or JS string."""
+    return re.sub(r'class="([^"]*)"',
+                  lambda m: 'class="%s"' % " ".join(
+                      (CLP + t if t in CLASSES else t) for t in m.group(1).split()),
+                  text)
+
+def rename_js_classes(js):
+    js = rename_class_attrs(js)
+    js = js.replace('el.className = "status" + (isError ? " err" : "");',
+                    'el.className = "%sstatus" + (isError ? " %serr" : "");' % (CLP, CLP))
+    js = re.sub(r'(classList\.(?:add|remove|toggle)\()"([\w-]+)"',
+                lambda m: '%s"%s"' % (m.group(1),
+                                      CLP + m.group(2) if m.group(2) in CLASSES else m.group(2)), js)
+    js = re.sub(r'(\$\$?|querySelector|querySelectorAll|closest|matches)\((["\'])\.([\w-]+)',
+                lambda m: '%s(%s.%s' % (m.group(1), m.group(2),
+                                        CLP + m.group(3) if m.group(3) in CLASSES else m.group(3)), js)
+    return js
+
+style = rename_css(style)
+
 # ---------------------------------------------------------------- css
 BRAND_TOKENS = """
 /* Bound to Dawn's colour scheme variables, so the designer inherits whatever
@@ -119,7 +170,7 @@ THEME_FIT = """
 .koru-vd .fineprint p + p{margin-top:8px}
 """
 
-css = BRAND_TOKENS + "\n" + namespace(style) + "\n" + THEME_FIT
+css = BRAND_TOKENS + "\n" + namespace(style) + "\n" + rename_css(THEME_FIT)
 # square everything off, as the theme does
 css = re.sub(r"border-radius:\s*[0-9.]+px", "border-radius:0", css)
 css = re.sub(r"border-radius:\s*50%", "border-radius:50%", css)
@@ -127,13 +178,6 @@ css = re.sub(r"border-radius:\s*50%", "border-radius:50%", css)
 css = re.sub(r"\n\s*box-shadow:0 0 0 2px [^;]+;", "\n    outline:2px solid var(--accent);outline-offset:2px;", css)
 
 # ---------------------------------------------------------------- ids
-IDS = ["palette", "styles", "opacity", "opacityVal", "clubName", "nameCount",
-       "fontPicker", "stageHost", "status", "fClub", "fName", "fEmail", "fPhone",
-       "fNotes", "submitBtn", "saveBtn", "crestFile", "sponsorFile",
-       "crestSizeRow", "crestSizeVal", "sponsorSizeRow", "sponsorSizeVal",
-       "frontSizeRow", "frontSizeVal", "backSizeRow", "backSizeVal",
-       "p-colours", "p-style", "p-name", "p-send"]
-
 for i in IDS:
     body = body.replace('id="%s"' % i, 'id="%s%s"' % (IDP, i))
     body = body.replace('for="%s"' % i, 'for="%s%s"' % (IDP, i))
@@ -141,12 +185,11 @@ for i in IDS:
     script = script.replace('$("#%s")' % i, '$("#%s%s")' % (IDP, i))
     script = script.replace('getElementById("%s")' % i, 'getElementById("%s%s")' % (IDP, i))
 
-# ids the script builds at runtime
-script = script.replace('$("#" + v + "File")', '$("#%s" + v + "File")' % IDP)
-script = script.replace('getElementById(key + "SizeRow")', 'getElementById("%s" + key + "SizeRow")' % IDP)
-script = script.replace('getElementById(key + "SizeVal")', 'getElementById("%s" + key + "SizeVal")' % IDP)
-script = script.replace('getElementById(bk + "SizeVal")', 'getElementById("%s" + bk + "SizeVal")' % IDP)
-script = script.replace('document.getElementById("p-" + id)', 'document.getElementById("%sp-" + id)' % IDP)
+# ids the script builds at runtime. Blanket rules rather than one line per
+# call site: a lookup the build misses fails silently in the browser.
+script = re.sub(r'\$\("#(?!%s)' % IDP, '$("#%s' % IDP, script)
+script = re.sub(r'getElementById\("(?!%s)' % IDP, 'getElementById("%s' % IDP, script)
+script = re.sub(r'getElementById\((\w+) \+ "', 'getElementById("%s" + \\1 + "' % IDP, script)
 script = script.replace('"el" + el.id + f[0]', '"%sel" + el.id + f[0]' % IDP)
 script = script.replace('"cc-" + id', '"%scc-" + id' % IDP)
 
@@ -237,6 +280,8 @@ script = script.replace('''      if (code) setStatus("Saved as " + code + ". Sha
 script = script.replace('''  var stageCanvas = null, stageCtx = null;''',
                         '''  var stageCanvas = null, stageCtx = null;''')
 
+script = rename_js_classes(script)
+
 open(CSS, "w", encoding="utf-8").write(css.strip() + "\n")
 open(JS, "w", encoding="utf-8").write(script.strip() + "\n")
 print("css %d bytes, js %d bytes" % (len(css), len(script)))
@@ -252,6 +297,9 @@ body = re.sub(r"  <section class=\"intro\">.*?</section>\n", """  <section class
 """, body, count=1, flags=re.S)
 body = re.sub(r"      <div class=\"fineprint\">.*?</div>\n", """      <div class="fineprint">{{ section.settings.fineprint }}</div>
 """, body, count=1, flags=re.S)
+# nothing here shares a link back: without the database there is no design to
+# reopen, so the second button just saves what the club has so far.
+body = body.replace("Save &amp; get a link", "Save my design")
 # the designer's own .wrap becomes the theme's page width
 # not .page-width: two sources of gutter fight each other, and the designer
 # already has one. It takes the theme's width instead.
@@ -293,6 +341,8 @@ SCHEMA = {
   "presets": [{"name": "Vest designer"}]
 }
 
+body = rename_class_attrs(body)
+
 liquid = """{{ 'koru-vest-designer.css' | asset_url | stylesheet_tag }}
 
 <div
@@ -321,3 +371,49 @@ liquid = """{{ 'koru-vest-designer.css' | asset_url | stylesheet_tag }}
 
 open(SEC, "w", encoding="utf-8").write(liquid)
 print("section %d bytes" % len(liquid))
+
+# ---------------------------------------------------------------- harness
+# A stand-in page so the section can be opened without a store. Dawn's own
+# base.css is loaded alongside it: a class of ours colliding with one of the
+# theme's is invisible in isolation, and namespacing does not prevent it.
+# Dawn's stylesheet is vendored rather than linked: GitHub serves it as
+# text/plain with nosniff, so a browser would refuse to apply it.
+DAWN_BASE = "vendor/dawn-base.css"
+
+def fake_liquid(text, dawn_css):
+    defaults = {}
+    for s in SCHEMA["settings"]:
+        if "id" in s:
+            defaults[s["id"]] = s.get("default", "")
+    def setting(m):
+        val = str(defaults.get(m.group(1), ""))
+        return val.replace('"', "&quot;") if "escape" in m.group(0) else val
+    text = re.sub(r"\{\{\s*section\.settings\.(\w+)[^}]*\}\}", setting, text)
+    text = text.replace("{{ shop.permanent_domain }}", "example.myshopify.com")
+    text = re.sub(r"\{\{\s*section\.id\s*\}\}", "vd", text)
+    text = re.sub(r"\{\{\s*'([\w.-]+)'\s*\|\s*asset_url\s*\|\s*stylesheet_tag\s*\}\}",
+                  r'<link rel="stylesheet" href="assets/\1">', text)
+    text = re.sub(r"\{\{\s*'([\w.-]+)'\s*\|\s*asset_url\s*\}\}", r"assets/\1", text)
+    text = re.sub(r"\{%\s*schema\s*%\}.*?\{%\s*endschema\s*%\}", "", text, flags=re.S)
+    head = """<!doctype html><meta charset=utf-8>
+<title>Vest designer — theme harness</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap">
+<!-- Dawn's own stylesheet (vendor/dawn-base.css, from Shopify/dawn main),
+     so a collision with the theme shows up here before it ships. -->
+<link rel="stylesheet" href="%s">
+<style>
+  /* the handful of Dawn variables the section reads */
+  :root{--font-body-family:Archivo,sans-serif;--font-heading-family:Archivo,sans-serif;
+        --buttons-radius:0px;--page-width:1200px;--duration-short:100ms}
+  .color-scheme-1{--color-background:250,250,247;--color-foreground:10,10,10;
+                  --color-button:10,10,10;--color-button-text:250,250,247}
+  body{margin:0;background:rgb(250,250,247)}
+  .gradient{background:rgb(var(--color-background))}
+</style>
+""" % dawn_css
+    return head + text
+
+open(os.path.join(HERE, "shopify", "test-harness.html"), "w", encoding="utf-8").write(
+    fake_liquid(liquid, DAWN_BASE))
+print("harness written")

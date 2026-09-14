@@ -7,176 +7,176 @@
   data-contact="{{ section.settings.contact_email | escape }}"
   data-shop="{{ shop.permanent_domain }}"
 >
-<div class="wrap">
-  <section class="intro">
+<div class="kv-wrap">
+  <section class="kv-intro">
     <h1>{{ section.settings.heading | escape }}</h1>
-    <div class="intro-copy">{{ section.settings.intro }}</div>
+    <div class="kv-intro-copy">{{ section.settings.intro }}</div>
   </section>
 
-  <div class="tool">
-    <div class="stagewrap">
-      <div class="stage"><div id="kvd-stageHost"></div></div>
+  <div class="kv-tool">
+    <div class="kv-stagewrap">
+      <div class="kv-stage"><div id="kvd-stageHost"></div></div>
     </div>
 
-    <nav class="tabs" role="tablist" aria-label="Design steps">
+    <nav class="kv-tabs" role="tablist" aria-label="Design steps">
       <button type="button" role="tab" data-tab="colours" aria-selected="true" aria-controls="kvd-p-colours">Vest</button>
       <button type="button" role="tab" data-tab="style" aria-selected="false" aria-controls="kvd-p-style">Style</button>
       <button type="button" role="tab" data-tab="name" aria-selected="false" aria-controls="kvd-p-name">Name</button>
       <button type="button" role="tab" data-tab="send" aria-selected="false" aria-controls="kvd-p-send">Send</button>
     </nav>
 
-    <div class="panels">
-      <section class="panel on" id="kvd-p-colours" data-panel="colours" role="tabpanel">
+    <div class="kv-panels">
+      <section class="kv-panel kv-on" id="kvd-p-colours" data-panel="colours" role="tabpanel">
         <h2>Body and trim</h2>
-        <p class="note">Everything is sublimated, so colour is free — a five-colour vest costs
+        <p class="kv-note">Everything is sublimated, so colour is free — a five-colour vest costs
           the same as a plain one. The rest of the colours sit with the things they colour.</p>
-        <div class="field">
-          <div class="colourbox" data-box="garment" data-roles="base,trim"></div>
+        <div class="kv-field">
+          <div class="kv-colourbox" data-box="garment" data-roles="base,trim"></div>
         </div>
-        <div class="nextbar"><button type="button" class="btn ghost" data-goto="style">Next: Style</button></div>
+        <div class="kv-nextbar"><button type="button" class="kv-btn kv-ghost" data-goto="style">Next: Style</button></div>
       </section>
 
-      <section class="panel" id="kvd-p-style" data-panel="style" role="tabpanel">
+      <section class="kv-panel" id="kvd-p-style" data-panel="style" role="tabpanel">
         <h2>Your style</h2>
-        <p class="note">Each one uses the colours you picked, so change a colour and they all
+        <p class="kv-note">Each one uses the colours you picked, so change a colour and they all
           change with it.</p>
         <div id="kvd-styles"></div>
-        <div class="field">
-          <label class="label" for="kvd-opacity">Strength</label>
-          <div class="slider-row">
+        <div class="kv-field">
+          <label class="kv-label" for="kvd-opacity">Strength</label>
+          <div class="kv-slider-row">
             <input type="range" id="kvd-opacity" min="10" max="100" value="100">
-            <span class="slider-val" id="kvd-opacityVal">100%</span>
+            <span class="kv-slider-val" id="kvd-opacityVal">100%</span>
           </div>
         </div>
-        <div class="field">
-          <span class="label">Style colours</span>
-          <div class="colourbox" data-box="style" data-roles="design,accent"></div>
+        <div class="kv-field">
+          <span class="kv-label">Style colours</span>
+          <div class="kv-colourbox" data-box="style" data-roles="design,accent"></div>
         </div>
-        <div class="field">
-          <span class="label">See it on</span>
-          <div class="seg" role="group" aria-label="Show the design on a different cut">
+        <div class="kv-field">
+          <span class="kv-label">See it on</span>
+          <div class="kv-seg" role="group" aria-label="Show the design on a different cut">
             <button type="button" data-preview="mens" aria-pressed="true">Men's</button>
             <button type="button" data-preview="womens" aria-pressed="false">Women's</button>
             <button type="button" data-preview="kids" aria-pressed="false">Kids</button>
             <button type="button" data-preview="crop" aria-pressed="false">Crop</button>
           </div>
         </div>
-        <div class="nextbar"><button type="button" class="btn ghost" data-goto="name">Next: Name</button></div>
+        <div class="kv-nextbar"><button type="button" class="kv-btn kv-ghost" data-goto="name">Next: Name</button></div>
       </section>
 
-      <section class="panel" id="kvd-p-name" data-panel="name" role="tabpanel">
+      <section class="kv-panel" id="kvd-p-name" data-panel="name" role="tabpanel">
         <h2>Club name and crest</h2>
-        <div class="field">
-          <span class="label">Front print</span>
-          <p class="note" style="margin:-4px 0 10px">Drag anything on the vest — prints, crest,
+        <div class="kv-field">
+          <span class="kv-label">Front print</span>
+          <p class="kv-note" style="margin:-4px 0 10px">Drag anything on the vest — prints, crest,
             sponsor — to place it. It snaps to the centre line, or use Centre.</p>
-          <div class="seg" role="group" aria-label="Print on the front">
+          <div class="kv-seg" role="group" aria-label="Print on the front">
             <button type="button" data-badge="front:on" aria-pressed="true">Club name</button>
             <button type="button" data-badge="front:off" aria-pressed="false">None</button>
           </div>
-          <div class="slider-row with-action" id="kvd-frontSizeRow" style="margin-top:12px">
+          <div class="kv-slider-row kv-with-action" id="kvd-frontSizeRow" style="margin-top:12px">
             <input type="range" data-badgesize="front" min="25" max="95" value="58"
                    aria-label="Front print size">
-            <span class="slider-val" id="kvd-frontSizeVal">58%</span>
-            <button type="button" class="mini" data-centre="front">Centre</button>
+            <span class="kv-slider-val" id="kvd-frontSizeVal">58%</span>
+            <button type="button" class="kv-mini" data-centre="front">Centre</button>
           </div>
         </div>
 
-        <div class="field">
-          <span class="label">Back print</span>
-          <div class="seg" role="group" aria-label="Print on the back">
+        <div class="kv-field">
+          <span class="kv-label">Back print</span>
+          <div class="kv-seg" role="group" aria-label="Print on the back">
             <button type="button" data-badge="back:on" aria-pressed="true">Club name</button>
             <button type="button" data-badge="back:off" aria-pressed="false">None</button>
           </div>
-          <div class="slider-row with-action" id="kvd-backSizeRow" style="margin-top:12px">
+          <div class="kv-slider-row kv-with-action" id="kvd-backSizeRow" style="margin-top:12px">
             <input type="range" data-badgesize="back" min="25" max="95" value="50"
                    aria-label="Back print size">
-            <span class="slider-val" id="kvd-backSizeVal">50%</span>
-            <button type="button" class="mini" data-centre="back">Centre</button>
+            <span class="kv-slider-val" id="kvd-backSizeVal">50%</span>
+            <button type="button" class="kv-mini" data-centre="back">Centre</button>
           </div>
         </div>
 
-        <div class="field">
-          <label class="label" for="kvd-clubName">Name across the chest</label>
-          <input type="text" id="kvd-clubName" class="text-input chest-input" maxlength="20"
+        <div class="kv-field">
+          <label class="kv-label" for="kvd-clubName">Name across the chest</label>
+          <input type="text" id="kvd-clubName" class="kv-text-input kv-chest-input" maxlength="20"
                  value="KORU AC" placeholder="YOUR CLUB" autocomplete="off">
-          <span class="counter" id="kvd-nameCount"></span>
+          <span class="kv-counter" id="kvd-nameCount"></span>
         </div>
-        <div class="field">
-          <span class="label">Lettering</span>
-          <div class="seg fonts" id="kvd-fontPicker" role="group" aria-label="Lettering face"></div>
+        <div class="kv-field">
+          <span class="kv-label">Lettering</span>
+          <div class="kv-seg kv-fonts" id="kvd-fontPicker" role="group" aria-label="Lettering face"></div>
         </div>
 
-        <div class="field">
-          <span class="label">Sponsor logo</span>
-          <div class="seg" role="group" aria-label="Sponsor logo">
+        <div class="kv-field">
+          <span class="kv-label">Sponsor logo</span>
+          <div class="kv-seg" role="group" aria-label="Sponsor logo">
             <button type="button" data-badge="sponsor:off" aria-pressed="true">None</button>
             <button type="button" data-badge="sponsor:on" aria-pressed="false">Show</button>
             <button type="button" data-upload="sponsor">Upload image</button>
             <button type="button" data-clear="sponsor" hidden>Remove image</button>
           </div>
           <input type="file" id="kvd-sponsorFile" accept="image/*" hidden>
-          <div class="slider-row with-action" id="kvd-sponsorSizeRow" style="margin-top:12px">
+          <div class="kv-slider-row kv-with-action" id="kvd-sponsorSizeRow" style="margin-top:12px">
             <input type="range" data-badgesize="sponsor" min="6" max="70" value="30" aria-label="Sponsor logo size">
-            <span class="slider-val" id="kvd-sponsorSizeVal">30%</span>
-            <button type="button" class="mini" data-centre="sponsor">Centre</button>
+            <span class="kv-slider-val" id="kvd-sponsorSizeVal">30%</span>
+            <button type="button" class="kv-mini" data-centre="sponsor">Centre</button>
           </div>
         </div>
 
-        <div class="field">
-          <span class="label">Lettering colour</span>
-          <div class="colourbox" data-box="lettering" data-roles="text"></div>
+        <div class="kv-field">
+          <span class="kv-label">Lettering colour</span>
+          <div class="kv-colourbox" data-box="lettering" data-roles="text"></div>
         </div>
-        <div class="field">
-          <span class="label">Club crest</span>
-          <p class="note" style="margin:-4px 0 10px">Upload it, then drag it on the vest to place
+        <div class="kv-field">
+          <span class="kv-label">Club crest</span>
+          <p class="kv-note" style="margin:-4px 0 10px">Upload it, then drag it on the vest to place
             it — front panel or back.</p>
-          <div class="seg" role="group" aria-label="Club crest">
+          <div class="kv-seg" role="group" aria-label="Club crest">
             <button type="button" data-badge="crest:off" aria-pressed="false">None</button>
             <button type="button" data-badge="crest:on" aria-pressed="true">Show</button>
             <button type="button" data-upload="crest">Upload image</button>
             <button type="button" data-clear="crest" hidden>Remove image</button>
           </div>
           <input type="file" id="kvd-crestFile" accept="image/*" hidden>
-          <div class="slider-row with-action" id="kvd-crestSizeRow" style="margin-top:12px">
+          <div class="kv-slider-row kv-with-action" id="kvd-crestSizeRow" style="margin-top:12px">
             <input type="range" data-badgesize="crest" min="6" max="70" value="17" aria-label="Club crest size">
-            <span class="slider-val" id="kvd-crestSizeVal">17%</span>
-            <button type="button" class="mini" data-centre="crest">Centre</button>
+            <span class="kv-slider-val" id="kvd-crestSizeVal">17%</span>
+            <button type="button" class="kv-mini" data-centre="crest">Centre</button>
           </div>
         </div>
-        <div class="nextbar"><button type="button" class="btn ghost" data-goto="send">Next: Send</button></div>
+        <div class="kv-nextbar"><button type="button" class="kv-btn kv-ghost" data-goto="send">Next: Send</button></div>
       </section>
 
-      <section class="panel" id="kvd-p-send" data-panel="send" role="tabpanel">
+      <section class="kv-panel" id="kvd-p-send" data-panel="send" role="tabpanel">
         <h2>Send it to Koru</h2>
-        <p class="note">We come back within two working days with a proof, the cuts and sizes
+        <p class="kv-note">We come back within two working days with a proof, the cuts and sizes
           we'd run, and a date for your window.</p>
-        <div class="field two-up">
-          <div><label class="label" for="kvd-fClub">Club</label>
-            <input type="text" id="kvd-fClub" class="text-input" placeholder="Bandon AC" autocomplete="organization"></div>
-          <div><label class="label" for="kvd-fName">Your name</label>
-            <input type="text" id="kvd-fName" class="text-input" placeholder="Gear officer" autocomplete="name"></div>
+        <div class="kv-field kv-two-up">
+          <div><label class="kv-label" for="kvd-fClub">Club</label>
+            <input type="text" id="kvd-fClub" class="kv-text-input" placeholder="Bandon AC" autocomplete="organization"></div>
+          <div><label class="kv-label" for="kvd-fName">Your name</label>
+            <input type="text" id="kvd-fName" class="kv-text-input" placeholder="Gear officer" autocomplete="name"></div>
         </div>
-        <div class="field two-up">
-          <div><label class="label" for="kvd-fEmail">Email</label>
-            <input type="email" id="kvd-fEmail" class="text-input" placeholder="you@club.ie"
+        <div class="kv-field kv-two-up">
+          <div><label class="kv-label" for="kvd-fEmail">Email</label>
+            <input type="email" id="kvd-fEmail" class="kv-text-input" placeholder="you@club.ie"
                    autocomplete="email" inputmode="email"></div>
-          <div><label class="label" for="kvd-fPhone">Phone</label>
-            <input type="tel" id="kvd-fPhone" class="text-input" placeholder="08x xxx xxxx"
+          <div><label class="kv-label" for="kvd-fPhone">Phone</label>
+            <input type="tel" id="kvd-fPhone" class="kv-text-input" placeholder="08x xxx xxxx"
                    autocomplete="tel" inputmode="tel"></div>
         </div>
-        <div class="field">
-          <label class="label" for="kvd-fNotes">Anything we should know</label>
-          <textarea id="kvd-fNotes" class="text-input" rows="3"
+        <div class="kv-field">
+          <label class="kv-label" for="kvd-fNotes">Anything we should know</label>
+          <textarea id="kvd-fNotes" class="kv-text-input" rows="3"
             placeholder="Colour references, your crest file, a race you need these for…"></textarea>
         </div>
-        <div class="actions">
-          <button type="button" class="btn" id="kvd-submitBtn">Send design to Koru</button>
-          <button type="button" class="btn ghost" id="kvd-saveBtn">Save &amp; get a link</button>
+        <div class="kv-actions">
+          <button type="button" class="kv-btn" id="kvd-submitBtn">Send design to Koru</button>
+          <button type="button" class="kv-btn kv-ghost" id="kvd-saveBtn">Save my design</button>
         </div>
-        <p class="status" id="kvd-status" role="status" aria-live="polite"></p>
+        <p class="kv-status" id="kvd-status" role="status" aria-live="polite"></p>
 
-        <div class="fineprint">{{ section.settings.fineprint }}</div>
+        <div class="kv-fineprint">{{ section.settings.fineprint }}</div>
       </section>
     </div>
   </div>
