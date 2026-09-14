@@ -39,8 +39,8 @@ because GitHub serves it as `text/plain` and a browser refuses to apply it.
 - **Colours from the crest.** Uploading a crest samples it and offers those colours as
   swatches, with one button to make them the vest's colours. Clubs know their colours by
   sight, not by hex.
-- **Vest-shaped style tiles**, eight per group with the rest behind a toggle. Twenty-seven
-  rectangles in the same two colours all look alike; twenty-seven vests do not.
+- **Vest-shaped style tiles**, eight per group with the rest behind a toggle. Thirty-two
+  rectangles in the same two colours all look alike; thirty-two vests do not.
 - **Undo and redo**, coalesced so a dragged slider is one step, and covering the design
   only — not which step is open or which way the vest is turned.
 - **Download** the mockup as a PNG, front and back, before filling in anything.
@@ -158,7 +158,7 @@ row in a sheet, create the club contact. It needs a sender address before it can
 
 Run in `test-harness.html` against Dawn's own stylesheet, headless, at 390px and 1200px:
 no console errors, every panel laid out, the canvas sized (the first install rendered it
-0×0), all 27 styles, the colour card read from the section setting. Class names were
+0×0), all 32 styles, the colour card read from the section setting. Class names were
 diffed against `dawn-base.css` — no collisions.
 
 ## Not yet verified

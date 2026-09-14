@@ -83,6 +83,11 @@
     snake:   { group:"print", make:function(){ return {size:0.12, coverage:0.55}; } },
     mosaic:  { group:"print", make:function(){ return {size:0.16, coverage:0.40, v:0.55}; } },
     warp:    { group:"print", make:function(){ return {w:0.20, lean:0.30, density:0.60}; } },
+    bleach:  { group:"print", make:function(){ return {size:0.34, coverage:0.52, soft:0.34}; } },
+    cubes:   { group:"print", make:function(){ return {size:0.22, face:0, hatch:false}; } },
+    caustic: { group:"print", make:function(){ return {size:0.34, sharp:0.55, lean:0.45}; } },
+    marble:  { group:"print", make:function(){ return {size:0.20, coverage:0.50, swirl:0.62}; } },
+    flame:   { group:"print", make:function(){ return {w:0.14, h:0.07, band:0.038}; } },
 
     /* The standard club-kit templates, laid out per panel. */
     vstripes:{ group:"kit", make:function(){ return {w:0.055, gap:0.055}; } },
@@ -134,7 +139,13 @@
     ["Mosaic",          [{ t:"mosaic", r:"design", coverage:0.5 },
                          { t:"mosaic", r:"accent", coverage:0.3 },
                          { t:"mosaic", r:"trim", coverage:0.28 }], "print"],
-    ["Warp chevron",    [{ t:"warp", r:"design" }], "print"]
+    ["Warp chevron",    [{ t:"warp", r:"design" }], "print"],
+    ["Bleach wash",     [{ t:"bleach", r:"design" }], "print"],
+    ["Tumbling blocks", [{ t:"cubes", r:"design", face:1 },
+                         { t:"cubes", r:"accent", face:0, hatch:true }], "print"],
+    ["Water",           [{ t:"caustic", r:"design" }], "print"],
+    ["Marble",          [{ t:"marble", r:"design" }], "print"],
+    ["Flame stitch",    [{ t:"flame", r:"design" }], "print"]
   ];
 
   /* Somewhere to start. A club landing on a blank vest has to invent a
@@ -531,6 +542,131 @@
     });
   }
 
+  /* Bleach wash: sponged blots with soft edges and a dappled grain inside
+     them, the way bleach actually lands on cloth. */
+  function bleachCanvas(el) {
+    return cached("bl|" + el.colour + "|" + [el.size, el.coverage, el.soft, el.seed].join("|"),
+      function () {
+        var w = 320, h = Math.max(2, Math.round(320 * TH / TW));
+        var c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        var x = c.getContext("2d"), img = x.createImageData(w, h);
+        var noise = makeNoise(el.seed), rgb = hexToRgb(el.colour);
+        var freq = 1.6 + el.size * 9;
+        var cut = 1 - el.coverage, soft = Math.max(0.03, el.soft * 0.55);
+        for (var py = 0; py < h; py++) {
+          for (var px = 0; px < w; px++) {
+            var u = px / w, v = py / h;
+            var blot = noise(u * freq, v * freq * 0.92, 3);
+            var dapple = noise(u * freq * 5.4 + 11, v * freq * 5.4 + 7, 2);
+            var n = blot * 0.72 + dapple * 0.28;
+            var a = (n - (cut - soft)) / (2 * soft);
+            a = a < 0 ? 0 : a > 1 ? 1 : a;
+            var o = (py * w + px) * 4;
+            img.data[o] = rgb[0]; img.data[o + 1] = rgb[1]; img.data[o + 2] = rgb[2];
+            img.data[o + 3] = Math.round(255 * smooth(a));
+          }
+        }
+        x.putImageData(img, 0, 0);
+        return c;
+      });
+  }
+
+  /* Water: ridged noise, which peaks along thin lines rather than in
+     blobs, so it reads as light running over a surface. */
+  function causticCanvas(el) {
+    return cached("wt|" + el.colour + "|" + [el.size, el.sharp, el.lean, el.seed].join("|"),
+      function () {
+        var w = 360, h = Math.max(2, Math.round(360 * TH / TW));
+        var c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        var x = c.getContext("2d"), img = x.createImageData(w, h);
+        var noise = makeNoise(el.seed), rgb = hexToRgb(el.colour);
+        var freq = 4 + el.size * 34;
+        var power = 3 + el.sharp * 9;
+        for (var py = 0; py < h; py++) {
+          for (var px = 0; px < w; px++) {
+            var u = px / w, v = py / h;
+            /* sheared, so the ripples run across the vest rather than
+               straight down it */
+            var su = u + v * el.lean;
+            var q = noise(su * freq * 0.35 + 3, v * freq * 0.35, 2);
+            var n = noise(su * freq + q * 1.4, v * freq * 0.55 + q * 1.4, 4);
+            var ridge = 1 - Math.abs(2 * n - 1);
+            /* a second, finer ridge for the glitter between the bands */
+            var fine = 1 - Math.abs(2 * noise(su * freq * 2.3 + 17, v * freq * 1.3 + 4, 2) - 1);
+            ridge = ridge * 0.82 + fine * 0.18;
+            var o = (py * w + px) * 4;
+            img.data[o] = rgb[0]; img.data[o + 1] = rgb[1]; img.data[o + 2] = rgb[2];
+            img.data[o + 3] = Math.round(255 * Math.pow(ridge, power));
+          }
+        }
+        x.putImageData(img, 0, 0);
+        return c;
+      });
+  }
+
+  /* Marble: noise pushed hard through itself and then cut to two tones,
+     with only a pixel of ramp at the edge so it stays a poured shape
+     rather than a cloud. */
+  function marbleCanvas(el) {
+    return cached("mb|" + el.colour + "|" + [el.size, el.coverage, el.swirl, el.seed].join("|"),
+      function () {
+        var w = 560, h = Math.max(2, Math.round(560 * TH / TW));
+        var c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        var x = c.getContext("2d"), img = x.createImageData(w, h);
+        var noise = makeNoise(el.seed), rgb = hexToRgb(el.colour);
+        var freq = 2 + el.size * 14;
+        var swirl = 0.8 + el.swirl * 2.6;
+        var cut = 1 - el.coverage;
+        for (var py = 0; py < h; py++) {
+          for (var px = 0; px < w; px++) {
+            var u = px / w, v = py / h;
+            var q = noise(u * freq * 0.55 + 5, v * freq * 0.55 + 2, 3);
+            var n = noise(u * freq + q * swirl, v * freq + q * swirl * 1.25, 4);
+            var a = (n - cut) / 0.014;
+            a = a < 0 ? 0 : a > 1 ? 1 : a;
+            var o = (py * w + px) * 4;
+            img.data[o] = rgb[0]; img.data[o + 1] = rgb[1]; img.data[o + 2] = rgb[2];
+            img.data[o + 3] = Math.round(255 * a);
+          }
+        }
+        x.putImageData(img, 0, 0);
+        return c;
+      });
+  }
+
+  /* Soft-edged effects are generated small and scaled up smoothly; the
+     hard-edged ones keep their pixels (drawPixels). */
+  function drawSoft(ctx, canvas) {
+    ctx.drawImage(canvas, 0, 0, TW, TH);
+  }
+
+  /* Engraved shading: lines inside a shape rather than a flat fill, which
+     is what separates the two lit faces of a cube from the dark one. */
+  function hatchPoly(ctx, pts, colour, pitch) {
+    var xs = pts.map(function (p) { return p[0]; });
+    var ys = pts.map(function (p) { return p[1]; });
+    var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
+    var y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+    var span = y1 - y0;
+    ctx.save();
+    ctx.beginPath();
+    pts.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); });
+    ctx.closePath();
+    ctx.clip();
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = Math.max(0.8, pitch * 0.45);
+    for (var sx = x0 - span; sx < x1 + pitch; sx += pitch) {
+      ctx.beginPath();
+      ctx.moveTo(sx, y0);
+      ctx.lineTo(sx + span, y1);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   /* Most kit shapes are per PANEL, not per texture: a vest with four
      vertical stripes has four on the front and four on the back, not
      eight spread across the pair. These helpers work a panel at a time. */
@@ -734,6 +870,76 @@
             ctx.arc(px, py, r, 0, Math.PI * 2);
             ctx.fill();
           }
+        }
+        break;
+      }
+
+      case "bleach":
+        drawSoft(ctx, bleachCanvas(el));
+        break;
+
+      case "caustic":
+        drawSoft(ctx, causticCanvas(el));
+        break;
+
+      case "marble":
+        drawSoft(ctx, marbleCanvas(el));
+        break;
+
+      /* Tumbling blocks. Each layer paints one face of the cube, so the
+         third face is whatever the body colour is and the whole thing
+         restyles with the club's colours like everything else. */
+      case "cubes": {
+        var R = Math.max(22, el.size * TW * 0.30);
+        var stepX = R * Math.sqrt(3), stepY = R * 1.5;
+        var face = el.face | 0;
+        var at = function (cx, cy, deg) {
+          var a = deg * Math.PI / 180;
+          return [cx + R * Math.cos(a), cy + R * Math.sin(a)];
+        };
+        for (var cRow = -1; cRow * stepY < TH + stepY; cRow++) {
+          var cy0 = cRow * stepY;
+          var offX = (cRow % 2) ? stepX / 2 : 0;
+          for (var cCol = -1; cCol * stepX < TW + stepX; cCol++) {
+            var cx0 = cCol * stepX + offX;
+            var pts = face === 0
+              ? [[cx0, cy0], at(cx0, cy0, -30), at(cx0, cy0, -90), at(cx0, cy0, -150)]
+              : face === 1
+                ? [[cx0, cy0], at(cx0, cy0, -150), at(cx0, cy0, 150), at(cx0, cy0, 90)]
+                : [[cx0, cy0], at(cx0, cy0, -30), at(cx0, cy0, 30), at(cx0, cy0, 90)];
+            if (el.hatch) hatchPoly(ctx, pts, c, R * 0.15);
+            else polyPx(ctx, c, pts);
+          }
+        }
+        break;
+      }
+
+      /* Flame stitch: interlocking zigzag bands, jittered row by row so
+         the peaks do not line up into a grid. */
+      case "flame": {
+        var period = Math.max(18, el.w * TW * 0.38);
+        var amp = el.h * TH;
+        var band = Math.max(3, el.band * TH);
+        var pitch = amp + band * 1.5;
+        var rnd = rng(el.seed + 5);
+        var half = period / 2;
+        var wave = function (x, shift, y0) {
+          return y0 + (Math.round((x + shift) / half) % 2 ? amp : 0);
+        };
+        ctx.fillStyle = c;
+        for (var fy = -pitch * 2; fy < TH + pitch; fy += pitch) {
+          var shift = rnd() * period;
+          var x;
+          ctx.beginPath();
+          ctx.moveTo(-period * 2, wave(-period * 2, shift, fy));
+          for (x = -period * 2 + half; x <= TW + period * 2; x += half) {
+            ctx.lineTo(x, wave(x, shift, fy));
+          }
+          for (x = TW + period * 2; x >= -period * 2; x -= half) {
+            ctx.lineTo(x, wave(x, shift, fy) + band);
+          }
+          ctx.closePath();
+          ctx.fill();
         }
         break;
       }
