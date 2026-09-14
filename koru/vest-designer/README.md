@@ -57,10 +57,24 @@ active step right.
 - **Styles name a colour role, not a hex.** A style says "design" or "accent" where a colour
   goes, so changing one of the club's five colours restyles the whole gallery at once. That
   is what lets seventeen styles sit behind five colour swatches.
-- **Eighteen layer types under the hood.** Blocks and stripes (band, hoops, sash, side panels,
-  chevron, yoke, hem band, centre stripe) and print effects (fade, halftone, grain, ikat, geo
-  blocks, camo, smear, snakeskin, mosaic, warp chevron). Clubs never see these: a style is a
-  short list of layers with their numbers baked in. Adding a style is a line in `STYLES`.
+- **Twenty-seven layer types under the hood.** Blocks and stripes (band, hoops, vertical
+  stripes, halves, quarters, sash, chevron, side panels, yoke, shoulder stripes, hem band,
+  centre stripe, piping) and print effects (fade, halftone, grain, ikat, geo blocks, camo,
+  smear, snakeskin, mosaic, warp chevron, contours, tiled crest, terrazzo, tartan). Clubs never
+  see these: a style is a short list of layers with their numbers baked in. Adding a style is a
+  line in `STYLES`.
+- **Kit shapes lay out per panel, not per texture.** A vest with four vertical stripes has four
+  on the front and four on the back, not eight spread across the pair, so stripes, halves,
+  quarters and shoulder stripes work outward from each panel centre.
+- **Twenty-seven styles in two groups** — blocks and stripes, prints and textures — because a
+  flat list that long is a wall. Thumbnails are cached against the five colours, the strength
+  and the club initials, since a noise style costs tens of thousands of samples and the gallery
+  redraws on every colour change.
+- **Sponsor logo and runner personalisation** are placements the club chooses, drawn as
+  placeholders: a sponsor box on the chest, back or hem, and a name or number on the back that
+  each runner fills in at checkout.
+- **The tiled crest uses the club's own initials**, taken from the name they typed, so the
+  mockup reads as their vest rather than a generic watermark.
 - **Halftones behave like a separation.** A screen's dot radius follows a ramp across the
   panel and the screen sits 34° off the fade direction, so two screens in two colours
   interfere the way process printing does instead of sitting on top of each other.
