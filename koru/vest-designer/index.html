@@ -533,6 +533,8 @@
     dotcamo: { group:"print", make:function(){ return {size:0.18, coverage:0.50, dot:0.28}; } },
     ikatband:{ group:"print", make:function(){ return {w:0.17, density:0.55, soft:0.55}; } },
     bolt:    { group:"print", make:function(){ return {w:0.30, h:0.10, thick:0.045, lean:0.55}; } },
+    pour:    { group:"print", make:function(){ return {size:0.26, v:0.52, soft:0.026,
+                                                       spread:0.40, swirl:2.6, reach:0.46}; } },
 
     /* The standard club-kit templates, laid out per panel. */
     vstripes:{ group:"kit", make:function(){ return {w:0.055, gap:0.055}; } },
@@ -595,7 +597,10 @@
                          { t:"weave", r:"accent", size:0.26, levels:2, star:false }], "print"],
     ["Dot camo",        [{ t:"dotcamo", r:"design" }], "print"],
     ["Ikat stripe",     [{ t:"ikatband", r:"design" }], "print"],
-    ["Lightning",       [{ t:"bolt", r:"design" }], "print"]
+    ["Lightning",       [{ t:"bolt", r:"design" }], "print"],
+    ["Pour",            [{ t:"pour", r:"design" },
+                         { t:"pour", r:"accent", v:0.20, spread:0.20, swirl:3.0,
+                           reach:0.26, soft:0.02, size:0.34 }], "print"]
   ];
 
   /* Somewhere to start. A club landing on a blank vest has to invent a
@@ -615,6 +620,8 @@
       { base:"#15161A", design:"#17875A", accent:"#F2F1EC", trim:"#17875A", text:"#F2F1EC" }],
     ["Dip dye",      "Dip dye",
       { base:"#4FA3D9", design:"#14284B", accent:"#F2F1EC", trim:"#14284B", text:"#F2F1EC" }],
+    ["Matcha",        "Pour",
+      { base:"#F4F1E6", design:"#7FA83C", accent:"#3F6B22", trim:"#3F6B22", text:"#F4F1E6" }],
     ["Plain",         "Solid",
       { base:"#6E1A2E", design:"#6E1A2E", accent:"#D9C9A3", trim:"#D9C9A3", text:"#D9C9A3" }]
   ];
@@ -1152,6 +1159,53 @@
       });
   }
 
+  /* A pour: one colour dropping into another and bleeding down through it.
+     The boundary is a wandering line rather than a level, and tendrils run
+     on below it where the noise punches through — which is what a drop of
+     matcha does on its way through milk. */
+  function pourCanvas(el) {
+    return cached("po|" + el.colour + "|" +
+                  [el.size, el.v, el.soft, el.spread, el.swirl, el.reach, el.seed].join("|"),
+      function () {
+        var w = 520, h = Math.max(2, Math.round(520 * TH / TW));
+        var c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        var x = c.getContext("2d"), img = x.createImageData(w, h);
+        var noise = makeNoise(el.seed), rgb = hexToRgb(el.colour);
+        var freq = 1.4 + el.size * 7;
+        var soft = Math.max(0.012, el.soft);
+        for (var py = 0; py < h; py++) {
+          for (var px = 0; px < w; px++) {
+            var u = px / w, v = py / h;
+            /* Curl the space itself before asking where the boundary is: a
+               drop in liquid does not fall in a straight line, it rolls. */
+            var swirlN = noise(u * freq * 0.55 + 3, v * freq * 0.55, 3);
+            var strength = noise(u * freq * 0.9 + 17, v * freq * 0.9 + 11, 2);
+            var ang = swirlN * Math.PI * 4;
+            var amp = el.swirl * 0.06 * (0.35 + strength);
+            var uu = u + Math.cos(ang) * amp;
+            var vv = v + Math.sin(ang) * amp;
+            var body = noise(uu * freq * 1.1, vv * freq * 0.85, 4);
+            var edge = el.v + (body - 0.5) * el.spread;
+            var a = (edge - vv) / soft;
+            /* tendrils, thinning with the distance they have fallen */
+            var drip = noise(uu * freq * 2.2 + 9, vv * freq * 0.8 + 4, 3);
+            var depth = 1 - (vv - edge) / el.reach;
+            if (depth > 0) {
+              var t = ((drip - 0.58) / 0.05) * depth * depth;
+              if (t > a) a = t;
+            }
+            a = a < 0 ? 0 : a > 1 ? 1 : a;
+            var o = (py * w + px) * 4;
+            img.data[o] = rgb[0]; img.data[o + 1] = rgb[1]; img.data[o + 2] = rgb[2];
+            img.data[o + 3] = Math.round(255 * smooth(a));
+          }
+        }
+        x.putImageData(img, 0, 0);
+        return c;
+      });
+  }
+
   /* Soft-edged effects are generated small and scaled up smoothly; the
      hard-edged ones keep their pixels (drawPixels). */
   function drawSoft(ctx, canvas) {
@@ -1393,6 +1447,10 @@
 
       case "bleach":
         drawSoft(ctx, bleachCanvas(el));
+        break;
+
+      case "pour":
+        drawSoft(ctx, pourCanvas(el));
         break;
 
       case "dotcamo":
