@@ -861,9 +861,12 @@
         for (var px = 0; px < w; px++) {
           var n = noise((px / w) * freq, (py / h) * freq, 4);
           var band = (n * levels) % 1;
+          /* soft at both edges of the band, or the line climbs the pixel grid
+             in stairs once it is scaled up to a garment */
+          var edge = Math.min(band, line - band) / 0.018;
           var o = (py * w + px) * 4;
           img.data[o] = rgb[0]; img.data[o + 1] = rgb[1]; img.data[o + 2] = rgb[2];
-          img.data[o + 3] = band < line ? 255 : 0;
+          img.data[o + 3] = Math.round(255 * (edge < 0 ? 0 : edge > 1 ? 1 : edge));
         }
       }
       x.putImageData(img, 0, 0);
