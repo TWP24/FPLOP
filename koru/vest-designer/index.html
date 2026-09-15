@@ -533,8 +533,8 @@
     dotcamo: { group:"print", make:function(){ return {size:0.18, coverage:0.50, dot:0.28}; } },
     ikatband:{ group:"print", make:function(){ return {w:0.17, density:0.55, soft:0.55}; } },
     bolt:    { group:"print", make:function(){ return {w:0.30, h:0.10, thick:0.045, lean:0.55}; } },
-    pour:    { group:"print", make:function(){ return {size:0.26, v:0.52, soft:0.026,
-                                                       spread:0.40, swirl:2.6, reach:0.46}; } },
+    pour:    { group:"print", make:function(){ return {size:0.26, v:0.52, soft:0.075,
+                                                       spread:0.40, swirl:2.6, reach:0.52}; } },
 
     /* The standard club-kit templates, laid out per panel. */
     vstripes:{ group:"kit", make:function(){ return {w:0.055, gap:0.055}; } },
@@ -600,7 +600,7 @@
     ["Lightning",       [{ t:"bolt", r:"design" }], "print"],
     ["Pour",            [{ t:"pour", r:"design" },
                          { t:"pour", r:"accent", v:0.20, spread:0.20, swirl:3.0,
-                           reach:0.26, soft:0.02, size:0.34 }], "print"]
+                           reach:0.30, soft:0.060, size:0.34 }], "print"]
   ];
 
   /* Somewhere to start. A club landing on a blank vest has to invent a
