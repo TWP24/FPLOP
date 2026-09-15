@@ -94,8 +94,8 @@
     bolt:    { group:"print", make:function(){ return {w:0.30, h:0.10, thick:0.045, lean:0.55}; } },
     pour:    { group:"print", make:function(){ return {size:0.26, v:0.70, vBack:null, soft:0.075,
                                                        spread:0.36, swirl:2.6, reach:0.56}; } },
-    ripple:  { group:"print", make:function(){ return {lines:34, duty:0.46, warp:1.15,
-                                                       size:0.20, drift:0.30}; } },
+    ripple:  { group:"print", make:function(){ return {lines:34, duty:0.46, warp:2.4,
+                                                       size:0.20, drift:0.22, lean:0.35}; } },
 
     /* The standard club-kit templates, laid out per panel. */
     vstripes:{ group:"kit", make:function(){ return {w:0.055, gap:0.055}; } },
@@ -789,9 +789,13 @@
         for (var py = 0; py < h; py++) {
           for (var px = 0; px < w; px++) {
             var u = px / w, v = py / h;
-            var bend = noise(u * f * 1.6 + 5, v * f * 0.7 + 1, 2) - 0.5;
+            /* two scales of bend so the sweep is not the same everywhere, and
+               a lean so the whole field runs off the vertical */
+            var bend = (noise(u * f * 1.6 + 5, v * f * 0.7 + 1, 2) - 0.5) +
+                       (noise(u * f * 3.4 + 21, v * f * 1.7 + 9, 2) - 0.5) * 0.5;
             var slide = (noise(u * f * 0.7 + 11, v * f * 0.45 + 3, 2) - 0.5) * el.drift;
-            var phase = (u + slide) * pitch + bend * el.warp * pitch * 0.12;
+            var lean = (el.lean == null ? 0 : el.lean) * v * 0.16;
+            var phase = (u + slide + lean) * pitch + bend * el.warp * pitch * 0.12;
             var frac = phase - Math.floor(phase);
             /* a hair of softness so the edges do not crawl when scaled */
             var d = Math.min(frac, el.duty - frac + 0.004) / 0.004;
