@@ -12,3 +12,11 @@ data/
 # Prediction log — written by the tool, but it is a record, not a build artifact.
 # Kept out of git so CI runs never overwrite the local one, and vice versa.
 vendor/
+
+# headless test copies of index.html, generated ad hoc
+koru/vest-designer/.t*.html
+koru/vest-designer/.s*.html
+koru/vest-designer/.frame*.html
+koru/vest-designer/.measure.html
+koru/vest-designer/shopify/.t*.html
+koru/vest-designer/shopify/.frame*.html
