@@ -92,7 +92,7 @@
     dotcamo: { group:"print", make:function(){ return {size:0.18, coverage:0.50, dot:0.28}; } },
     ikatband:{ group:"print", make:function(){ return {w:0.17, density:0.55, soft:0.55}; } },
     bolt:    { group:"print", make:function(){ return {w:0.30, h:0.10, thick:0.045, lean:0.55}; } },
-    pour:    { group:"print", make:function(){ return {size:0.26, v:0.70, soft:0.075,
+    pour:    { group:"print", make:function(){ return {size:0.26, v:0.70, vBack:null, soft:0.075,
                                                        spread:0.36, swirl:2.6, reach:0.56}; } },
 
     /* The standard club-kit templates, laid out per panel. */
@@ -157,9 +157,9 @@
     ["Dot camo",        [{ t:"dotcamo", r:"design" }], "print"],
     ["Ikat stripe",     [{ t:"ikatband", r:"design" }], "print"],
     ["Lightning",       [{ t:"bolt", r:"design" }], "print"],
-    ["Pour",            [{ t:"pour", r:"design" },
-                         { t:"pour", r:"accent", v:0.30, spread:0.22, swirl:3.0,
-                           reach:0.32, soft:0.060, size:0.34 }], "print"]
+    ["Pour",            [{ t:"pour", r:"design", v:0.52, vBack:0.70 },
+                         { t:"pour", r:"accent", v:0.20, vBack:0.30, spread:0.22,
+                           swirl:3.0, reach:0.32, soft:0.060, size:0.34 }], "print"]
   ];
 
   /* Somewhere to start. A club landing on a blank vest has to invent a
@@ -724,7 +724,7 @@
      matcha does on its way through milk. */
   function pourCanvas(el) {
     return cached("po|" + el.colour + "|" +
-                  [el.size, el.v, el.soft, el.spread, el.swirl, el.reach, el.seed].join("|"),
+                  [el.size, el.v, el.vBack, el.soft, el.spread, el.swirl, el.reach, el.seed].join("|"),
       function () {
         var w = 520, h = Math.max(2, Math.round(520 * TH / TW));
         var c = document.createElement("canvas");
@@ -745,7 +745,10 @@
             var uu = u + Math.cos(ang) * amp;
             var vv = v + Math.sin(ang) * amp;
             var body = noise(uu * freq * 1.1, vv * freq * 0.85, 4);
-            var edge = el.v + (body - 0.5) * el.spread;
+            /* front and back can pour to different levels; the texture is one
+               image, so the level is chosen per panel rather than per layer */
+            var level = (u >= 0.5 && el.vBack != null) ? el.vBack : el.v;
+            var edge = level + (body - 0.5) * el.spread;
             var a = (edge - vv) / soft;
             /* tendrils, thinning with the distance they have fallen */
             var drip = noise(uu * freq * 2.2 + 9, vv * freq * 0.8 + 4, 3);
