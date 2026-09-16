@@ -475,9 +475,8 @@ def cmd_plan(args) -> None:
                 print(f"{DIM}purse: could not be reconciled against FPL's team value "
                       f"(no witness readable){RESET}")
             else:
-                ours, theirs, detail = purse
-                mark = "matches" if abs(ours - theirs) <= 0.15 else "DOES NOT MATCH"
-                print(f"{DIM}purse: {mark} FPL — {detail}{RESET}")
+                mark = "matches" if purse.ok else "DOES NOT MATCH"
+                print(f"{DIM}purse: {mark} FPL — {purse.detail}{RESET}")
 
     from . import xp as _xpmod
 

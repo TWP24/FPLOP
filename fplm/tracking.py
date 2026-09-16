@@ -51,6 +51,9 @@ class SquadState:
     paid: dict[int, float] = field(default_factory=dict)
     bank_then: float = 0.0
     value_then: float | None = None
+    # Players bought by transfer. Their purchase price is FPL's own figure from the
+    # transfers endpoint; everyone else's is the season-opening price, rebuilt.
+    transferred_in: set[int] = field(default_factory=set)
 
     @property
     def budget(self) -> float:
@@ -131,6 +134,7 @@ def squad_state(entry_id: int, next_gw: int, boot: dict) -> SquadState | None:
             if ev == next_gw:
                 pending += 1
         bought[t["element_in"]] = t.get("element_in_cost") or now_cost.get(t["element_in"], 0)
+    transferred_in = set(bought)
 
     sell: dict[int, float] = {}
     paid: dict[int, float] = {}
@@ -148,41 +152,90 @@ def squad_state(entry_id: int, next_gw: int, boot: dict) -> SquadState | None:
     return SquadState(players=players, bank=round(bank, 1), sell=sell,
                       pending=pending, note=note, base_gw=base_gw,
                       deadline_players=deadline_players, paid=paid,
+                      transferred_in=transferred_in,
                       bank_then=round(bank_then, 1), value_then=value_then)
 
 
-def reconcile(state: SquadState) -> tuple[float, float, str] | None:
-    """Check the rebuilt purse against the team value FPL published at the deadline.
+@dataclass
+class Reconciliation:
+    """The rebuilt purse held up against what FPL published."""
 
-    The selling prices are reconstructed, and a reconstruction needs a witness. FPL
-    gives one: `entry_history.value` on the last deadline's picks is its own figure
-    for squad value plus bank at that moment. Pricing the fifteen held then at that
-    gameweek's prices — each player's price history is public — and adding the bank
-    should land on the same number. If it does, every purchase price is right; if it
-    does not, something is, and a plan built on it should not be published.
+    market: float               # bank + the fifteen at that gameweek's listed prices
+    selling: float              # bank + what they would have sold for
+    theirs: float               # FPL's own team value on the deadline's picks
+    wrong_paid: dict[int, tuple[float, float]]   # pid -> (ours, FPL's GW1 price)
+    detail: str = ""
 
-    Returns (ours, theirs, detail) in millions, or None when the witness is missing.
+    @property
+    def convention(self) -> str | None:
+        """Which of the two readings FPL's figure agrees with, if either."""
+        m, s_ = abs(self.market - self.theirs), abs(self.selling - self.theirs)
+        if min(m, s_) > PURSE_TOLERANCE:
+            return None
+        return "market" if m <= s_ else "selling"
+
+    @property
+    def ok(self) -> bool:
+        return self.convention is not None and not self.wrong_paid
+
+
+# How far a rebuilt total may sit from FPL's before it is wrong rather than rounded.
+PURSE_TOLERANCE = 0.15
+
+
+def reconcile(state: SquadState) -> Reconciliation | None:
+    """Hold the rebuilt purse up against what FPL published, two ways.
+
+    Two things are reconstructed and each gets its own witness.
+
+    The *purchase prices*. A player bought by transfer carries FPL's own figure. A
+    player held since the start was bought at the season-opening price, which is
+    rebuilt from `cost_change_start` — and every player's price history is public,
+    so his GW1 price is the witness. A mismatch there is a wrong selling price and a
+    wrong budget, and fails the check outright.
+
+    The *fifteen, the bank and the prices*. `entry_history.value` on the deadline's
+    picks is FPL's own team value at that moment. The fifteen held then, at that
+    gameweek's prices, plus the bank, should land on it. Whether FPL values the
+    squad at listed prices or at what it would sell for is not documented, so both
+    totals are computed and the check passes if either agrees — and says which, so
+    the convention is learned from the data rather than assumed. The first live run
+    assumed selling and was £0.5m short of a figure that was almost certainly the
+    listed one.
+
+    Returns None when the witness is missing; that is not a pass.
     """
     if state.value_then is None or not state.deadline_players:
         return None
-    total = state.bank_then
-    missing = []
+    market = selling = state.bank_then
+    wrong: dict[int, tuple[float, float]] = {}
     for pid in sorted(state.deadline_players):
         try:
             summ = api.fetch(f"element-summary/{pid}", key=f"summary_{pid}", ttl=3600)
         except Exception:  # noqa: BLE001
             return None
-        rows = [r for r in summ.get("history", []) if (r.get("round") or 0) <= state.base_gw]
-        if not rows or pid not in state.paid:
-            missing.append(pid)
-            continue
-        price_then = float(max(rows, key=lambda r: r["round"])["value"]) / 10.0
-        total += sell_price(state.paid[pid], price_then)
-    if missing:
-        return None
-    detail = (f"£{total:.1f}m rebuilt against FPL's £{state.value_then:.1f}m "
-              f"at the GW{state.base_gw} deadline")
-    return round(total, 1), state.value_then, detail
+        hist = [r for r in summ.get("history", []) if r.get("round") and r.get("value")]
+        upto = [r for r in hist if r["round"] <= state.base_gw]
+        if not upto or pid not in state.paid:
+            return None
+        price_then = float(max(upto, key=lambda r: r["round"])["value"]) / 10.0
+        paid = state.paid[pid]
+        if pid not in state.transferred_in:
+            opening = float(min(hist, key=lambda r: r["round"])["value"]) / 10.0
+            if abs(opening - paid) > 0.01:
+                wrong[pid] = (paid, opening)
+        market += price_then
+        selling += sell_price(paid, price_then)
+    rec = Reconciliation(round(market, 1), round(selling, 1), state.value_then, wrong)
+    which = rec.convention
+    verdict = (f"FPL's £{rec.theirs:.1f}m is the {which} value" if which
+               else f"neither reading matches FPL's £{rec.theirs:.1f}m")
+    bad = (f"; {len(wrong)} purchase price(s) disagree with FPL's GW1 price: "
+           + ", ".join(f"#{pid} ours {o:.1f} vs {t:.1f}" for pid, (o, t) in sorted(wrong.items()))
+           if wrong else "")
+    rec.detail = (f"at the GW{state.base_gw} deadline: listed £{rec.market:.1f}m, "
+                  f"selling £{rec.selling:.1f}m — {verdict}{bad}")
+    return rec
 
 
 @dataclass
