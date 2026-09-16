@@ -1,12 +1,29 @@
 """Season plan: starting squad, chip calendar, and month-by-month targets.
 
 Answers the operational questions rather than the analytical ones — what do I pick,
-which months do I contest, when does a chip come out — and does it for the whole season
-from today's data, so the plan can be refreshed daily and compared against yesterday's.
+when does a chip come out, where do the points come from — and does it for the whole
+season from today's data, so the plan can be refreshed daily and compared against
+yesterday's.
 
-Two objectives are in play and they pull in different directions. The monthly prize
-rewards spikes; the overall title rewards consistency. `monthly_weight` sets the
-balance: 1.0 plans purely for monthly prizes, 0.0 purely for the season.
+**The objective is the season.** Win the season and the monthly prizes come with it:
+the manager with the most points at the end is, by construction, the one who won or
+came close in most months along the way. The reverse does not hold. Playing for a
+monthly cheque means spending chips early to contest a month you would otherwise
+coast, buying variance to spike a four-gameweek window, and picking a squad for the
+fixtures in front of you rather than the ones that last — every one of which costs
+season points to buy a lottery ticket.
+
+Both objectives are still available, because the tool was built for a league that pays
+monthly and that money is real:
+
+    objective="season"  — the default. Squad picked for the rest of the season, chips
+                          where they score most, risk appetite flat.
+    objective="month"   — the old behaviour. Squad picked for the month in front of
+                          you, chips spread to contest as many months as possible,
+                          risk appetite chosen by simulated monthly win probability.
+
+`monthly_weight` is the underlying dial and still overrides the objective's default:
+1.0 values only the month ahead, 0.0 only the rest of the season.
 """
 from __future__ import annotations
 
@@ -53,6 +70,7 @@ class SeasonPlan:
     sim_p_win: float = 0.0
     provider_note: str = ""
     start_note: str = ""
+    objective: str = "season"
     kept: set[int] = field(default_factory=set)
     # The transfer this plan is recommending right now, as (out, in) names. The
     # forward planner starts *from* the squad chosen here and skips transfers for its
@@ -66,6 +84,52 @@ class SeasonPlan:
     @property
     def contested(self) -> list[MonthPlan]:
         return [m for m in self.months if m.contest]
+
+    @property
+    def season_xp(self) -> float:
+        """Projected points from here to GW38, chips included."""
+        return sum(m.projected for m in self.months)
+
+    @property
+    def season_target(self) -> float:
+        """What the season's winner is expected to post over the same gameweeks."""
+        return self.season_xp * (1.0 + season_winner_edge(len(self.months)))
+
+
+# How much of the squad's valuation comes from the month in front of you rather than
+# the rest of the season. Not zero even when the season is the objective: the near
+# month is the part of the estimate that is actually reliable — team news, price,
+# who is starting — and the far horizon is a fixture list multiplied by last season's
+# rates. The weight is a precision argument, not an objective one.
+MONTHLY_WEIGHT = {"season": 0.2, "month": 0.75}
+
+# A monthly-prize plan spreads chips so it can contest more months. A season plan
+# spends them where they score most and lets the months fall where they fall.
+CHIPS_PER_MONTH = {"season": None, "month": 2}
+
+# How far above a good squad's own expectation the winner of a month lands. Calibrated
+# from the three-season backtest.
+MONTH_WINNER_EDGE = 0.15
+
+# The same figure for a whole season, which is emphatically NOT the monthly one summed:
+# nobody wins every month, and a manager who tops the table has usually won two or
+# three and been solid in the rest. The month winner's edge is part being better, which
+# persists, and part running hot, which does not — so the luck half averages out over
+# the months while the skill half stays. Split 50/50 for want of a measurement.
+#
+# This is a PRIOR. It sets the bar the season chart draws, nothing that is decided on.
+# It gets replaced the moment the backtest is pointed at the right question: what the
+# winning manager's season total was, against a good squad's own expectation, in each
+# of the four seasons already downloaded.
+WINNER_SKILL_SHARE = 0.5
+
+
+def season_winner_edge(n_months: int) -> float:
+    """What the season's winner clears a good squad's own expectation by."""
+    if n_months < 1:
+        return MONTH_WINNER_EDGE
+    luck = MONTH_WINNER_EDGE * (1.0 - WINNER_SKILL_SHARE) / n_months**0.5
+    return MONTH_WINNER_EDGE * WINNER_SKILL_SHARE + luck
 
 
 def _season_label(boot: dict) -> str:
@@ -81,7 +145,8 @@ def build(
     prior_weight: float = 0.5,
     minutes_override: dict[int, float] | None = None,
     rivals: int = 19,
-    monthly_weight: float = 0.75,
+    objective: str = "season",
+    monthly_weight: float | None = None,
     min_minutes: float = 25.0,
     budget: float = 100.0,
     current_squad: set[int] | None = None,
@@ -95,6 +160,11 @@ def build(
     captain: int | None = None,
 ) -> SeasonPlan:
     """Build a whole-season plan from today's data."""
+    if objective not in MONTHLY_WEIGHT:
+        raise ValueError(f"objective must be one of {sorted(MONTHLY_WEIGHT)}")
+    if monthly_weight is None:
+        monthly_weight = MONTHLY_WEIGHT[objective]
+
     team_ratings = rt.build(boot, fixtures, prior_weight=prior_weight)
     rates = xpmod.build_rates(boot, minutes_override=minutes_override)
     months = mo.get_months(boot)
@@ -130,10 +200,14 @@ def build(
                         tables[m.name][pid].xp = v
 
     # The starting squad is chosen for the month we are about to enter, but a squad
-    # persists, so long-month value is blended in according to `monthly_weight`.
+    # persists, so rest-of-season value is blended in according to `monthly_weight`.
     current_month = next((m for m in months if m.start_event <= next_gw <= m.stop_event),
                          months[0])
-    season_month = mo.Month(0, "rest-of-season", next_gw, min(next_gw + 9, 38))
+    # Every gameweek left, not a ten-week window. The window was a hedge against the
+    # far fixtures being noise, but the blend already normalises per gameweek, so a
+    # longer horizon does not shout louder — it just stops the valuation ending in
+    # February. A season objective has to be able to see the end of the season.
+    season_month = mo.Month(0, "rest-of-season", next_gw, 38)
     season_table = mo.build_table(boot, fixtures, rates, team_ratings, season_month)
 
     blended: dict[int, mo.PlayerMonth] = {}
@@ -222,13 +296,18 @@ def build(
         # points across twenty-one gameweeks, better in every season.
         squad = _solve_with_horizon(boot, fixtures, rates, team_ratings, next_gw,
                                     current_squad, cons, blended, budget, rivals,
-                                    current_month, simulate)
-        if squad is None:
+                                    current_month, simulate, objective=objective)
+        if squad is None and objective == "month":
             squad = _solve_for_win(boot, fixtures, tables[current_month.name], rates,
                                    team_ratings, current_month, blended, cons, rivals,
                                    simulate)
         if squad is None:
-            squad = opt.solve(blended, lam=opt.suggested_lam(rivals), cons=cons)
+            # A season is long enough that the mean wins it. Spread only pays when you
+            # need to leapfrog a field in a four-gameweek window, and the measured cost
+            # of buying it is about 2 points of mean for 1 of spread — see the risk
+            # table in the README. Over 38 gameweeks that is simply a worse squad.
+            lam = 0.0 if objective == "season" else opt.suggested_lam(rivals)
+            squad = opt.solve(blended, lam=lam, cons=cons)
 
     start_note = ("most-owned fifteen (no squad held yet)"
                   if start == "template" and not current_squad
@@ -273,7 +352,9 @@ def build(
     for f in fixtures:
         if f["event"]:
             real_counts[f["event"]] = real_counts.get(f["event"], 0) + 2
-    allocation = chipmod.allocate(values, live_windows, months, real_counts=real_counts)
+    allocation = chipmod.allocate(values, live_windows, months,
+                                  max_per_month=CHIPS_PER_MONTH[objective],
+                                  real_counts=real_counts)
 
     # --- Assemble the month-by-month view ----------------------------------
     counts_by_month = {m.name: mo.fixture_counts(fixtures, m) for m in months}
@@ -294,16 +375,17 @@ def build(
                 month=m,
                 n_gws=m.n_events,
                 squad_xp=sq_xp,
-                # A month's winner in a casual league runs roughly 15% above a good
-                # squad's own expectation; calibrated from the three-season backtest.
-                field_target=sq_xp * 1.15,
+                field_target=sq_xp * (1.0 + MONTH_WINNER_EDGE),
                 chips=[c for c in allocation if c.month == m.name],
                 doubles=[short[t] for t, c in counts.items() if c > m.n_events],
                 blanks=[short[t] for t, c in counts.items() if c < m.n_events],
             )
         )
 
-    # Contest the months where chips land — that is what "targeting" means.
+    # Under a monthly objective this is the plan's whole shape: these are the months
+    # you go for and the rest you coast. Under a season objective nothing is being
+    # coasted — the flag just marks where the chips land, which is where the month
+    # totals jump.
     for p in plans:
         p.contest = bool(p.chips)
 
@@ -341,6 +423,7 @@ def build(
             moves_now.append((names.get(o, str(o)), names.get(i, str(i))))
 
     return SeasonPlan(
+        objective=objective,
         provider_note=provider_note,
         start_note=start_note,
         kept=set(keep or ()),
@@ -360,7 +443,8 @@ def build(
 
 def _solve_with_horizon(boot, fixtures, rates, team_ratings, next_gw, current_squad,
                        cons, blended, budget: float, rivals: int = 19,
-                       month=None, simulate: bool = True, span: int = 4):
+                       month=None, simulate: bool = True, span: int = 4,
+                       objective: str = "season"):
     """Decide this week's transfer as the first move of a multi-gameweek plan.
 
     Two things have to be true of the answer at once. It has to spend transfers at
@@ -370,9 +454,16 @@ def _solve_with_horizon(boot, fixtures, rates, team_ratings, next_gw, current_sq
     template and you finish mid-table by construction, which loses a prize paid to
     whoever finishes top.
 
-    So the horizon is solved at several risk levels and the winner is chosen by
-    simulated win probability, rather than by maximising expected points and hoping,
-    or by looking the risk level up in a table.
+    So under a monthly objective the horizon is solved at several risk levels and the
+    winner is chosen by simulated win probability, rather than by maximising expected
+    points and hoping, or by looking the risk level up in a table.
+
+    Under a season objective that second requirement is gone, and with it the reason
+    to pay for spread: nothing has to be won inside a four-gameweek window, so the
+    horizon is solved once at zero risk and the points are the answer. Which is also
+    why the template regression that motivated the win-probability search is not a
+    regression here — finishing mid-table in March is not a failure if the season
+    total is the thing being maximised.
 
     Returns None when there is no squad to plan from, the horizon cannot be built, or
     nothing solves — the caller falls back to the single-week paths.
@@ -413,7 +504,10 @@ def _solve_with_horizon(boot, fixtures, rates, team_ratings, next_gw, current_sq
             except Exception:  # noqa: BLE001
                 sim = field = None
 
-        lams = [0.0, 0.1, 0.2, 0.3] if sim else [opt.suggested_lam(rivals)]
+        if objective == "season":
+            lams = [0.0]
+        else:
+            lams = [0.0, 0.1, 0.2, 0.3] if sim else [opt.suggested_lam(rivals)]
         candidates = []
         for lam in lams:
             plan = hzmod.solve(tabs, set(current_squad), bank, cons,

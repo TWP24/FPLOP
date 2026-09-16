@@ -12,10 +12,13 @@ from __future__ import annotations
 
 import unittest
 
+from fplm import chips as chipmod
 from fplm import optimise as opt
+from fplm import plan as planmod
 from fplm import tracking
 from fplm import selfcheck
 from fplm import xp as xpmod
+from fplm.monthly import Month
 
 
 def make_elements(n_per_team: int = 15, teams: int = 20, minutes: int = 900,
@@ -248,6 +251,158 @@ class SelfCheckHarness(unittest.TestCase):
             p.team = 1
         checks = selfcheck.run(boot, plan, rates)
         self.assertIn("max 3 per club", {c.name for c in checks if not c.ok})
+
+
+class ChipAllocation(unittest.TestCase):
+    """Every chip the game gives you has to end up on the calendar.
+
+    The defect: the allocator priced each chip in the single best week of a month and
+    dropped it outright if another chip had already taken that week. Within a month the
+    kindest week is largely the same week for everybody — best captain fixture, best
+    bench fixtures, best week to free-hit — so collisions were the norm, and the chip
+    that lost was the one worth least, which is the Triple Captain every time. The
+    visible symptom was a season plan showing one Triple Captain when FPL gives two.
+    """
+
+    PHASES = [("October", 6, 9), ("November", 10, 12), ("December", 13, 18),
+              ("January", 19, 23), ("February", 24, 27), ("March", 28, 30),
+              ("April", 31, 33), ("May", 34, 38)]
+
+    def _months(self):
+        return [Month(i + 1, n, a, b) for i, (n, a, b) in enumerate(self.PHASES)]
+
+    def _windows(self):
+        """Both halves of the season, as bootstrap-static reports them."""
+        names = ("wildcard", "freehit", "bboost", "3xc")
+        return ([chipmod.ChipWindow(n, 1, 19) for n in names]
+                + [chipmod.ChipWindow(n, 20, 38) for n in names])
+
+    def _values(self, months, peak):
+        """Chip values where `peak(month)` is the week every chip wants."""
+        tops = {"wildcard": 15.0, "freehit": 10.0, "bboost": 8.0, "3xc": 6.0}
+        vals = []
+        for m in months:
+            top_gw = peak(m)
+            for chip, top in tops.items():
+                by_gw = {gw: top * 0.85 ** abs(gw - top_gw) for gw in m.events}
+                vals.append(chipmod.ChipValue(chip, m.name, top_gw, top, "", by_gw))
+        return vals
+
+    def test_both_triple_captains_survive_a_week_collision(self):
+        months = self._months()
+        got = chipmod.allocate(
+            self._values(months, peak=lambda m: m.start_event),
+            self._windows(), months)
+        self.assertEqual(len([c for c in got if c.chip == "3xc"]), 2,
+                         f"a Triple Captain went unplayed: {[(c.chip, c.gw) for c in got]}")
+
+    def test_every_chip_is_allocated(self):
+        months = self._months()
+        got = chipmod.allocate(
+            self._values(months, peak=lambda m: m.start_event),
+            self._windows(), months)
+        self.assertEqual(len(got), 8, [(c.chip, c.month, c.gw) for c in got])
+
+    def test_one_chip_per_gameweek(self):
+        months = self._months()
+        got = chipmod.allocate(
+            self._values(months, peak=lambda m: m.start_event),
+            self._windows(), months)
+        gws = [c.gw for c in got]
+        self.assertEqual(len(gws), len(set(gws)), f"two chips share a week: {gws}")
+
+    def test_chips_land_inside_their_own_window_and_month(self):
+        months = self._months()
+        by_name = {m.name: m for m in months}
+        got = chipmod.allocate(
+            self._values(months, peak=lambda m: m.stop_event),
+            self._windows(), months)
+        halves = {}
+        for c in got:
+            m = by_name[c.month]
+            self.assertTrue(m.start_event <= c.gw <= m.stop_event,
+                            f"{c.chip} in {c.month} landed on GW{c.gw}")
+            halves.setdefault(c.chip, []).append(c.gw <= 19)
+        for chip, first_half in halves.items():
+            self.assertEqual(sorted(first_half), [False, True],
+                             f"both {chip} chips came from the same half of the season")
+
+    def test_a_month_straddling_the_halfway_split_can_still_take_a_chip(self):
+        # January runs GW19-23 this season and the chip windows split at GW19/20, so
+        # requiring a month to sit wholly inside a window barred January from every
+        # chip in the game. Only the week played has to be inside the window.
+        months = [Month(1, "January", 19, 23)]
+        vals = self._values(months, peak=lambda m: m.start_event)
+        got = chipmod.allocate(vals, self._windows(), months)
+        self.assertTrue(got, "January took no chip at all")
+        for c in got:
+            self.assertTrue(19 <= c.gw <= 23)
+
+    def test_a_first_half_chip_never_lands_after_the_split(self):
+        months = [Month(1, "January", 19, 23)]
+        vals = self._values(months, peak=lambda m: m.stop_event)   # everything wants GW23
+        first_half = [chipmod.ChipWindow("3xc", 1, 19)]
+        got = chipmod.allocate(vals, first_half, months)
+        self.assertEqual([(c.chip, c.gw) for c in got], [("3xc", 19)])
+
+    def test_a_chip_with_nowhere_to_go_is_simply_left_out(self):
+        # One month, one legal week: the second set of chips has no home and the
+        # allocator must not invent one.
+        months = [Month(1, "May", 38, 38)]
+        vals = [chipmod.ChipValue(n, "May", 38, 5.0)
+                for n in ("wildcard", "freehit", "bboost", "3xc")]
+        got = chipmod.allocate(vals, self._windows(), months)
+        self.assertEqual(len(got), 1)
+        self.assertEqual(got[0].gw, 38)
+
+    def test_the_triple_captain_says_whose_armband_it_is(self):
+        # The note is what the dashboard prints next to the week, so it has to follow
+        # the chip when a collision moves it.
+        v = chipmod.ChipValue("3xc", "October", 6, 9.0, "on Haaland",
+                              {6: 9.0, 7: 8.0}, {6: "on Haaland", 7: "on Salah"})
+        self.assertEqual(v.at(7, 8.0).note, "on Salah")
+
+
+class SeasonObjective(unittest.TestCase):
+    """The season total is what the plan is aimed at; months are where it lands."""
+
+    def test_the_season_default_looks_past_the_month_ahead(self):
+        self.assertLess(planmod.MONTHLY_WEIGHT["season"], 0.5)
+        self.assertGreater(planmod.MONTHLY_WEIGHT["month"], 0.5)
+
+    def test_a_season_plan_does_not_spread_chips_to_contest_months(self):
+        # Spreading buys extra chances at a monthly cheque with points that would
+        # score more elsewhere. Only the one-chip-a-week rule should spread a season
+        # plan's chips.
+        self.assertIsNone(planmod.CHIPS_PER_MONTH["season"])
+        self.assertEqual(planmod.CHIPS_PER_MONTH["month"], 2)
+
+    def test_chips_stack_in_one_month_when_nothing_caps_them(self):
+        months = [Month(1, "December", 13, 18)]
+        vals = [chipmod.ChipValue(n, "December", 13 + i, 10.0 - i,
+                                  "", {gw: 10.0 - i for gw in months[0].events})
+                for i, n in enumerate(("wildcard", "freehit", "bboost", "3xc"))]
+        wins = [chipmod.ChipWindow(n, 1, 19)
+                for n in ("wildcard", "freehit", "bboost", "3xc")]
+        self.assertEqual(len(chipmod.allocate(vals, wins, months)), 4)
+        self.assertEqual(len(chipmod.allocate(vals, wins, months, max_per_month=2)), 2)
+
+    def test_winning_a_season_asks_for_less_of_an_edge_than_winning_a_month(self):
+        # Nobody wins every month. Summing the monthly bar would set a target only a
+        # manager who won all ten could hit.
+        self.assertLess(planmod.season_winner_edge(9), planmod.MONTH_WINNER_EDGE)
+
+    def test_the_season_edge_shrinks_as_the_months_pile_up(self):
+        # The luck half of a month winner's edge averages out; the skill half does not,
+        # so the bar falls toward it and never below it.
+        edges = [planmod.season_winner_edge(n) for n in (1, 4, 9, 38)]
+        self.assertEqual(edges, sorted(edges, reverse=True))
+        floor = planmod.MONTH_WINNER_EDGE * planmod.WINNER_SKILL_SHARE
+        self.assertGreater(edges[-1], floor)
+
+    def test_an_unknown_objective_is_refused_rather_than_guessed(self):
+        with self.assertRaises(ValueError):
+            planmod.build({"events": [], "chips": []}, [], objective="vibes")
 
 
 if __name__ == "__main__":

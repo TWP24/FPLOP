@@ -1,9 +1,16 @@
 # fplm — an FPL tool for monthly-prize leagues
 
 A squad builder, chip planner and dashboard for Fantasy Premier League leagues where
-**each month pays a cash prize**. That objective is different from season-long FPL in
-ways that change what you should pick, so the tool optimises for the month and then
-measures how often the squad it picked would actually *win* one.
+**each month pays a cash prize** as well as the title.
+
+**The objective is the season, and the monthly prizes come with it.** The manager on
+the most points at GW38 is the one who won or ran close in most months on the way, so
+winning the season is the way to win months. The reverse does not hold: playing for one
+month means spending chips early to contest a month you would otherwise coast, buying
+variance to spike a four-gameweek window, and picking for the fixtures in front of you
+rather than the ones that last — each of which trades season points for a lottery
+ticket. The monthly machinery is all still here, still measured, and still one flag
+away — `--objective month`.
 
 **Live: [twp24.github.io/FPLOP](https://twp24.github.io/FPLOP/)** — rebuilt every
 morning on GitHub's runners, no local machine involved.
@@ -13,6 +20,7 @@ what I expected — which was most of the time — that is what is written down.
 
 ```bash
 ./fplm.sh plan                      # squad, chips, week-by-week plan, dashboard
+./fplm.sh plan --objective month    # play for the monthly cheque instead
 ./fplm.sh months                    # the monthly buckets and how uneven they are
 ./fplm.sh template                  # the most-owned legal fifteen, vs the model's
 ./fplm.sh players -m August         # ranked player outlook
@@ -48,8 +56,10 @@ player and never a reason to start him.
 FPL publishes the boundaries itself. August is **2 gameweeks**, December is **6** — same
 prize. A two-gameweek month is close to a coin toss; one captain haul decides it.
 
-Your chips and transfers are worth most where a single decision swings a whole prize.
-`./fplm.sh months` shows the live picture.
+Your chips and transfers are worth most where a single decision swings a whole prize,
+and a season plan spends them where they simply score most — which lands them in the
+long months anyway, because that is where the points are. `./fplm.sh months` shows the
+live picture.
 
 ## Chasing differentials loses
 
@@ -149,7 +159,8 @@ to its own total, so a figure that looks wrong can be checked rather than taken 
 trust — and appearance reads as the 1.9 a gameweek it is, rather than a month total
 that looks like an edge when it is the two points every starter gets.
 
-**Squad** · **Season** (chips, months to contest, simulated outcome distribution) ·
+**Squad** · **Season** (chips, where the season's points come from, simulated outcome
+distribution) ·
 **Gameweeks** (every week to GW38 with transfers, captain, chips) · **League** (rivals'
 real squads and ownership measured in *your* league) · **Charts**.
 
@@ -187,6 +198,11 @@ Repository variables `FPL_ENTRY`, `FPL_LEAGUE` (space-separated for several),
   `ratings.build`, deliberately unhandled until real values exist.
 - **Blanks and doubles do not exist yet.** Chip values use a documented prior for where
   they historically land, which retires itself as soon as the real fixtures show one.
+- **The season target is a prior, not a measurement.** The `To GW38` bar assumes the
+  season's winner clears a good squad's own expectation by less than a month's winner
+  does, because the luck half of a month winner's 15% averages out over a season and
+  the skill half does not. The 50/50 split is assumed. It sets a bar on a chart and
+  nothing that is decided on; `plan.season_winner_edge` says what would replace it.
 - **P(win) has real sampling error** — it depends which 19 rivals get drawn. Treat the
   ranking between squads as meaningful and the percentage as approximate.
 - **Automatic substitutions are per gameweek in the backtest but per month in the Monte

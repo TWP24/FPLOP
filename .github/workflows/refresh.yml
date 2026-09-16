@@ -58,12 +58,16 @@ jobs:
           # FPL has no endpoint for free transfers held, so set this as a repository
           # variable the week after you bank one, and back to 1 once it is spent.
           FPL_FREE_TRANSFERS: ${{ vars.FPL_FREE_TRANSFERS || '1' }}
+          # What the plan is trying to win. 'season' takes the season total as the
+          # objective and lets the monthly prizes follow; 'month' plays for the cheque.
+          FPL_OBJECTIVE: ${{ vars.FPL_OBJECTIVE || 'season' }}
         run: |
           python -m fplm.cli plan \
             --refresh \
             --rivals "$FPL_RIVALS" \
             --free-transfers "${FPL_FREE_TRANSFERS:-1}" \
             --start "${FPL_START:-template}" \
+            --objective "${FPL_OBJECTIVE:-season}" \
             ${FPL_ENTRY:+--entry "$FPL_ENTRY"} \
             ${FPL_LEAGUE:+--league $FPL_LEAGUE} \
             --out site/index.html

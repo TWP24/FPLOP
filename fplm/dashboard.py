@@ -696,7 +696,7 @@ def _one_league(view, my_squad, table) -> str:
   </section>"""
 
 
-def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
+def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL season plan",
            gwplans=None, league_view=None, boot_ref=None, fixtures_ref=None,
            rates_ref=None, deadline_ref="") -> str:
     squad = plan.squad
@@ -873,12 +873,36 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
         _views, [p.pid for p in squad.players],
         plan.tables.get(month_now, {}) if month_now else {},
     )
+    # The season is the objective, so the month rows are a read-out of where the
+    # points come from rather than a list of battles to pick. Under the monthly
+    # objective they are the plan itself, and the page has to say which it is.
+    season_first = getattr(plan, "objective", "season") == "season"
+    aim_sub = ("where the season's points come from" if season_first
+               else "which months to contest")
+    month_tag = "CHIPS" if season_first else "TARGET"
+    aim_rail = ("playing for the season" if season_first
+                else "playing for monthly prizes")
+    aim_note = (
+        "<b>The objective is the season total.</b> Win that and the monthly prizes "
+        "come with it — the manager on the most points at GW38 is the one who won or "
+        "ran close in most months on the way. Playing for a single month instead means "
+        "spending chips early and buying variance, which costs season points to buy a "
+        "lottery ticket. <b>CHIPS</b> marks the months a chip lands in; the month totals "
+        "jump there, and nothing is being coasted in the others."
+        if season_first else
+        "You cannot contest all ten months — eight chips across ten months means "
+        "picking your battles. <b>TARGET</b> months are where the chips land."
+    )
+
     scale = max([m.field_target for m in plan.months] + [1])
     months = ""
     for m in plan.months:
+        # "Triple Cap GW7" is only half an instruction — whose armband is the other
+        # half, and the chip planner already knows, so say it.
         chips = "".join(
             f'<span class="chip">{CHIP_LABEL.get(c.chip, c.chip)}'
-            f'<u> GW{c.gw} · +{c.value:.0f}</u></span>'
+            f'<u> GW{c.gw} · +{c.value:.0f}'
+            f'{" " + _esc(c.note) if c.chip == "3xc" and c.note else ""}</u></span>'
             for c in m.chips
         )
         notes = ""
@@ -891,13 +915,29 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
         months += (
             f'<tr class="{"target" if m.contest else ""}">'
             f'<td class="nm">{_esc(m.month.name)}'
-            f'{"<span class=tag>TARGET</span>" if m.contest else ""}</td>'
+            f'{f"<span class=tag>{month_tag}</span>" if m.contest else ""}</td>'
             f'<td class="dim mono">{m.month.start_event}–{m.month.stop_event}</td>'
             f'<td class="r mono">{m.n_gws}</td>'
             f'<td><div class="meter"><span class="fill" style="width:{fill:.1f}%"></span>'
             f'<span class="tick" style="left:{tick:.1f}%"></span>'
             f'<span class="val mono">{m.projected:.0f} / {m.field_target:.0f}</span></div></td>'
             f'<td>{chips or "<span class=dim>—</span>"}{notes}</td></tr>'
+        )
+
+    # The line the whole plan is now aimed at. It goes at the foot of the months
+    # because it is their sum — a month row that looks thin is only a problem if this
+    # row is, which is the entire point of putting the season first.
+    if plan.months:
+        s_fill = 100 * plan.season_xp / max(plan.season_target, 1)
+        months += (
+            f'<tr class="mrule"><td class="nm">To GW38</td>'
+            f'<td class="dim mono">{plan.months[0].month.start_event}–38</td>'
+            f'<td class="r mono">{sum(m.n_gws for m in plan.months)}</td>'
+            f'<td><div class="meter"><span class="fill" style="width:{s_fill:.1f}%">'
+            f'</span><span class="tick" style="left:100%"></span>'
+            f'<span class="val mono">{plan.season_xp:.0f} / '
+            f'{plan.season_target:.0f}</span></div></td>'
+            f'<td class="dim">the number that wins the league</td></tr>'
         )
 
     # The charset and viewport declarations matter more than they look. This file is
@@ -919,7 +959,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
   <aside class="rail">
     <div class="brand">
       <div class="mark">FP</div>
-      <div><b>{_esc(title)}</b><span>2026/27 &middot; monthly prizes</span></div>
+      <div><b>{_esc(title)}</b><span>2026/27 &middot; {aim_rail}</span></div>
     </div>
     <nav class="tabs">
       <div class="grp">Plan</div>
@@ -976,7 +1016,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
 
     <div class="panel p2">
   <section class="card">
-    <div class="hd"><h2>Season plan</h2><span class="sub">which months to contest</span></div>
+    <div class="hd"><h2>Season plan</h2><span class="sub">{aim_sub}</span></div>
     <div class="bd flush"><div class="scroll"><table>
       <thead><tr><th>Month</th><th>GWs</th><th class="r">#</th>
         <th>Projected vs winning score</th><th>Chips &amp; fixtures</th></tr></thead>
@@ -984,8 +1024,10 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     </table></div></div>
     <div class="ft"><div class="legend">
       <i><span class="swatch"></span> your projected points</i>
-      <i><span class="needle"></span> what the month's winner scores</i>
+      <i><span class="needle"></span> what the winner scores</i>
       <i>the gap between them is what a chip has to close</i>
+      <i><b>To GW38</b> holds this squad all season &mdash; the Gameweeks tab re-plans
+        the transfers and totals a little differently</i>
     </div></div>
   </section>
 
@@ -1025,8 +1067,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
           projected high realises around 0.79 of it. <b>xP adj</b> is the one to believe
           for "what will this actually score". Real outcomes appear on the
           <b>Charts</b> tab, from gameweek 1 onward.</li>
-      <li>You cannot contest all ten months — eight chips across ten months means
-          picking your battles. <b>TARGET</b> months are where the chips land.</li>
+      <li>{aim_note}</li>
       <li><b>?</b> marks a player with no Premier League history, whose role is inferred
           from price alone. Check these against team news before trusting them.</li>
       <li>Chip values are low right now because the fixture list has no double or blank
@@ -1034,6 +1075,11 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
           Free Hit get much more valuable when they do. This page re-prices daily.</li>
       <li>A two-gameweek month is close to a coin toss whatever your squad looks like.
           Spend chips where there are more gameweeks to work with.</li>
+      <li>The <b>To GW38</b> row is a projection against a prior, not a measurement:
+          the winner of a season is taken to clear a good squad's own expectation by
+          less than the winner of a month does, because the luck half of a month
+          winner's edge averages out over a season and the skill half does not. The
+          split is assumed, and is documented in <code>plan.season_winner_edge</code>.</li>
     </ul></div>
   </section>
 
@@ -1050,7 +1096,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
 
 
 def write(plan: SeasonPlan, path: str, rivals: int = 19,
-          title: str = "FPL monthly plan", gwplans=None, league_view=None,
+          title: str = "FPL season plan", gwplans=None, league_view=None,
           boot_ref=None, fixtures_ref=None, rates_ref=None,
           deadline_ref="") -> str:
     # Create the parent directory. Writing beside an existing file works everywhere,
