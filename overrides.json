@@ -9,6 +9,8 @@
   "_captain": "Force the armband onto a player of your choosing. The optimiser's pick is a recommendation; once you have made your own call the page should show the team you are fielding. Null lets the model choose.",
   "captain": "Haaland",
   "_free_transfers": "null works it out from your transfer history, which is right unless you have made a transfer since the last gameweek was scored. Set 1-5 to override.",
+  "_made": "Transfers you have already made for the coming deadline. FPL's public API does not show them until the deadline has passed, so without this the plan works from last week's squad and spends a free transfer you have already spent. One entry per move, names as shown in FPL, and the gameweek it was made for — the entry is ignored once that deadline has passed, so it cannot apply twice. Example: {\"gw\": 5, \"out\": \"Watkins\", \"in\": \"Isak\"}",
+  "made": [],
   "note": "GW3: Fernandes held for Everton, Haaland captained vs Coventry",
   "_note": "Free text shown on the dashboard, for reminding yourself why something is set."
 }
