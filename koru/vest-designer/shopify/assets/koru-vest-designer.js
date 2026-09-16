@@ -47,7 +47,8 @@
     { key:"condensed", label:"Condensed", family:"Oswald",         weight:"600", track:0.045, upper:true },
     { key:"slab",      label:"Slab",      family:"Bevan",          weight:"400", track:0.030, upper:true },
     { key:"varsity",   label:"Varsity",   family:"Graduate",       weight:"400", track:0.075, upper:true },
-    { key:"script",    label:"Script",    family:"Kaushan Script", weight:"400", track:0.000, upper:false }
+    { key:"script",    label:"Script",    family:"Kaushan Script", weight:"400", track:0.000, upper:false },
+    { key:"blur",      label:"Blur",      family:"Archivo",        weight:"700", track:0.075, upper:true, dots:true }
   ];
   function fontOf(key) {
     for (var i = 0; i < FONTS.length; i++) if (FONTS[i].key === key) return FONTS[i];
@@ -1326,6 +1327,74 @@
     }
   }
 
+  /* Lettering as a dot screen that dissolves at the edges: the word is drawn
+     to a scratch canvas, then read back cell by cell, and each cell becomes a
+     soft dot sized by how much of the letter fell in it. Sublimation prints
+     the dots exactly as they are, so the blur is in the artwork rather than
+     something the press has to do. */
+  function dottedText(ctx, chars, widths, tracking, size, cxPx, cyPx, total, colour, fontSpec) {
+    var pad = Math.ceil(size * 0.6);
+    var bw = Math.ceil(total + pad * 2), bh = Math.ceil(size * 2 + pad * 2);
+    var sc = document.createElement("canvas");
+    sc.width = bw; sc.height = bh;
+    var s = sc.getContext("2d", { willReadFrequently: true });
+    s.font = fontSpec;
+    s.textAlign = "left";
+    s.textBaseline = "middle";
+    s.fillStyle = "#ffffff";
+    var sx = pad;
+    chars.forEach(function (c, i) {
+      s.fillText(c, sx, bh / 2);
+      sx += widths[i] + tracking * size;
+    });
+    /* Blur the mask before screening it. Down to a fraction of the size and
+       back up is a cheap box blur, and it is the blur that makes the edge
+       dots thin out over a band rather than stopping at the letter. */
+    var small = document.createElement("canvas");
+    var k = Math.max(1, Math.round(size * 0.055));
+    small.width = Math.max(1, Math.round(bw / k));
+    small.height = Math.max(1, Math.round(bh / k));
+    var sm = small.getContext("2d");
+    sm.drawImage(sc, 0, 0, small.width, small.height);
+    s.clearRect(0, 0, bw, bh);
+    s.imageSmoothingEnabled = true;
+    s.drawImage(small, 0, 0, bw, bh);
+    var data;
+    try { data = s.getImageData(0, 0, bw, bh).data; } catch (e) { return; }
+    /* fine enough that the middle of a letter fills solid where the dots
+       overlap, and only the edge reads as dots */
+    var cell = Math.max(3, size * 0.085);
+    var step = Math.max(1, Math.round(cell / 2));
+    var x0 = cxPx - total / 2 - pad, y0 = cyPx - bh / 2;
+    ctx.save();
+    for (var gy = cell / 2; gy < bh; gy += cell) {
+      for (var gx = cell / 2; gx < bw; gx += cell) {
+        var sum = 0, n = 0;
+        for (var oy = -cell / 2; oy < cell / 2; oy += step) {
+          for (var ox = -cell / 2; ox < cell / 2; ox += step) {
+            var px = Math.round(gx + ox), py = Math.round(gy + oy);
+            if (px < 0 || py < 0 || px >= bw || py >= bh) continue;
+            sum += data[(py * bw + px) * 4 + 3] / 255;
+            n++;
+          }
+        }
+        var cov = n ? sum / n : 0;
+        if (cov < 0.04) continue;
+        var r = cell * 0.95 * Math.sqrt(cov);
+        var dx = x0 + gx, dy = y0 + gy;
+        var g = ctx.createRadialGradient(dx, dy, r * 0.2, dx, dy, r);
+        g.addColorStop(0, rgba(colour, 1));
+        g.addColorStop(0.5, rgba(colour, 0.95));
+        g.addColorStop(1, rgba(colour, 0));
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(dx, dy, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
   function trackedText(ctx, text, cxPx, cyPx, maxPx, colour, capSize, font) {
     if (!text) return null;
     var face = "'" + font.family + "', 'Arial Narrow', 'Helvetica Neue', sans-serif";
@@ -1343,6 +1412,10 @@
     var widths = chars.map(function (c) { return ctx.measureText(c).width; });
     var total = tracking * size * (chars.length - 1);
     widths.forEach(function (w) { total += w; });
+    if (font.dots) {
+      dottedText(ctx, chars, widths, tracking, size, cxPx, cyPx, total, colour, ctx.font);
+      return { w: total, h: size };
+    }
     var x = cxPx - total / 2;
     ctx.fillStyle = colour;
     ctx.textAlign = "left";
