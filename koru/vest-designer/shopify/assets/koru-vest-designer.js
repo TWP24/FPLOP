@@ -210,8 +210,8 @@
     front: { on:true, u:0.250, v:0.345, scale:0.58 },
     back:  { on:true, u:0.750, v:0.330, scale:0.50 },
     font: "block",
-    crest:   { on:true,  u:0.188, v:0.222, scale:0.17, src:null },
-    sponsor: { on:false, u:0.250, v:0.470, scale:0.30, src:null },
+    crest:   { on:true,  u:0.188, v:0.222, scale:0.17, src:null, dots:false },
+    sponsor: { on:false, u:0.250, v:0.470, scale:0.30, src:null, dots:false },
     contact: { club:"", name:"", email:"", phone:"", notes:"" }
   };
 
@@ -1332,40 +1332,47 @@
      soft dot sized by how much of the letter fell in it. Sublimation prints
      the dots exactly as they are, so the blur is in the artwork rather than
      something the press has to do. */
-  function dottedText(ctx, chars, widths, tracking, size, cxPx, cyPx, total, colour, fontSpec) {
-    var pad = Math.ceil(size * 0.6);
-    var bw = Math.ceil(total + pad * 2), bh = Math.ceil(size * 2 + pad * 2);
-    var sc = document.createElement("canvas");
-    sc.width = bw; sc.height = bh;
-    var s = sc.getContext("2d", { willReadFrequently: true });
-    s.font = fontSpec;
-    s.textAlign = "left";
-    s.textBaseline = "middle";
-    s.fillStyle = "#ffffff";
-    var sx = pad;
-    chars.forEach(function (c, i) {
-      s.fillText(c, sx, bh / 2);
-      sx += widths[i] + tracking * size;
-    });
-    /* Blur the mask before screening it. Down to a fraction of the size and
-       back up is a cheap box blur, and it is the blur that makes the edge
-       dots thin out over a band rather than stopping at the letter. */
-    var small = document.createElement("canvas");
-    var k = Math.max(1, Math.round(size * 0.055));
-    small.width = Math.max(1, Math.round(bw / k));
-    small.height = Math.max(1, Math.round(bh / k));
-    var sm = small.getContext("2d");
-    sm.drawImage(sc, 0, 0, small.width, small.height);
-    s.clearRect(0, 0, bw, bh);
-    s.imageSmoothingEnabled = true;
-    s.drawImage(small, 0, 0, bw, bh);
+  /* One screen serves both the lettering and a club's artwork: blur the
+     shape by about a stroke, then lay it back down as halftone dots, so
+     the print reads soft-focus the way a coarse screen prints on cloth.
+     `mask` is a canvas whose alpha is the shape; `refSize` is the feature
+     size the blur and the dot pitch are measured against. */
+  function halftoneScreen(ctx, mask, x0, y0, refSize, colour) {
+    var bw = mask.width, bh = mask.height;
+    var blurred = document.createElement("canvas");
+    blurred.width = bw; blurred.height = bh;
+    var b = blurred.getContext("2d", { willReadFrequently: true });
+    var blurPx = Math.max(0.6, refSize * 0.055);
+    if (typeof b.filter === "string") {
+      b.filter = "blur(" + blurPx.toFixed(2) + "px)";
+      b.drawImage(mask, 0, 0);
+      b.filter = "none";
+    } else {
+      var small = document.createElement("canvas");
+      var k = Math.max(1, Math.round(blurPx));
+      small.width = Math.max(1, Math.round(bw / k));
+      small.height = Math.max(1, Math.round(bh / k));
+      small.getContext("2d").drawImage(mask, 0, 0, small.width, small.height);
+      b.imageSmoothingEnabled = true;
+      b.drawImage(small, 0, 0, bw, bh);
+    }
+    /* The blurred shape goes down first, faintly, so the dots sit in a
+       soft field rather than being the whole of the print. */
+    var tint = document.createElement("canvas");
+    tint.width = bw; tint.height = bh;
+    var tc = tint.getContext("2d");
+    tc.drawImage(blurred, 0, 0);
+    tc.globalCompositeOperation = "source-in";
+    tc.fillStyle = colour;
+    tc.fillRect(0, 0, bw, bh);
     var data;
-    try { data = s.getImageData(0, 0, bw, bh).data; } catch (e) { return; }
-    /* fine enough that the middle of a letter fills solid where the dots
-       overlap, and only the edge reads as dots */
-    var cell = Math.max(3, size * 0.085);
+    try { data = b.getImageData(0, 0, bw, bh).data; } catch (e) { return; }
+    var cell = Math.max(2.5, refSize * 0.055);
     var step = Math.max(1, Math.round(cell / 2));
-    var x0 = cxPx - total / 2 - pad, y0 = cyPx - bh / 2;
+    ctx.save();
+    ctx.globalAlpha = ctx.globalAlpha * 0.38;
+    ctx.drawImage(tint, x0, y0);
+    ctx.restore();
     ctx.save();
     for (var gy = cell / 2; gy < bh; gy += cell) {
       for (var gx = cell / 2; gx < bw; gx += cell) {
@@ -1379,12 +1386,12 @@
           }
         }
         var cov = n ? sum / n : 0;
-        if (cov < 0.04) continue;
-        var r = cell * 0.95 * Math.sqrt(cov);
+        if (cov < 0.07) continue;
+        var r = cell * 0.78 * Math.sqrt(cov);
         var dx = x0 + gx, dy = y0 + gy;
         var g = ctx.createRadialGradient(dx, dy, r * 0.2, dx, dy, r);
         g.addColorStop(0, rgba(colour, 1));
-        g.addColorStop(0.5, rgba(colour, 0.95));
+        g.addColorStop(0.55, rgba(colour, 0.88));
         g.addColorStop(1, rgba(colour, 0));
         ctx.fillStyle = g;
         ctx.beginPath();
@@ -1393,6 +1400,51 @@
       }
     }
     ctx.restore();
+  }
+
+  function dottedText(ctx, chars, widths, tracking, size, cxPx, cyPx, total, colour, fontSpec) {
+    var pad = Math.ceil(size * 0.6);
+    var bw = Math.ceil(total + pad * 2), bh = Math.ceil(size * 2 + pad * 2);
+    var sc = document.createElement("canvas");
+    sc.width = bw; sc.height = bh;
+    var s = sc.getContext("2d");
+    s.font = fontSpec;
+    s.textAlign = "left";
+    s.textBaseline = "middle";
+    s.fillStyle = "#ffffff";
+    var sx = pad;
+    chars.forEach(function (c, i) {
+      s.fillText(c, sx, bh / 2);
+      sx += widths[i] + tracking * size;
+    });
+    halftoneScreen(ctx, sc, cxPx - total / 2 - pad, cyPx - bh / 2, size, colour);
+  }
+
+  /* Artwork screened the same way. A logo keyed to transparency carries
+     its shape in its alpha; one that arrives opaque has none, so its
+     darkness stands in for it and the ink lands where the logo is dark. */
+  function artworkMask(img, w, h) {
+    var pad = Math.ceil(Math.max(w, h) * 0.06);
+    var c = document.createElement("canvas");
+    c.width = Math.ceil(w) + pad * 2;
+    c.height = Math.ceil(h) + pad * 2;
+    var x = c.getContext("2d", { willReadFrequently: true });
+    x.drawImage(img, pad, pad, w, h);
+    var d;
+    try { d = x.getImageData(0, 0, c.width, c.height); } catch (e) { return null; }
+    var p = d.data, i, clear = false;
+    for (i = 3; i < p.length; i += 4) { if (p[i] < 250) { clear = true; break; } }
+    for (i = 0; i < p.length; i += 4) {
+      var a = p[i + 3] / 255;
+      if (!clear) {
+        var lum = (p[i] * 0.299 + p[i + 1] * 0.587 + p[i + 2] * 0.114) / 255;
+        a = a * (1 - lum);
+      }
+      p[i] = p[i + 1] = p[i + 2] = 255;
+      p[i + 3] = Math.round(Math.max(0, Math.min(1, a)) * 255);
+    }
+    x.putImageData(d, 0, 0);
+    return { canvas: c, pad: pad };
   }
 
   function trackedText(ctx, text, cxPx, cyPx, maxPx, colour, capSize, font) {
@@ -1464,6 +1516,13 @@
     var r = badgeRect(key);
     var img = badgeImg[key];
     if (img && img.naturalWidth) {
+      if (b.dots) {
+        var m = artworkMask(img, r.w, r.h);
+        if (m) {
+          halftoneScreen(ctx, m.canvas, r.x - m.pad, r.y - m.pad, r.h * 0.45, colour);
+          return;
+        }
+      }
       ctx.drawImage(img, r.x, r.y, r.w, r.h);
       return;
     }
@@ -2187,6 +2246,10 @@
       });
       var clear = ROOT.querySelector('[data-clear="' + key + '"]');
       if (clear) clear.hidden = !b.src;
+      $$('[data-badgedots="' + key + '"]').forEach(function (btn) {
+        btn.hidden = !b.src;
+        btn.setAttribute("aria-pressed", String(!!b.dots));
+      });
       $$('[data-sizerow="' + key + '"]').forEach(function (row) { row.hidden = !b.on; });
       $$('[data-badgesize="' + key + '"]').forEach(function (sl) {
         sl.value = Math.round(b.scale * 100);
@@ -2291,7 +2354,8 @@
     HIST_KEYS.forEach(function (k) {
       var v = state[k];
       o[k] = (v && typeof v === "object")
-        ? { on: !!v.on, u: v.u, v: v.v, scale: v.scale, src: v.src || null }
+        ? { on: !!v.on, u: v.u, v: v.v, scale: v.scale, dots: !!v.dots,
+            src: v.src || null }
         : v;
     });
     return JSON.stringify(o);
@@ -2379,7 +2443,8 @@
     LINK_KEYS.forEach(function (k) {
       var v = state[k];
       o[k] = (v && typeof v === "object")
-        ? { on: !!v.on, u: round(v.u, 4), v: round(v.v, 4), scale: round(v.scale, 3) }
+        ? { on: !!v.on, u: round(v.u, 4), v: round(v.v, 4),
+            scale: round(v.scale, 3), dots: !!v.dots }
         : v;
     });
     return b64url(JSON.stringify(o));
@@ -2471,6 +2536,7 @@
           u: typeof b.u === "number" ? b.u : d[2],
           v: typeof b.v === "number" ? b.v : d[3],
           scale: typeof b.scale === "number" ? b.scale : d[4],
+          dots: !!b.dots,
           src: b.src || null
         };
       });
@@ -2646,6 +2712,7 @@
     var parts = v.split(":");
     state[parts[0]].on = parts[1] === "on";
   });
+  onPick("badgedots", function (v) { state[v].dots = !state[v].dots; });
   onPick("centre",  function (v) { centreBadge(v); });
   onPick("upload",  function (v) { $("#kvd-" + v + "File").click(); });
   onPick("clear",   function (v) { adoptArtwork(v, null, renderAll); });
