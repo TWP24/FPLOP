@@ -578,35 +578,71 @@ class SquadState(unittest.TestCase):
                        chips=[{"name": "freehit", "event": 4}])
         self.assertEqual(st.players, set(real))
 
-    def test_the_rebuilt_purse_reconciles_with_fpl_at_the_deadline(self):
+    def test_the_purse_reconciles_when_fpl_values_the_squad_at_listed_prices(self):
         # Fifteen bought at 5.0 at the season's start. By the GW4 deadline player 1
-        # was 5.3 (sells 5.1) and player 2 was 4.8 (sells 4.8); the rest unchanged.
-        # FPL's team value then: 5.1 + 4.8 + 13 x 5.0 + 1.2 bank = 76.1.
+        # was 5.3 and player 2 was 4.8; the rest unchanged. FPL's team value at
+        # listed prices: 5.3 + 4.8 + 13 x 5.0 + 1.2 bank = 76.3. At selling prices it
+        # would be 76.1 (player 1 sells for 5.1). The check must accept the listed
+        # reading and say that is what it matched.
         held = list(range(1, 16))
         boot = self._boot({p: 50 for p in held})
-        then = {p: {4: 50} for p in held}
-        then[1] = {4: 53}
-        then[2] = {4: 48}
-        st, rec = self._run(5, {4: held}, [], boot, value=761, prices_then=then,
+        then = {p: {1: 50, 4: 50} for p in held}
+        then[1] = {1: 50, 4: 53}
+        then[2] = {1: 50, 4: 48}
+        st, rec = self._run(5, {4: held}, [], boot, value=763, prices_then=then,
                             reconcile=True)
         self.assertIsNotNone(rec)
-        ours, theirs, _ = rec
-        self.assertAlmostEqual(theirs, 76.1)
-        self.assertAlmostEqual(ours, 76.1)
+        self.assertAlmostEqual(rec.market, 76.3)
+        self.assertAlmostEqual(rec.selling, 76.1)
+        self.assertEqual(rec.convention, "market")
+        self.assertTrue(rec.ok, rec.detail)
 
-    def test_a_wrong_purchase_price_shows_up_in_the_reconciliation(self):
-        # If the reconstruction thought player 1 was bought at 5.0 but he was really
-        # bought at 4.0 by transfer, his selling price is off and the totals differ.
+    def test_the_purse_reconciles_when_fpl_values_the_squad_at_selling_prices(self):
         held = list(range(1, 16))
         boot = self._boot({p: 50 for p in held})
-        then = {p: {4: 50} for p in held}
-        then[1] = {4: 60}                              # rose to 6.0 by GW4
-        # FPL knows he was bought at 4.0: sells 5.0 -> value 5.0 + 14 x 5.0 + 1.2 = 76.2
+        then = {p: {1: 50, 4: 50} for p in held}
+        then[1] = {1: 50, 4: 53}
+        # Selling: 14 x 5.0 + 5.1 + 1.2 = 76.3. Listed would be 76.5.
+        st, rec = self._run(5, {4: held}, [], boot, value=763, prices_then=then,
+                            reconcile=True)
+        self.assertEqual(rec.convention, "selling")
+        self.assertTrue(rec.ok, rec.detail)
+
+    def test_a_team_value_matching_neither_reading_fails(self):
+        held = list(range(1, 16))
+        boot = self._boot({p: 50 for p in held})
+        then = {p: {1: 50, 4: 50} for p in held}
+        st, rec = self._run(5, {4: held}, [], boot, value=790, prices_then=then,
+                            reconcile=True)
+        self.assertIsNone(rec.convention)
+        self.assertFalse(rec.ok)
+
+    def test_a_wrong_purchase_price_is_caught_against_fpl_gw1_price(self):
+        # cost_change_start says player 1 has not moved, so the reconstruction takes
+        # his purchase as today's 5.0. FPL's history says he opened at 4.5 — the
+        # reconstruction is wrong about what he cost, and so about what he sells for.
+        held = list(range(1, 16))
+        boot = self._boot({p: 50 for p in held})
+        then = {p: {1: 50, 4: 50} for p in held}
+        then[1] = {1: 45, 4: 50}
         st, rec = self._run(5, {4: held}, [], boot, value=762, prices_then=then,
                             reconcile=True)
-        ours, theirs, _ = rec
-        # We assumed start price 5.0 -> sells 5.5 -> 76.7. The check must see the gap.
-        self.assertGreater(abs(ours - theirs), selfcheck.PURSE_TOLERANCE)
+        self.assertIn(1, rec.wrong_paid)
+        self.assertEqual(rec.wrong_paid[1], (5.0, 4.5))
+        self.assertFalse(rec.ok)
+
+    def test_a_transferred_in_player_is_not_checked_against_gw1(self):
+        # Bought by transfer at 5.0 in GW3; his GW1 price of 4.0 is irrelevant.
+        held = list(range(1, 16))
+        boot = self._boot({p: 50 for p in held})
+        then = {p: {1: 50, 4: 50} for p in held}
+        then[1] = {1: 40, 4: 50}
+        transfers = [{"event": 3, "time": "t", "element_in": 1, "element_in_cost": 50,
+                      "element_out": 77, "element_out_cost": 45}]
+        st, rec = self._run(5, {4: held}, transfers, boot, value=762, prices_then=then,
+                            reconcile=True)
+        self.assertEqual(rec.wrong_paid, {})
+        self.assertTrue(rec.ok, rec.detail)
 
     def test_no_witness_means_no_verdict(self):
         held = list(range(1, 16))
