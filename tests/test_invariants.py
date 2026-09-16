@@ -345,6 +345,36 @@ class ChipAllocation(unittest.TestCase):
         got = chipmod.allocate(vals, first_half, months)
         self.assertEqual([(c.chip, c.gw) for c in got], [("3xc", 19)])
 
+    def test_a_chip_is_never_advised_for_a_week_already_played(self):
+        # The live plan advised a Triple Captain in GW3 with GW5 the next deadline:
+        # the month we are in is part-spent, and its best week for a chip was behind
+        # us. A chip still held has to find the best week LEFT.
+        months = self._months()
+        got = chipmod.allocate(self._values(months, peak=lambda m: m.start_event),
+                               self._windows(), months, first_gw=12)
+        self.assertTrue(got)
+        for c in got:
+            self.assertGreaterEqual(c.gw, 12, f"{c.chip} advised for a played GW{c.gw}")
+
+    def test_a_chip_whose_best_week_has_gone_moves_rather_than_vanishes(self):
+        # November runs GW10-12 and every chip's best week in it is GW10, already
+        # played. The chip should slide to GW12, not disappear and not jump month.
+        months = [Month(1, "November", 10, 12)]
+        vals = [chipmod.ChipValue("3xc", "November", 10, 9.0, "on Haaland",
+                                  {10: 9.0, 11: 4.0, 12: 6.0},
+                                  {10: "on Haaland", 11: "on Salah", 12: "on Isak"})]
+        wins = [chipmod.ChipWindow("3xc", 1, 19)]
+        got = chipmod.allocate(vals, wins, months, first_gw=11)
+        self.assertEqual([(c.chip, c.gw, c.note) for c in got],
+                         [("3xc", 12, "on Isak")])
+
+    def test_a_month_wholly_behind_us_takes_no_chip(self):
+        months = [Month(1, "August", 1, 2)]
+        vals = [chipmod.ChipValue("3xc", "August", 1, 9.0, "", {1: 9.0, 2: 8.0})]
+        got = chipmod.allocate(vals, [chipmod.ChipWindow("3xc", 1, 19)], months,
+                               first_gw=5)
+        self.assertEqual(got, [])
+
     def test_a_chip_with_nowhere_to_go_is_simply_left_out(self):
         # One month, one legal week: the second set of chips has no home and the
         # allocator must not invent one.
