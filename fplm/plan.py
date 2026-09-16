@@ -352,9 +352,12 @@ def build(
     for f in fixtures:
         if f["event"]:
             real_counts[f["event"]] = real_counts.get(f["event"], 0) + 2
+    # `first_gw` so a chip you still hold is never advised for a week that has been
+    # played. The month we are in is usually part-spent, and its best week for a chip
+    # is often behind us.
     allocation = chipmod.allocate(values, live_windows, months,
                                   max_per_month=CHIPS_PER_MONTH[objective],
-                                  real_counts=real_counts)
+                                  real_counts=real_counts, first_gw=next_gw)
 
     # --- Assemble the month-by-month view ----------------------------------
     counts_by_month = {m.name: mo.fixture_counts(fixtures, m) for m in months}

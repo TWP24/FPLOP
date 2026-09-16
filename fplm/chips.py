@@ -291,6 +291,7 @@ def allocate(
     months: list[Month],
     max_per_month: int | None = None,
     real_counts: dict[int, int] | None = None,
+    first_gw: int | None = None,
 ) -> list[ChipValue]:
     """Assign each available chip to the month, and the week, where it is worth most.
 
@@ -308,6 +309,12 @@ def allocate(
     used to be dropped instead, and the chip it was dropped for was almost always the
     Triple Captain — the cheapest of the four, so it lost every tie — which is how a
     season plan ended up showing one Triple Captain when the game gives you two.
+
+    `first_gw` is the next gameweek you can still play a chip in. Without it the
+    valuation happily picks the best week of a month that is already half gone, and a
+    month keeps its best week long after that week has been played — a live plan
+    advised a Triple Captain in GW3 with GW5 the next deadline, which is not advice.
+    A chip you have not spent has to find the best week *left*.
     """
     by_key = {(v.chip, v.month): v for v in values}
     month_of = {m.name: m for m in months}
@@ -341,7 +348,8 @@ def allocate(
         """
         opts = [(val * window_uplift(v.chip, gw, real_counts), -gw)
                 for gw, val in v.by_gw.items()
-                if gw not in taken and w.start_event <= gw <= w.stop_event]
+                if gw not in taken and w.start_event <= gw <= w.stop_event
+                and (first_gw is None or gw >= first_gw)]
         if not opts:
             return None
         val, neg_gw = max(opts)    # ties go to the earlier week

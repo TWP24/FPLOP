@@ -570,7 +570,10 @@ def cmd_plan(args) -> None:
             f"{' ' + c.note if c.chip == '3xc' and c.note else ''}"
             for c in m.chips
         ) or "-"
-        tag = f"{BOLD}TARGET{RESET}" if m.contest else "      "
+        # Same word the dashboard uses: under a season objective nothing is being
+        # coasted, so the flag marks where the chips land rather than a battle picked.
+        word = "CHIPS " if p.objective == "season" else "TARGET"
+        tag = f"{BOLD}{word}{RESET}" if m.contest else "      "
         print(f"{m.month.name:<11}{m.n_gws}GW  xP {m.squad_xp:>6.0f}  "
               f"need {m.field_target:>6.0f}  {tag}  {DIM}{chips}{RESET}")
     print(_hr())
