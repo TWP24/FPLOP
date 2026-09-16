@@ -81,7 +81,13 @@ def build(
     my_entry: int | None = None,
     limit: int = 30,
 ) -> LeagueView:
-    """Read a league, price every rival's squad, and measure real ownership."""
+    """Read a league, price every rival's squad, and measure real ownership.
+
+    `gw` is the gameweek whose picks to read, and it has to be one whose deadline has
+    passed: FPL publishes nobody's picks before then. Pass the *last* deadline, not
+    the next one. This was called with the next deadline all season, which is never
+    public, so the league view reported "not readable yet" every single day.
+    """
     try:
         data = fetch_standings(league_id)
     except Exception as exc:  # noqa: BLE001
@@ -131,8 +137,8 @@ def build(
     if not fielded:
         return LeagueView(
             league_id, league_name, gw, rivals, {}, available=False,
-            note=("squads are not readable yet — FPL only publishes picks once a "
-                  f"gameweek deadline has passed, and GW{gw} has not started"),
+            note=(f"no squads readable for GW{gw} — FPL only publishes picks once "
+                  "a gameweek's deadline has passed"),
         )
 
     ownership = {pid: n / fielded for pid, n in starts.items()}

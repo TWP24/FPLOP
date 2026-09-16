@@ -75,6 +75,13 @@ class SeasonPlan:
     provider_note: str = ""
     start_note: str = ""
     objective: str = "season"
+    # The purse the squad was solved against: bank plus what the held fifteen would
+    # sell for. `bank` is what is left after this week's recommended moves, and
+    # `free_after` the free transfers carried into the following week — the forward
+    # plan starts from both rather than assuming £100.0m and one transfer.
+    budget: float = 100.0
+    bank: float = 0.0
+    free_after: int = 1
     kept: set[int] = field(default_factory=set)
     # The transfer this plan is recommending right now, as (out, in) names. The
     # forward planner starts *from* the squad chosen here and skips transfers for its
@@ -170,6 +177,7 @@ def build(
     min_minutes: float = 25.0,
     budget: float = 100.0,
     current_squad: set[int] | None = None,
+    sell_price: dict[int, float] | None = None,
     free_transfers: int = 1,
     max_hits: int = 0,
     simulate: bool = True,
@@ -179,7 +187,13 @@ def build(
     keep: set[int] | None = None,
     captain: int | None = None,
 ) -> SeasonPlan:
-    """Build a whole-season plan from today's data."""
+    """Build a whole-season plan from today's data.
+
+    `budget` is the whole purse — bank plus the selling value of the held fifteen —
+    and `sell_price` says what each held player would fetch, where that is below his
+    listed price. Together they make the budget line read exactly as FPL's does. With
+    no squad held the budget is the £100.0m everyone starts with.
+    """
     if objective not in MONTHLY_WEIGHT:
         raise ValueError(f"objective must be one of {sorted(MONTHLY_WEIGHT)}")
     if monthly_weight is None:
@@ -254,15 +268,17 @@ def build(
         blended[pid] = q
 
     # FPL publishes no endpoint for how many free transfers you are holding, so it
-    # has to be told. Defaulting to one is safe but wrong the week after you bank
-    # one: the plan would consider a single move when two are available free.
+    # is rebuilt from the transfer history. Zero is a real balance — a transfer
+    # already made this week leaves nothing free for the deadline — and clamping it
+    # to one used to let the plan spend a transfer that had already been spent.
     cons = opt.Constraints(
         budget=budget,
         min_expected_minutes=min_minutes,
         current_squad=current_squad or set(),
-        free_transfers=max(1, min(free_transfers, opt.MAX_BANKED_TRANSFERS)),
+        free_transfers=max(0, min(free_transfers, opt.MAX_BANKED_TRANSFERS)),
         max_hits=max_hits,
         include=set(keep or ()),
+        sell_price=dict(sell_price or {}),
     )
 
     # Forcing the most-owned fifteen is a pre-season device: before a ball is kicked
@@ -446,16 +462,32 @@ def build(
                           captain=captain, vice=vice, lam=squad.lam, cost=squad.cost)
 
     moves_now: list[tuple[str, str]] = []
+    n_moves = 0
     if current_squad:
         chosen = {p.pid for p in squad.players}
-        gone = sorted(current_squad - chosen)
-        came = sorted(chosen - current_squad)
+        gone = current_squad - chosen
+        came = chosen - current_squad
+        n_moves = len(gone)
         names = {pid: r.name for pid, r in rates.items()}
-        for o, i in zip(gone, came):
+        # Pair each sale with the purchase that replaced it. FPL swaps like for like,
+        # so sorting both sides by position and then price lines them up; sorting by
+        # id paired "Fernandes -> a defender" whenever two moves were made at once.
+        key = lambda pid: (rates[pid].pos if pid in rates else 0,  # noqa: E731
+                           -(rates[pid].price if pid in rates else 0.0))
+        for o, i in zip(sorted(gone, key=key), sorted(came, key=key)):
             moves_now.append((names.get(o, str(o)), names.get(i, str(i))))
+
+    # What is left in the bank once those moves are made, valuing kept players at
+    # what they would sell for and new ones at what they cost.
+    bank_after = round(budget - sum(cons.price_of(p) for p in squad.players), 1)
+    used = min(n_moves, cons.free_transfers)
+    free_after = min(opt.MAX_BANKED_TRANSFERS, cons.free_transfers - used + 1)
 
     return SeasonPlan(
         objective=objective,
+        budget=budget,
+        bank=bank_after,
+        free_after=free_after,
         provider_note=provider_note,
         start_note=start_note,
         kept=set(keep or ()),
@@ -515,9 +547,6 @@ def _solve_with_horizon(boot, fixtures, rates, team_ratings, next_gw, current_sq
         if next_gw not in tabs or len(tabs) < 2:
             return None
 
-        held_cost = sum(blended[p].price for p in current_squad if p in blended)
-        bank = max(budget - held_cost, 0.0)
-
         # Build the field before choosing anything, then price differential risk
         # against what it actually owns. Optimising against published ownership while
         # being scored against this field would leave the objective and the
@@ -542,7 +571,7 @@ def _solve_with_horizon(boot, fixtures, rates, team_ratings, next_gw, current_sq
             lams = [0.0, 0.1, 0.2, 0.3] if sim else [opt.suggested_lam(rivals)]
         candidates = []
         for lam in lams:
-            plan = hzmod.solve(tabs, set(current_squad), bank, cons,
+            plan = hzmod.solve(tabs, set(current_squad), cons,
                                free_transfers=cons.free_transfers,
                                max_hits_per_gw=cons.max_hits, lam=lam,
                                time_limit=60)

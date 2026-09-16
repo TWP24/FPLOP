@@ -9,6 +9,16 @@ refresh.log
 data/
 !data/README.md
 
-# Prediction log — written by the tool, but it is a record, not a build artifact.
-# Kept out of git so CI runs never overwrite the local one, and vice versa.
+# The built dashboard. The live one is published to GitHub Pages by the daily
+# workflow and never committed; a local `refresh.sh` writes this copy for iCloud.
+# A tracked copy went stale within days and read as the current plan to anyone
+# who opened it from the repo.
+plan.html
+site/
+
+# Vendored third-party models (see DASTAN_INTEGRATION.md).
 vendor/
+
+# predictions.json is deliberately NOT ignored. The daily workflow commits it back
+# after every run — it is the record the model is scored against, and it only
+# means anything if it survives the run that wrote it.

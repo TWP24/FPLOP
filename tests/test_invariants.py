@@ -13,12 +13,14 @@ from __future__ import annotations
 import unittest
 
 from fplm import chips as chipmod
+from fplm import forecast as fcmod
+from fplm import horizon as hzmod
 from fplm import optimise as opt
 from fplm import plan as planmod
 from fplm import tracking
 from fplm import selfcheck
 from fplm import xp as xpmod
-from fplm.monthly import Month
+from fplm.monthly import Month, PlayerMonth
 
 
 def make_elements(n_per_team: int = 15, teams: int = 20, minutes: int = 900,
@@ -452,6 +454,236 @@ class SeasonObjective(unittest.TestCase):
     def test_an_unknown_objective_is_refused_rather_than_guessed(self):
         with self.assertRaises(ValueError):
             planmod.build({"events": [], "chips": []}, [], objective="vibes")
+
+
+def _pm(pid, pos, price, xp=4.0, team=None):
+    """A PlayerMonth with nothing pathological in it."""
+    team = team if team is not None else 1 + pid % 20
+    return PlayerMonth(pid, f"P{pid}", team, f"T{team}", pos, price, 5.0, xp,
+                       xp * 0.8, 1, 85.0)
+
+
+def _pool(n_per_pos=(4, 10, 10, 6), price=4.5):
+    """A legal pool: enough in every position, spread across twenty clubs."""
+    table, pid = {}, 0
+    for pos, n in zip((1, 2, 3, 4), n_per_pos):
+        for _ in range(n):
+            pid += 1
+            table[pid] = _pm(pid, pos, price)
+    return table
+
+
+class SquadState(unittest.TestCase):
+    """The squad, bank and selling prices the plan is solved against.
+
+    The plan used to assume £100.0m and the last published picks every day. Once
+    prices move that is the wrong purse, and once a transfer has been made for the
+    coming deadline it is the wrong squad — and the wrong number of free transfers.
+    """
+
+    def _fake_api(self, picks_by_gw, transfers, chips=()):
+        """Stand in for the three endpoints `squad_state` reads."""
+        def fetch(endpoint, key=None, ttl=0):
+            if endpoint.endswith("/history"):
+                return {"current": [], "chips": list(chips)}
+            if endpoint.endswith("/transfers"):
+                return list(transfers)
+            raise AssertionError(endpoint)
+
+        def entry_picks(entry, gw, ttl=0):
+            if gw not in picks_by_gw:
+                raise RuntimeError("Not found")
+            return {"picks": [{"element": p} for p in picks_by_gw[gw]],
+                    "entry_history": {"bank": 12}}   # £1.2m
+        return fetch, entry_picks
+
+    def _boot(self, cost, change=None):
+        change = change or {}
+        return {"elements": [{"id": pid, "now_cost": c,
+                              "cost_change_start": change.get(pid, 0)}
+                             for pid, c in cost.items()]}
+
+    def _run(self, next_gw, picks_by_gw, transfers, boot, chips=()):
+        fetch, picks = self._fake_api(picks_by_gw, transfers, chips)
+        orig = tracking.api.fetch, tracking.api.entry_picks
+        tracking.api.fetch, tracking.api.entry_picks = fetch, picks
+        try:
+            return tracking.squad_state(1, next_gw, boot)
+        finally:
+            tracking.api.fetch, tracking.api.entry_picks = orig
+
+    def test_selling_price_is_purchase_plus_half_the_rise_rounded_down(self):
+        self.assertAlmostEqual(tracking.sell_price(5.0, 5.3), 5.1)   # 0.3 rise -> +0.1
+        self.assertAlmostEqual(tracking.sell_price(5.0, 5.4), 5.2)
+        self.assertAlmostEqual(tracking.sell_price(5.0, 5.1), 5.0)   # half of 0.1 rounds down
+        self.assertAlmostEqual(tracking.sell_price(5.0, 4.7), 4.7)   # a fall is passed on in full
+
+    def test_the_purse_is_bank_plus_what_the_fifteen_would_sell_for(self):
+        held = list(range(1, 16))
+        cost = {p: 50 for p in held}
+        # Player 1 has risen 0.4 since the season opened: bought at 4.6, listed 5.0,
+        # sells for 4.8. The other fourteen are unchanged.
+        boot = self._boot(cost, change={1: 4})
+        st = self._run(5, {4: held}, [], boot)
+        self.assertIsNotNone(st)
+        self.assertAlmostEqual(st.sell[1], 4.8)
+        self.assertAlmostEqual(st.sell[2], 5.0)
+        self.assertAlmostEqual(st.bank, 1.2)
+        self.assertAlmostEqual(st.budget, 1.2 + 4.8 + 14 * 5.0)
+
+    def test_a_transfer_already_made_this_week_is_applied(self):
+        held = list(range(1, 16))
+        cost = {p: 50 for p in held}
+        cost[99] = 60
+        boot = self._boot(cost)
+        # Sold 15 for 5.0, bought 99 for 6.0, for the coming GW5.
+        transfers = [{"event": 5, "time": "t", "element_in": 99, "element_in_cost": 60,
+                      "element_out": 15, "element_out_cost": 50}]
+        st = self._run(5, {4: held}, transfers, boot)
+        self.assertIn(99, st.players)
+        self.assertNotIn(15, st.players)
+        self.assertEqual(st.pending, 1)
+        self.assertAlmostEqual(st.bank, 1.2 - 1.0)       # bank moved with the trade
+        self.assertAlmostEqual(st.sell[99], 6.0)          # bought at the listed price
+        self.assertEqual(len(st.players), 15)
+
+    def test_a_player_bought_by_transfer_sells_from_what_was_paid(self):
+        held = list(range(1, 16))
+        cost = {p: 50 for p in held}
+        cost[1] = 56   # listed 5.6 now; bought for 5.0 in GW3
+        boot = self._boot(cost, change={1: 10})   # up 1.0 since GW1, but that is not his purchase
+        transfers = [{"event": 3, "time": "t", "element_in": 1, "element_in_cost": 50,
+                      "element_out": 77, "element_out_cost": 45}]
+        st = self._run(5, {4: held}, transfers, boot)
+        self.assertAlmostEqual(st.sell[1], 5.3)           # 5.0 + half of 0.6
+
+    def test_after_a_free_hit_the_real_squad_is_the_week_before(self):
+        real = list(range(1, 16))
+        one_week = list(range(101, 116))
+        cost = {p: 50 for p in real + one_week}
+        boot = self._boot(cost)
+        # Free hit played in GW4: the GW4 picks are the one-week team.
+        st = self._run(5, {4: one_week, 3: real}, [], boot,
+                       chips=[{"name": "freehit", "event": 4}])
+        self.assertEqual(st.players, set(real))
+
+    def test_unreadable_picks_mean_no_state_not_a_guess(self):
+        boot = self._boot({p: 50 for p in range(1, 16)})
+        self.assertIsNone(self._run(5, {}, [], boot))
+
+    def test_before_gw1_there_is_nothing_to_read(self):
+        boot = self._boot({p: 50 for p in range(1, 16)})
+        self.assertIsNone(self._run(1, {}, [], boot))
+
+
+class BudgetLine(unittest.TestCase):
+    """The optimiser must afford exactly what FPL would let you afford."""
+
+    def test_a_squad_over_a_flat_hundred_is_still_legal_when_it_is_yours(self):
+        # Fifteen held players listed at a combined 100.5 after price rises. The purse
+        # is bank plus selling value; a flat 100.0 would force a sale nobody asked for.
+        table = _pool(price=6.7)                      # 30 x 6.7 = 201 listed
+        held = set(list(range(1, 3)) + list(range(5, 10)) + list(range(15, 20))
+                   + list(range(25, 28)))
+        self.assertEqual(len(held), 15)
+        for p in held:
+            table[p].xp = 4.1                         # keeping them is strictly best
+        sell = {p: 6.6 for p in held}                 # each sells 0.1 under listed
+        purse = round(sum(sell.values()) + 0.5, 1)    # 99.5 + 0.5 in the bank
+        cons = opt.Constraints(budget=purse, current_squad=held, free_transfers=1,
+                               sell_price=sell)
+        sq = opt.solve(table, lam=0.0, cons=cons)
+        self.assertIsNotNone(sq, "the squad you hold must always be a legal answer")
+        self.assertEqual({p.pid for p in sq.players}, held)
+        # And the same fifteen against a flat 100.0 at listed prices is *not* legal,
+        # which is the forced sale the old purse produced.
+        flat = opt.solve(table, lam=0.0, cons=opt.Constraints(
+            budget=100.0, current_squad=held, free_transfers=1))
+        self.assertTrue(flat is None or {p.pid for p in flat.players} != held)
+
+    def test_a_swap_is_affordable_only_when_bank_plus_selling_price_covers_it(self):
+        table = _pool(price=6.0)
+        held = set(list(range(1, 3)) + list(range(5, 10)) + list(range(15, 20))
+                   + list(range(25, 28)))
+        target = 3                                    # a keeper worth buying
+        table[target].xp = 30.0
+        table[target].price = 6.4
+        sell = {p: 6.0 for p in held}
+        for bank in (0.3, 0.4):
+            cons = opt.Constraints(budget=round(90.0 + bank, 1), current_squad=held,
+                                   free_transfers=1, sell_price=sell)
+            sq = opt.solve(table, lam=0.0, cons=cons)
+            bought = target in {p.pid for p in sq.players}
+            # 6.4 in for 6.0 out needs 0.4 in the bank, not 0.3.
+            self.assertEqual(bought, bank >= 0.4, f"bank {bank}")
+
+    def test_zero_free_transfers_means_no_move(self):
+        table = _pool(price=5.0)
+        held = set(list(range(1, 3)) + list(range(5, 10)) + list(range(15, 20))
+                   + list(range(25, 28)))
+        table[3].xp = 40.0                            # very tempting
+        cons = opt.Constraints(budget=100.0, current_squad=held, free_transfers=0,
+                               max_hits=0)
+        sq = opt.solve(table, lam=0.0, cons=cons)
+        self.assertEqual({p.pid for p in sq.players}, held)
+
+    def test_the_horizon_planner_accepts_zero_free_transfers(self):
+        table = _pool(price=5.0)
+        held = set(list(range(1, 3)) + list(range(5, 10)) + list(range(15, 20))
+                   + list(range(25, 28)))
+        tables = {g: table for g in (5, 6, 7)}
+        cons = opt.Constraints(budget=100.0, current_squad=held)
+        plan = hzmod.solve(tables, held, cons, free_transfers=0, time_limit=20)
+        self.assertIsNotNone(plan, "a week with nothing free used to be infeasible")
+        self.assertEqual(plan.squads[5], held)
+        self.assertEqual(plan.free[6], 1)
+
+
+class ForwardPlan(unittest.TestCase):
+    """The gameweek-by-gameweek projection must play the chips it shows."""
+
+    def _plan(self, next_gw, chips):
+        boot = {"elements": make_elements(),
+                "teams": [{"id": t, "short_name": f"T{t}", "name": f"Team{t}",
+                           "strength_overall_home": 3, "strength_overall_away": 3}
+                          for t in range(1, 21)],
+                "events": [{"id": g, "finished": g < next_gw, "is_next": g == next_gw,
+                            "deadline_time": "2026-10-03T10:00:00Z"} for g in range(1, 39)],
+                "phases": [{"id": 1, "name": "Overall", "start_event": 1, "stop_event": 38},
+                           {"id": 2, "name": "October", "start_event": 1, "stop_event": 38}]}
+        fixtures, fid = [], 0
+        for g in range(1, 39):
+            for i in range(0, 20, 2):
+                fid += 1
+                fixtures.append({"id": fid, "event": g, "team_h": i + 1, "team_a": i + 2,
+                                 "team_h_difficulty": 3, "team_a_difficulty": 3})
+        p = planmod.build(boot, fixtures, simulate=False, start="template")
+        p.months[0].chips = [chipmod.ChipValue(c, "October", gw, 5.0) for gw, c in chips]
+        return boot, fixtures, p
+
+    def test_a_free_hit_week_scores_the_free_hit_squad_and_then_reverts(self):
+        boot, fixtures, p = self._plan(5, [(7, "freehit")])
+        gws = fcmod.build(boot, fixtures, p, use_horizon=False, min_minutes=0.0)
+        by = {g.gw: g for g in gws}
+        self.assertEqual(by[7].chip, "freehit")
+        # The week after, the only differences from before the free hit are that
+        # week's own transfers: everything the free hit changed has come back.
+        changed = set(by[8].squad) ^ set(by[6].squad)
+        self.assertEqual(len(changed), 2 * len(by[8].moves),
+                         "the squad must come back after a free hit")
+        self.assertAlmostEqual(by[7].bank, by[6].bank, places=1,
+                               msg="a free hit must not move the bank")
+        self.assertEqual(by[7].hits, 0)
+        if by[7].moves:
+            self.assertNotEqual(set(by[7].squad), set(by[6].squad),
+                                "the week is scored on the one-week team, not the old one")
+
+    def test_a_chip_week_does_not_spend_the_free_transfer(self):
+        boot, fixtures, p = self._plan(5, [(7, "wildcard")])
+        gws = fcmod.build(boot, fixtures, p, use_horizon=False, min_minutes=0.0)
+        by = {g.gw: g for g in gws}
+        self.assertEqual(by[7].hits, 0)
+        self.assertEqual(by[7].free_transfers, min(5, by[6].free_transfers + 1))
 
 
 if __name__ == "__main__":

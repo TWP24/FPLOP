@@ -95,8 +95,10 @@ def run_season(season, horizons=(1, 4), ft_value: float = 0.0,
                 squad = {p.pid for p in seed.players}
                 bank = round(BUDGET - seed.cost, 1)
 
-            plan = hz.solve(tabs, squad, bank,
-                            opt.Constraints(budget=BUDGET, min_expected_minutes=20),
+            plan = hz.solve(tabs, squad,
+                            opt.Constraints(budget=round(bank + sum(
+                                tabs[g][p].price for p in squad if p in tabs[g]), 1),
+                                min_expected_minutes=20),
                             free_transfers=free, max_hits_per_gw=max_hits,
                             ft_terminal_value=ft_value, time_limit=45,
                             shuffle_seed=shuffle_seed)

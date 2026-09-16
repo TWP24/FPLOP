@@ -143,8 +143,13 @@ def run(boot, plan, rates, held: set[int] | None = None,
     worst = max(per_club.values()) if per_club else 0
     out.append(Check("squad is 15 players", len(players) == 15, f"{len(players)}"))
     out.append(Check("max 3 per club", worst <= 3, f"most from one club: {worst}"))
-    out.append(Check("within budget", plan.squad.cost <= 100.01,
-                     f"£{plan.squad.cost:.1f}m"))
+    # Against the purse the plan was actually solved with — bank plus what the held
+    # fifteen would sell for — not a flat 100.0, which is only right on the day the
+    # squad was bought. Kept players count at their selling price, as FPL counts them.
+    purse = float(getattr(plan, "budget", 100.0) or 100.0)
+    bank = float(getattr(plan, "bank", 0.0) or 0.0)
+    out.append(Check("within budget", bank >= -0.01,
+                     f"£{purse - bank:.1f}m of £{purse:.1f}m, £{bank:.1f}m in the bank"))
     out.append(Check("eleven starters", len(plan.squad.xi) == 11,
                      f"{len(plan.squad.xi)}"))
     return out

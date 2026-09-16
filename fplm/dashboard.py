@@ -308,6 +308,15 @@ a.plink:hover{color:var(--accent); border-bottom-color:var(--accent)}
 """
 
 
+def _season_label(boot: dict) -> str:
+    """'2026/27', from the GW1 deadline — FPL publishes no season string."""
+    ev = sorted(boot.get("events", []), key=lambda e: e["id"])
+    if not ev:
+        return ""
+    year = int(ev[0]["deadline_time"][:4])
+    return f"{year}/{str(year + 1)[2:]}"
+
+
 def _esc(s) -> str:
     return html.escape(str(s))
 
@@ -701,8 +710,6 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL season plan",
            rates_ref=None, deadline_ref="") -> str:
     squad = plan.squad
     cap = next((p for p in squad.players if p.pid == squad.captain), None)
-    total_chip = sum(m.chip_value for m in plan.months)
-    contested = [m for m in plan.months if m.contest]
 
     def row(p, mark="") -> str:
         q = ' <span class="q" title="No Premier League history — role inferred from price">?</span>' if "no-PL-history" in p.flags else ""
@@ -882,6 +889,9 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL season plan",
     month_tag = "CHIPS" if season_first else "TARGET"
     aim_rail = ("playing for the season" if season_first
                 else "playing for monthly prizes")
+    # Read off the fixture list rather than typed in, so the page does not carry
+    # last season's label into next season's first build.
+    season = _season_label(boot_ref) if boot_ref else ""
     aim_note = (
         "<b>The objective is the season total.</b> Win that and the monthly prizes "
         "come with it — the manager on the most points at GW38 is the one who won or "
@@ -960,7 +970,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL season plan",
   <aside class="rail">
     <div class="brand">
       <div class="mark">FP</div>
-      <div><b>{_esc(title)}</b><span>2026/27 &middot; {aim_rail}</span></div>
+      <div><b>{_esc(title)}</b><span>{_esc(season)} &middot; {aim_rail}</span></div>
     </div>
     <nav class="tabs">
       <div class="grp">Plan</div>
@@ -984,6 +994,7 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL season plan",
       {model_chip}{squad_chip}{note_chip}
       <span class="spacer"></span>
       <span class="pill mono">&pound;{squad.cost:.1f}m</span>
+      <span class="pill mono">&pound;{getattr(plan, "bank", 0.0):.1f}m in the bank</span>
       <span class="pill">C: {_esc(cap.name if cap else "&mdash;")}</span>
     </div>
 
