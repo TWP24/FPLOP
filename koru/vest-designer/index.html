@@ -313,6 +313,13 @@
           <div class="crestcols" hidden></div>
         </div>
         <div class="field">
+          <span class="label">Back</span>
+          <div class="seg" role="group" aria-label="Back shape">
+            <button type="button" data-backstyle="standard" aria-pressed="true">Standard</button>
+            <button type="button" data-backstyle="racer" aria-pressed="false">Racer</button>
+          </div>
+        </div>
+        <div class="field">
           <span class="label">Cut</span>
           <div class="seg" role="group" aria-label="Show the design on a different cut">
             <button type="button" data-preview="mens" aria-pressed="true">Men's</button>
@@ -638,6 +645,7 @@
     tab: "colours",
     view: "front",
     preview: "mens",
+    backStyle: "standard",
     base:   "#F5C518",
     design: "#14284B",
     accent: "#CE2027",
@@ -2170,6 +2178,7 @@
 
   function vestPath(cut, x, y, w, h, back) {
     var cx = x + w / 2, hw = w / 2;
+    if (back && state.backStyle === "racer") return racerPath(cut, x, y, w, h);
     var nd = y + (back ? cut.neckD * 0.42 : cut.neckD) * h;
     var X = function (f) { return cx + f * hw; };
     var Y = function (f) { return y + f * h; };
@@ -2186,6 +2195,29 @@
     p.bezierCurveTo(X(-cut.hemX), Y(0.87), X(-cut.waist), Y(0.63), X(-cut.uaX), Y(cut.uaY));
     p.bezierCurveTo(X(-cut.armIn * 1.24), Y(cut.uaY * 0.78), X(-cut.armIn * 0.97), Y(cut.uaY * 0.36),
                     X(-cut.shoulder), Y(0.048));
+    p.closePath();
+    return p;
+  }
+
+  /* A racer back: the armholes cut deep and inward, leaving two straps that
+     run up to a wide opening between them. Same side seam and hem as the
+     standard back, so the two sides of a vest still match at the seam. */
+  function racerPath(cut, x, y, w, h) {
+    var cx = x + w / 2, hw = w / 2;
+    var X = function (f) { return cx + f * hw; };
+    var Y = function (f) { return y + f * h; };
+    var p = new Path2D();
+    /* the armhole hugs the centre before it swings out to the underarm —
+       control points outside that line give a deep V, not a racer */
+    p.moveTo(X(-0.33), Y(0.02));
+    p.bezierCurveTo(X(-0.33), Y(0.24), X(-0.56), Y(0.40), X(-cut.uaX), Y(cut.uaY));
+    p.bezierCurveTo(X(-cut.waist), Y(0.63), X(-cut.hemX), Y(0.87), X(-cut.hemX), Y(0.982));
+    p.bezierCurveTo(X(-cut.hemX * 0.42), Y(1.0), X(cut.hemX * 0.42), Y(1.0), X(cut.hemX), Y(0.982));
+    p.bezierCurveTo(X(cut.hemX), Y(0.87), X(cut.waist), Y(0.63), X(cut.uaX), Y(cut.uaY));
+    p.bezierCurveTo(X(0.56), Y(0.40), X(0.33), Y(0.24), X(0.33), Y(0.02));
+    p.lineTo(X(0.13), Y(0.02));
+    p.bezierCurveTo(X(0.12), Y(0.22), X(0.05), Y(0.34), cx, Y(0.40));
+    p.bezierCurveTo(X(-0.05), Y(0.34), X(-0.12), Y(0.22), X(-0.13), Y(0.02));
     p.closePath();
     return p;
   }
@@ -2516,7 +2548,8 @@
   }
 
   function syncToggles() {
-    [["preview","preview"],["font","font"],["view","view"]].forEach(function (m) {
+    [["preview","preview"],["font","font"],["view","view"],
+     ["backstyle","backStyle"]].forEach(function (m) {
       $$("[data-" + m[0] + "]").forEach(function (b) {
         b.setAttribute("aria-pressed", String(b.dataset[m[0]] === state[m[1]]));
       });
@@ -2622,7 +2655,7 @@
      details, none of which anyone means to undo.
   ----------------------------------------------------------------*/
   var HIST_KEYS = ["base", "design", "accent", "trim", "text", "style", "opacity",
-                   "clubName", "font", "front", "back", "crest", "sponsor"];
+                   "clubName", "font", "backStyle", "front", "back", "crest", "sponsor"];
   var undoStack = [], redoStack = [], lastPush = 0, applyingHistory = false;
 
   /* Canonical shape, not whatever shape the state happens to be in: a
@@ -2921,6 +2954,7 @@
   }
   onPick("preview", function (v) { state.preview = v; });
   onPick("view",    function (v) { state.view = v; });
+  onPick("backstyle", function (v) { state.backStyle = v; });
   onPick("role",    function (v, btn) {
     var host = boxOf(btn);
     if (host) boxRole[host.dataset.box] = v;
