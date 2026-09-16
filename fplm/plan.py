@@ -47,6 +47,10 @@ class MonthPlan:
     contest: bool = False
     doubles: list[str] = field(default_factory=list)
     blanks: list[str] = field(default_factory=list)
+    # Gameweeks of this month already played. Everything else on this row describes
+    # what is left, so the page has to be able to say the month is part-spent rather
+    # than leave a three-gameweek September looking like a one-gameweek one.
+    gws_played: int = 0
 
     @property
     def chip_value(self) -> float:
@@ -124,6 +128,22 @@ MONTH_WINNER_EDGE = 0.15
 WINNER_SKILL_SHARE = 0.5
 
 
+def remaining(month: mo.Month, next_gw: int) -> mo.Month:
+    """The part of a month still to be played.
+
+    A month in progress is not the month you are planning. September runs GW3-5; with
+    GW5 the next deadline, two thirds of it is history and its points are already
+    banked. Projecting the whole phase counts them twice — once as points you have,
+    once as points you are going to get — which overstated every figure on the page
+    that a part-spent month fed: the month's own row, the bar it is measured against,
+    and the season total those roll up into.
+
+    Keeps the name and the phase id, so a month stays itself all season.
+    """
+    return mo.Month(month.phase_id, month.name,
+                    max(month.start_event, next_gw), month.stop_event)
+
+
 def season_winner_edge(n_months: int) -> float:
     """What the season's winner clears a good squad's own expectation by."""
     if n_months < 1:
@@ -173,8 +193,16 @@ def build(
     if next_gw is None:
         next_gw = next((e["id"] for e in boot["events"] if not e["finished"]), 1)
 
+    # Months with something still to play, each trimmed to the part still to play.
+    # Everything downstream — chip values, month rows, the season total — is built
+    # from these, so none of it can count a gameweek twice.
+    live_months = [remaining(m, next_gw) for m in months if m.stop_event >= next_gw]
+    played_in = {m.name: max(0, min(next_gw, m.stop_event + 1) - m.start_event)
+                 for m in months}
+
     tables = {
-        m.name: mo.build_table(boot, fixtures, rates, team_ratings, m) for m in months
+        m.name: mo.build_table(boot, fixtures, rates, team_ratings, m)
+        for m in live_months
     }
 
     # A different provider replaces the xP values while leaving every other field —
@@ -191,7 +219,7 @@ def build(
         if prov.name != "fplm":
             cmap = pv.code_map_from(_P(__file__).resolve().parent.parent
                                     / "data" / f"players_raw_{season}.csv")
-            for m in months:
+            for m in live_months:
                 got = prov.predict(boot, fixtures, m, season=season, code_map=cmap)
                 if not got.ok:
                     continue
@@ -201,8 +229,9 @@ def build(
 
     # The starting squad is chosen for the month we are about to enter, but a squad
     # persists, so rest-of-season value is blended in according to `monthly_weight`.
-    current_month = next((m for m in months if m.start_event <= next_gw <= m.stop_event),
-                         months[0])
+    current_month = next(
+        (m for m in live_months if m.start_event <= next_gw <= m.stop_event),
+        live_months[0] if live_months else remaining(months[0], next_gw))
     # Every gameweek left, not a ten-week window. The window was a hedge against the
     # far fixtures being noise, but the blend already normalises per gameweek, so a
     # longer horizon does not shout louder — it just stops the valuation ending in
@@ -336,9 +365,7 @@ def build(
 
     # --- Value every chip in every month -----------------------------------
     values: list[chipmod.ChipValue] = []
-    for m in months:
-        if m.stop_event < next_gw:
-            continue
+    for m in live_months:
         tbl = tables[m.name]
         values.append(chipmod.triple_captain_value(squad, tbl, m, per_gw))
         values.append(chipmod.bench_boost_value(squad, m, per_gw))
@@ -355,18 +382,16 @@ def build(
     # `first_gw` so a chip you still hold is never advised for a week that has been
     # played. The month we are in is usually part-spent, and its best week for a chip
     # is often behind us.
-    allocation = chipmod.allocate(values, live_windows, months,
+    allocation = chipmod.allocate(values, live_windows, live_months,
                                   max_per_month=CHIPS_PER_MONTH[objective],
                                   real_counts=real_counts, first_gw=next_gw)
 
     # --- Assemble the month-by-month view ----------------------------------
-    counts_by_month = {m.name: mo.fixture_counts(fixtures, m) for m in months}
+    counts_by_month = {m.name: mo.fixture_counts(fixtures, m) for m in live_months}
     short = {t["id"]: t["short_name"] for t in boot["teams"]}
 
     plans: list[MonthPlan] = []
-    for m in months:
-        if m.stop_event < next_gw:
-            continue
+    for m in live_months:
         tbl = tables[m.name]
         sq_xp = sum(tbl[p.pid].xp for p in squad.xi if p.pid in tbl)
         cap = max((tbl[p.pid].xp for p in squad.xi if p.pid in tbl), default=0.0)
@@ -378,7 +403,11 @@ def build(
                 month=m,
                 n_gws=m.n_events,
                 squad_xp=sq_xp,
+                # Measured over the same gameweeks the projection covers: what the
+                # month's winner still has to come, not what they will finish on.
+                # Both sides of a part-spent month are the part that is left.
                 field_target=sq_xp * (1.0 + MONTH_WINNER_EDGE),
+                gws_played=played_in[m.name],
                 chips=[c for c in allocation if c.month == m.name],
                 doubles=[short[t] for t, c in counts.items() if c > m.n_events],
                 blanks=[short[t] for t, c in counts.items() if c < m.n_events],
