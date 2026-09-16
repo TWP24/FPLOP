@@ -916,7 +916,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL season plan",
             f'<tr class="{"target" if m.contest else ""}">'
             f'<td class="nm">{_esc(m.month.name)}'
             f'{f"<span class=tag>{month_tag}</span>" if m.contest else ""}</td>'
-            f'<td class="dim mono">{m.month.start_event}–{m.month.stop_event}</td>'
+            f'<td class="dim mono">{m.month.start_event}–{m.month.stop_event}'
+            f'{f" &middot; {m.gws_played} played" if m.gws_played else ""}</td>'
             f'<td class="r mono">{m.n_gws}</td>'
             f'<td><div class="meter"><span class="fill" style="width:{fill:.1f}%"></span>'
             f'<span class="tick" style="left:{tick:.1f}%"></span>'
@@ -1028,6 +1029,8 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL season plan",
       <i>the gap between them is what a chip has to close</i>
       <i><b>To GW38</b> holds this squad all season &mdash; the Gameweeks tab re-plans
         the transfers and totals a little differently</i>
+      <i>every row is what is <b>left</b> to play: a month in progress shows only its
+        remaining weeks, and the points already banked in it are not counted again</i>
     </div></div>
   </section>
 

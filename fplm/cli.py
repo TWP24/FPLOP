@@ -574,8 +574,12 @@ def cmd_plan(args) -> None:
         # coasted, so the flag marks where the chips land rather than a battle picked.
         word = "CHIPS " if p.objective == "season" else "TARGET"
         tag = f"{BOLD}{word}{RESET}" if m.contest else "      "
+        # A part-spent month says so, or a one-gameweek September looks like a
+        # September that never had three.
+        played = (f"  {DIM}({m.gws_played} of {m.gws_played + m.n_gws} played){RESET}"
+                  if m.gws_played else "")
         print(f"{m.month.name:<11}{m.n_gws}GW  xP {m.squad_xp:>6.0f}  "
-              f"need {m.field_target:>6.0f}  {tag}  {DIM}{chips}{RESET}")
+              f"need {m.field_target:>6.0f}  {tag}  {DIM}{chips}{RESET}{played}")
     print(_hr())
     print(f"{BOLD}{'TO GW38':<11}{sum(m.n_gws for m in p.months)}GW  "
           f"xP {p.season_xp:>6.0f}  need {p.season_target:>6.0f}{RESET}  "

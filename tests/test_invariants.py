@@ -430,6 +430,25 @@ class SeasonObjective(unittest.TestCase):
         floor = planmod.MONTH_WINNER_EDGE * planmod.WINNER_SKILL_SHARE
         self.assertGreater(edges[-1], floor)
 
+    def test_a_month_in_progress_is_trimmed_to_what_is_left(self):
+        # September runs GW3-5. With GW5 the next deadline the plan is about GW5 and
+        # nothing else in that month: GW3 and GW4 are already in the bank, and
+        # projecting them again counted the same points twice.
+        sept = Month(3, "September", 3, 5)
+        left = planmod.remaining(sept, 5)
+        self.assertEqual((left.start_event, left.stop_event, left.n_events), (5, 5, 1))
+        self.assertEqual(left.name, sept.name)
+        self.assertEqual(left.phase_id, sept.phase_id)
+
+    def test_a_month_wholly_ahead_of_us_is_left_alone(self):
+        dec = Month(6, "December", 13, 18)
+        self.assertEqual(planmod.remaining(dec, 5), dec)
+
+    def test_a_month_already_over_trims_to_nothing_playable(self):
+        aug = Month(2, "August", 1, 2)
+        left = planmod.remaining(aug, 5)
+        self.assertEqual(left.events, [])
+
     def test_an_unknown_objective_is_refused_rather_than_guessed(self):
         with self.assertRaises(ValueError):
             planmod.build({"events": [], "chips": []}, [], objective="vibes")
