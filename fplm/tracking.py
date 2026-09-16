@@ -54,6 +54,35 @@ class SquadState:
     # Players bought by transfer. Their purchase price is FPL's own figure from the
     # transfers endpoint; everyone else's is the season-opening price, rebuilt.
     transferred_in: set[int] = field(default_factory=set)
+    # What the transfers endpoint returned, so the log can say whether a transfer
+    # made this week is visible before its deadline — the public API hides picks
+    # until then and appears to hide transfers the same way.
+    n_transfers: int = 0
+    latest_transfer_gw: int = 0
+
+    def apply_move(self, out_pid: int, in_pid: int, listed_in: float,
+                   gw: int | None = None) -> str | None:
+        """Record a transfer you have made that the API cannot see yet.
+
+        The player sold leaves at his selling price, the player bought arrives at
+        his listed price and is worth that if sold again, the bank moves by the
+        difference, and the transfer counts as spent. Returns why it could not be
+        applied, or None when it was.
+        """
+        if out_pid not in self.players:
+            return "the player sold is not in the squad"
+        if in_pid in self.players:
+            return "the player bought is already in the squad"
+        got = self.sell.get(out_pid, 0.0)
+        self.players.discard(out_pid)
+        self.players.add(in_pid)
+        self.sell.pop(out_pid, None)
+        self.sell[in_pid] = listed_in
+        self.bank = round(self.bank + got - listed_in, 1)
+        self.pending += 1
+        tag = f"GW{gw}" if gw else "this week"
+        self.note = f"{self.pending} transfer(s) already made for {tag}"
+        return None
 
     @property
     def budget(self) -> float:
@@ -135,6 +164,8 @@ def squad_state(entry_id: int, next_gw: int, boot: dict) -> SquadState | None:
                 pending += 1
         bought[t["element_in"]] = t.get("element_in_cost") or now_cost.get(t["element_in"], 0)
     transferred_in = set(bought)
+    n_transfers = len(transfers)
+    latest_transfer_gw = max((t.get("event") or 0 for t in transfers), default=0)
 
     sell: dict[int, float] = {}
     paid: dict[int, float] = {}
@@ -153,6 +184,7 @@ def squad_state(entry_id: int, next_gw: int, boot: dict) -> SquadState | None:
                       pending=pending, note=note, base_gw=base_gw,
                       deadline_players=deadline_players, paid=paid,
                       transferred_in=transferred_in,
+                      n_transfers=n_transfers, latest_transfer_gw=latest_transfer_gw,
                       bank_then=round(bank_then, 1), value_then=value_then)
 
 
@@ -316,6 +348,48 @@ def fill_actuals(entry_id: int, records: dict[int, GWRecord] | None = None) -> d
     if changed:
         save(recs)
     return recs
+
+
+def apply_made(state: SquadState, made: list, next_gw: int,
+               by_name: dict[str, int], listed: dict[int, float]) -> list[str]:
+    """Apply the transfers `overrides.json` says were made for the coming deadline.
+
+    FPL's public API does not show a transfer until its deadline has passed, so a
+    move made on Tuesday is invisible to a Wednesday build — which then works from
+    the old squad and spends a free transfer that has already been spent. The
+    override is the human telling the tool what it cannot see.
+
+    Every entry carries the gameweek it was made for and is ignored once that
+    deadline has passed: by then the picks show it, and a stale entry would apply
+    the same move twice. Entries without a gameweek are refused for the same
+    reason — one that never expires is a contamination waiting to happen.
+
+    Returns the messages to print, one per entry, applied or not.
+    """
+    out: list[str] = []
+    for entry in made or []:
+        if not isinstance(entry, dict):
+            continue
+        gw = entry.get("gw")
+        who = f"{entry.get('out', '?')} -> {entry.get('in', '?')}"
+        if gw is None:
+            out.append(f"! overrides.json: transfer {who} has no gw, so it would never "
+                       f"expire — add \"gw\": {next_gw} and it will be applied")
+            continue
+        if int(gw) != next_gw:
+            continue    # expired, or for a week that has not come yet
+        o = by_name.get(str(entry.get("out", "")).strip().lower())
+        i = by_name.get(str(entry.get("in", "")).strip().lower())
+        if o is None or i is None:
+            out.append(f"! overrides.json: transfer {who}: no player matching "
+                       f"{'both names' if o is None and i is None else entry['out'] if o is None else entry['in']!r}")
+            continue
+        why = state.apply_move(o, i, listed.get(i, 0.0), gw=int(gw))
+        if why:
+            out.append(f"! overrides.json: transfer {who} not applied — {why}")
+        else:
+            out.append(f"transfer already made for GW{gw}: {who} (from overrides.json)")
+    return out
 
 
 def free_transfers(entry_id: int, next_gw: int) -> int | None:

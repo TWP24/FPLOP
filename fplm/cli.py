@@ -407,6 +407,10 @@ def cmd_check(args) -> None:
         if state is None and nxt > 1:
             raise SystemExit(f"could not read entry {args.entry}'s squad for GW{nxt}")
         if state is not None:
+            listed = {e["id"]: e["now_cost"] / 10.0 for e in boot["elements"]}
+            names = {e["web_name"].lower(): e["id"] for e in boot["elements"]}
+            tracking.apply_made(state, _read_overrides().get("made") or [], nxt,
+                                names, listed)
             current = state.players
 
     rates = _xpmod.build_rates(boot)
@@ -463,11 +467,21 @@ def cmd_plan(args) -> None:
                              " you do not hold. Try again, or check the entry id.")
         purse = None
         if state is not None:
+            # Transfers you have told the tool about, because the API will not
+            # show this week's until the deadline has passed.
+            listed = {e["id"]: e["now_cost"] / 10.0 for e in boot["elements"]}
+            names = {e["web_name"].lower(): e["id"] for e in boot["elements"]}
+            for line in tracking.apply_made(state, _read_overrides().get("made") or [],
+                                            next_ev, names, listed):
+                print(f"{DIM}{line}{RESET}" if not line.startswith("!") else f"  {line}",
+                      file=sys.stderr if line.startswith("!") else sys.stdout)
             current = state.players
             budget = state.budget
             print(f"{DIM}squad: 15 held, £{state.bank:.1f}m in the bank, "
                   f"£{state.budget:.1f}m to spend"
                   f"{' — ' + state.note if state.note else ''}{RESET}")
+            print(f"{DIM}transfers endpoint: {state.n_transfers} on record, latest for "
+                  f"GW{state.latest_transfer_gw} (next deadline GW{next_ev}){RESET}")
             # Check the reconstruction against FPL's own figure, and say so either
             # way: a purse that cannot be verified should not read as one that was.
             purse = tracking.reconcile(state)

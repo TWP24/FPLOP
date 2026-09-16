@@ -644,6 +644,58 @@ class SquadState(unittest.TestCase):
         self.assertEqual(rec.wrong_paid, {})
         self.assertTrue(rec.ok, rec.detail)
 
+    def test_a_transfer_declared_in_overrides_is_applied_once(self):
+        # FPL's public API hides this week's transfers until the deadline, so the
+        # human says what was done: 15 out (sells 5.0), 99 in (listed 6.0), for GW5.
+        held = list(range(1, 16))
+        cost = {p: 50 for p in held}
+        cost[99] = 60
+        boot = self._boot(cost)
+        st = self._run(5, {4: held}, [], boot)
+        names = {f"p{p}": p for p in list(held) + [99]}
+        listed = {p: c / 10.0 for p, c in cost.items()}
+        msgs = tracking.apply_made(st, [{"gw": 5, "out": "P15", "in": "P99"}], 5,
+                                   names, listed)
+        self.assertEqual(len(msgs), 1)
+        self.assertNotIn("!", msgs[0])
+        self.assertIn(99, st.players)
+        self.assertNotIn(15, st.players)
+        self.assertEqual(st.pending, 1)
+        self.assertAlmostEqual(st.bank, 1.2 + 5.0 - 6.0)
+        self.assertAlmostEqual(st.sell[99], 6.0)
+        self.assertEqual(len(st.players), 15)
+
+    def test_a_declared_transfer_expires_with_its_gameweek(self):
+        # Once GW5's deadline has passed the picks show the move; applying the
+        # entry again would swap a player who is no longer there.
+        held = list(range(1, 16))
+        boot = self._boot({p: 50 for p in held} | {99: 60})
+        st = self._run(6, {5: held}, [], boot)
+        msgs = tracking.apply_made(st, [{"gw": 5, "out": "P15", "in": "P99"}], 6,
+                                   {f"p{p}": p for p in held + [99]}, {99: 6.0})
+        self.assertEqual(msgs, [])
+        self.assertEqual(st.pending, 0)
+        self.assertEqual(st.players, set(held))
+
+    def test_a_declared_transfer_without_a_gameweek_is_refused(self):
+        held = list(range(1, 16))
+        boot = self._boot({p: 50 for p in held} | {99: 60})
+        st = self._run(5, {4: held}, [], boot)
+        msgs = tracking.apply_made(st, [{"out": "P15", "in": "P99"}], 5,
+                                   {f"p{p}": p for p in held + [99]}, {99: 6.0})
+        self.assertTrue(msgs and msgs[0].startswith("!"))
+        self.assertEqual(st.players, set(held))
+
+    def test_a_declared_transfer_of_a_player_not_held_is_refused(self):
+        held = list(range(1, 16))
+        boot = self._boot({p: 50 for p in held} | {98: 50, 99: 60})
+        st = self._run(5, {4: held}, [], boot)
+        msgs = tracking.apply_made(st, [{"gw": 5, "out": "P98", "in": "P99"}], 5,
+                                   {f"p{p}": p for p in held + [98, 99]}, {99: 6.0})
+        self.assertTrue(msgs and "not applied" in msgs[0])
+        self.assertEqual(st.players, set(held))
+        self.assertEqual(st.pending, 0)
+
     def test_no_witness_means_no_verdict(self):
         held = list(range(1, 16))
         boot = self._boot({p: 50 for p in held})
