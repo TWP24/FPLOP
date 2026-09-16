@@ -16,7 +16,8 @@ a triple captain.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+import heapq
+from dataclasses import dataclass, field
 
 from .monthly import Month, PlayerMonth, fixture_counts
 from .optimise import Constraints, Squad, solve
@@ -118,6 +119,22 @@ class ChipValue:
     gw: int          # best single gameweek to play it, where that matters
     value: float
     note: str = ""
+    # What the chip is worth in *every* week of the month, not only its best one.
+    # The allocator needs the alternatives: FPL allows one chip per gameweek, so when
+    # two chips want the same Saturday the loser has to move, not go unplayed.
+    by_gw: dict[int, float] = field(default_factory=dict)
+    note_by_gw: dict[int, str] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        # A value built without the per-week breakdown still has one option: its own.
+        if not self.by_gw:
+            self.by_gw = {self.gw: self.value}
+
+    def at(self, gw: int, value: float) -> "ChipValue":
+        """The same chip, priced in a different week of the same month."""
+        return ChipValue(self.chip, self.month, gw, value,
+                         self.note_by_gw.get(gw, self.note),
+                         dict(self.by_gw), dict(self.note_by_gw))
 
 
 def windows(boot: dict) -> list[ChipWindow]:
@@ -138,31 +155,41 @@ def triple_captain_value(squad: Squad, table: dict[int, PlayerMonth], month: Mon
 
     Best played in the single gameweek where your best captain has the highest
     expected return — a double gameweek if one exists, otherwise the kindest fixture.
+    Every week of the month is priced, not just the best one, because the best one is
+    often also the week the bench boost wants and only one of them can have it.
     """
-    best_gw, best_val, best_name = month.start_event, 0.0, ""
+    by_gw: dict[int, float] = {}
+    notes: dict[int, str] = {}
     for gw in month.events:
         gw_xp = per_gw.get(gw, {})
         cands = [(gw_xp.get(p.pid, 0.0), p.name) for p in squad.xi]
         if not cands:
             continue
         v, nm = max(cands)
+        by_gw[gw] = v
+        notes[gw] = f"on {nm}"
+
+    best_gw, best_val = month.start_event, 0.0
+    for gw, v in by_gw.items():
         if v > best_val:
-            best_gw, best_val, best_name = gw, v, nm
+            best_gw, best_val = gw, v
     return ChipValue("3xc", month.name, best_gw, best_val,
-                     f"on {best_name}" if best_name else "")
+                     notes.get(best_gw, "") if best_val else "", by_gw, notes)
 
 
 def bench_boost_value(squad: Squad, month: Month,
                       per_gw: dict[int, dict[int, float]]) -> ChipValue:
     """Bench boost pays your four bench players for one gameweek."""
+    by_gw = {
+        gw: sum(per_gw.get(gw, {}).get(p.pid, 0.0) for p in squad.bench)
+        for gw in month.events
+    }
     best_gw, best_val = month.start_event, 0.0
-    for gw in month.events:
-        gw_xp = per_gw.get(gw, {})
-        v = sum(gw_xp.get(p.pid, 0.0) for p in squad.bench)
+    for gw, v in by_gw.items():
         if v > best_val:
             best_gw, best_val = gw, v
     return ChipValue("bboost", month.name, best_gw, best_val,
-                     f"{len(squad.bench)}-man bench")
+                     f"{len(squad.bench)}-man bench", by_gw)
 
 
 def free_hit_value(squad: Squad, table: dict[int, PlayerMonth], month: Month,
@@ -173,6 +200,7 @@ def free_hit_value(squad: Squad, table: dict[int, PlayerMonth], month: Month,
     what your actual squad would have scored. Most valuable in a blank gameweek, when
     your own squad cannot field a full team.
     """
+    by_gw: dict[int, float] = {}
     best_gw, best_val = month.start_event, 0.0
     for gw in month.events:
         gw_xp = per_gw.get(gw, {})
@@ -186,9 +214,10 @@ def free_hit_value(squad: Squad, table: dict[int, PlayerMonth], month: Month,
             continue
         mine = _best_xi_score(squad, gw_xp)
         gain = sum(gw_xp.get(p.pid, 0.0) for p in ideal.xi) - mine
+        by_gw[gw] = max(gain, 0.0)
         if gain > best_val:
             best_gw, best_val = gw, gain
-    return ChipValue("freehit", month.name, best_gw, max(best_val, 0.0))
+    return ChipValue("freehit", month.name, best_gw, max(best_val, 0.0), "", by_gw)
 
 
 def wildcard_value(squad: Squad, table: dict[int, PlayerMonth], month: Month,
@@ -214,9 +243,16 @@ def wildcard_value(squad: Squad, table: dict[int, PlayerMonth], month: Month,
     # With one free transfer a week you can reach much of the ideal squad unaided, so
     # credit the chip with the shortfall rather than the full gap.
     reachable = min(month.n_events, 5) / 15.0
-    gain = (ideal.xp - current) * (1.0 - reachable)
-    return ChipValue("wildcard", month.name, month.start_event, max(gain, 0.0),
-                     f"{month.n_events} GWs")
+    gain = max((ideal.xp - current) * (1.0 - reachable), 0.0)
+
+    # A wildcard only improves the weeks that come after it, so played later in the
+    # month it is worth pro-rata less. Pricing that decay gives the allocator somewhere
+    # to put the chip when the first week of the month is already spoken for, instead
+    # of leaving it unplayed.
+    by_gw = {gw: gain * (month.stop_event - gw + 1) / month.n_events
+             for gw in month.events}
+    return ChipValue("wildcard", month.name, month.start_event, gain,
+                     f"{month.n_events} GWs", by_gw)
 
 
 def _as_single_gw(p: PlayerMonth, xp: float) -> PlayerMonth:
@@ -256,12 +292,17 @@ def allocate(
     max_per_month: int = 2,
     real_counts: dict[int, int] | None = None,
 ) -> list[ChipValue]:
-    """Assign each available chip to the month where it is worth most.
+    """Assign each available chip to the month, and the week, where it is worth most.
 
-    Greedy on value, respecting each chip's gameweek window and a cap on how many
-    chips one month can absorb. Greedy is optimal enough here: chip values are close
-    to independent across months, and the binding constraints are the windows rather
-    than interactions between chips.
+    Greedy on value, respecting each chip's gameweek window, FPL's one-chip-a-week
+    rule and a cap on how many chips one month can absorb. Greedy is optimal enough
+    here: chip values are close to independent across months, and the binding
+    constraints are the windows rather than interactions between chips.
+
+    When two chips want the same Saturday the loser moves to its next-best week. It
+    used to be dropped instead, and the chip it was dropped for was almost always the
+    Triple Captain — the cheapest of the four, so it lost every tie — which is how a
+    season plan ended up showing one Triple Captain when the game gives you two.
     """
     by_key = {(v.chip, v.month): v for v in values}
     month_of = {m.name: m for m in months}
@@ -273,40 +314,72 @@ def allocate(
     candidates = []
     for w in chip_windows:
         for m in months:
-            # A chip can only go in a month it can legally cover.
-            if m.start_event < w.start_event or m.stop_event > w.stop_event:
+            # A chip can go in any month it *overlaps*. Requiring the month to sit
+            # wholly inside the window is what the rule looks like, but it is not the
+            # rule: the two halves split at GW19/20 and FPL's month boundaries do not
+            # respect that, so this season January runs GW19-23 and used to be barred
+            # from every chip in the game. Only the week the chip is played in has to
+            # be inside the window, which `price` enforces.
+            if m.stop_event < w.start_event or m.start_event > w.stop_event:
                 continue
             v = by_key.get((w.name, m.name))
             if v:
                 candidates.append((w, v))
 
-    # Price in the blank/double prior before ranking, so the second set of chips is
-    # held back for the window where it is worth most.
-    candidates = [
-        (w, ChipValue(v.chip, v.month, v.gw,
-                      v.value * window_uplift(v.chip, v.gw, real_counts), v.note))
-        for w, v in candidates
-    ]
-    candidates.sort(key=lambda wv: -wv[1].value)
+    def price(v: ChipValue, w: ChipWindow, taken: set[int]) -> tuple[float, int] | None:
+        """Best value and week for this chip in its month, avoiding the taken weeks.
+
+        The blank/double prior is priced in here, per gameweek rather than once on the
+        month's best week, so that the second set of chips is held back for the window
+        where it is worth most and a chip that has to move is re-judged on where it
+        actually lands.
+        """
+        opts = [(val * window_uplift(v.chip, gw, real_counts), -gw)
+                for gw, val in v.by_gw.items()
+                if gw not in taken and w.start_event <= gw <= w.stop_event]
+        if not opts:
+            return None
+        val, neg_gw = max(opts)    # ties go to the earlier week
+        return val, -neg_gw
+
     spent: set[int] = set()
     used_gws: set[int] = set()
+
+    # Lazy greedy. Taking a chip removes a week from every other chip's options, so a
+    # candidate's price can only fall as the queue drains: re-price the head before
+    # trusting it, and push it back if it has slipped below the runner-up. Each
+    # push-back strictly lowers that candidate's price and a month has finitely many
+    # weeks, so this terminates.
+    heap: list[tuple[float, int]] = []
     for i, (w, v) in enumerate(candidates):
-        wid = id(w)
-        if wid in spent:
+        p = price(v, w, set())
+        if p is not None:
+            heapq.heappush(heap, (-p[0], i))
+
+    while heap:
+        _neg, i = heapq.heappop(heap)
+        w, v = candidates[i]
+        if id(w) in spent:
             continue
         if used_per_month.get(v.month, 0) >= max_per_month:
-            continue
-        # FPL allows exactly one chip per gameweek. Two chips can share a month, but
-        # not a week — without this the planner happily stacked a bench boost and a
-        # triple captain on the same Saturday and counted both.
-        if v.gw in used_gws:
             continue
         # Never play the same chip type twice in one month.
         if any(c.month == v.month and c.chip == v.chip for c in chosen):
             continue
-        chosen.append(v)
-        spent.add(wid)
-        used_gws.add(v.gw)
+        # FPL allows exactly one chip per gameweek. Two chips can share a month, but
+        # not a week — without this the planner happily stacked a bench boost and a
+        # triple captain on the same Saturday and counted both.
+        p = price(v, w, used_gws)
+        if p is None:
+            continue
+        val, gw = p
+        if heap and val < -heap[0][0] - 1e-9:
+            heapq.heappush(heap, (-val, i))
+            continue
+
+        chosen.append(v.at(gw, val))
+        spent.add(id(w))
+        used_gws.add(gw)
         used_per_month[v.month] = used_per_month.get(v.month, 0) + 1
 
     return sorted(chosen, key=lambda v: (month_of[v.month].start_event, -v.value))

@@ -561,7 +561,11 @@ def cmd_plan(args) -> None:
     print(f"\n{BOLD}Season plan — next deadline GW{p.next_gw}{RESET}")
     print(_hr())
     for m in p.months:
-        chips = ", ".join(f"{c.chip}@GW{c.gw} +{c.value:.0f}" for c in m.chips) or "-"
+        chips = ", ".join(
+            f"{c.chip}@GW{c.gw} +{c.value:.0f}"
+            f"{' ' + c.note if c.chip == '3xc' and c.note else ''}"
+            for c in m.chips
+        ) or "-"
         tag = f"{BOLD}TARGET{RESET}" if m.contest else "      "
         print(f"{m.month.name:<11}{m.n_gws}GW  xP {m.squad_xp:>6.0f}  "
               f"need {m.field_target:>6.0f}  {tag}  {DIM}{chips}{RESET}")

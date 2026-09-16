@@ -876,9 +876,12 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL monthly plan",
     scale = max([m.field_target for m in plan.months] + [1])
     months = ""
     for m in plan.months:
+        # "Triple Cap GW7" is only half an instruction — whose armband is the other
+        # half, and the chip planner already knows, so say it.
         chips = "".join(
             f'<span class="chip">{CHIP_LABEL.get(c.chip, c.chip)}'
-            f'<u> GW{c.gw} · +{c.value:.0f}</u></span>'
+            f'<u> GW{c.gw} · +{c.value:.0f}'
+            f'{" " + _esc(c.note) if c.chip == "3xc" and c.note else ""}</u></span>'
             for c in m.chips
         )
         notes = ""
