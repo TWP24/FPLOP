@@ -97,7 +97,8 @@ def cmd_months(args) -> None:
     fixtures = api.fixtures()
     months = monthly.get_months(boot)
 
-    print(f"\n{BOLD}Scoring months — 2026/27{RESET}")
+    first = min(boot["events"], key=lambda e: e["id"])["deadline_time"][:4]
+    print(f"\n{BOLD}Scoring months — {first}/{str(int(first) + 1)[2:]}{RESET}")
     print(_hr())
     print(f"{'Month':<12}{'GWs':<10}{'#':<5}{'Fixtures':<11}{'Prize weight':<14}")
     print(_hr())
@@ -396,14 +397,17 @@ def cmd_check(args) -> None:
 
     boot = api.bootstrap()
     fixtures = api.fixtures()
+    from . import tracking
+
     current: set[int] = set()
+    state = None
     if args.entry:
         nxt = next((e["id"] for e in boot["events"] if e.get("is_next")), 1)
-        try:
-            current = {x["element"]
-                       for x in api.entry_picks(args.entry, max(nxt - 1, 1))["picks"]}
-        except Exception as exc:  # noqa: BLE001
-            print(f"  ! could not load entry {args.entry}: {exc}", file=sys.stderr)
+        state = tracking.squad_state(args.entry, nxt, boot)
+        if state is None and nxt > 1:
+            raise SystemExit(f"could not read entry {args.entry}'s squad for GW{nxt}")
+        if state is not None:
+            current = state.players
 
     rates = _xpmod.build_rates(boot)
     # Read the same overrides the real build reads, or the check would verify a plan
@@ -416,8 +420,12 @@ def cmd_check(args) -> None:
     # with a different allowance from the one that will be published.
     free = int(ov.get("free_transfers") or 0) or (
         _tr_free(args.entry, boot) if args.entry else 1) or 1
+    if state is not None:
+        free = max(0, free - state.pending)
     p = planmod.build(boot, fixtures, current_squad=current, keep=keep_ids,
                       free_transfers=free,
+                      budget=state.budget if state is not None else 100.0,
+                      sell_price=state.sell if state is not None else None,
                       rivals=args.rivals or 19, simulate=bool(args.rivals))
     raise SystemExit(
         0 if selfcheck.report(selfcheck.run(boot, p, rates, held=current,
@@ -433,14 +441,31 @@ def cmd_plan(args) -> None:
     fixtures = api.fixtures(ttl=0 if args.refresh else 3600)
     overrides = _read_minutes_csv(args.minutes_csv, boot) if args.minutes_csv else {}
 
+    from . import tracking
+
     current: set[int] = set()
+    state = None
+    budget = args.budget
     if args.entry:
         next_ev = next((e["id"] for e in boot["events"] if e.get("is_next")), 1)
-        try:
-            picks = api.entry_picks(args.entry, max(next_ev - 1, 1))
-            current = {p["element"] for p in picks["picks"]}
-        except Exception as exc:  # noqa: BLE001
-            print(f"  ! could not load entry {args.entry}: {exc}", file=sys.stderr)
+        state = tracking.squad_state(args.entry, next_ev, boot)
+        if state is None and next_ev > 1:
+            # Once a season is under way there is a real squad, and a plan that
+            # cannot see it is not a plan for you. This used to fall through to a
+            # fresh template fifteen and publish that as your team, with transfer
+            # advice measured against a squad you do not hold — and the self-check
+            # let it pass, because it only checks the plan against the squad it was
+            # given. Failing here leaves yesterday's page up, which is the right
+            # answer to a bad API day.
+            raise SystemExit(f"could not read entry {args.entry}'s squad for GW{next_ev}"
+                             " from the FPL API; refusing to build a plan from a squad"
+                             " you do not hold. Try again, or check the entry id.")
+        if state is not None:
+            current = state.players
+            budget = state.budget
+            print(f"{DIM}squad: 15 held, £{state.bank:.1f}m in the bank, "
+                  f"£{state.budget:.1f}m to spend"
+                  f"{' — ' + state.note if state.note else ''}{RESET}")
 
     from . import xp as _xpmod
 
@@ -461,6 +486,11 @@ def cmd_plan(args) -> None:
         if derived:
             free_now = derived
             ft_source = "your transfer history"
+    # A transfer already made for this deadline has been spent, whatever the
+    # source above says, and zero is what is left when it was the only one.
+    if state is not None and state.pending:
+        free_now = max(0, free_now - state.pending)
+        ft_source += f", less {state.pending} already made"
     if free_now != 1 or ft_source != "default":
         print(f"{DIM}free transfers: {free_now} (from {ft_source}){RESET}")
 
@@ -494,7 +524,8 @@ def cmd_plan(args) -> None:
         boot, fixtures, prior_weight=args.prior_weight, minutes_override=overrides,
         rivals=args.rivals, objective=args.objective,
         monthly_weight=args.monthly_weight,
-        min_minutes=args.min_minutes, budget=args.budget, current_squad=current,
+        min_minutes=args.min_minutes, budget=budget, current_squad=current,
+        sell_price=state.sell if state is not None else None,
         free_transfers=free_now,
         max_hits=getattr(args, "max_hits", 0),
         note=str(overrides_file.get("note") or ""),
@@ -507,13 +538,11 @@ def cmd_plan(args) -> None:
 
     gwplans = None
     if not args.no_gameweeks:
-        gwplans = fcmod.build(boot, fixtures, p, budget=args.budget,
+        gwplans = fcmod.build(boot, fixtures, p, budget=budget,
                               min_minutes=args.min_minutes)
 
     # Write this gameweek's prediction down before the deadline, and pull in the
     # actuals for any gameweek already played, so the model can be scored honestly.
-    from . import tracking
-
     if p.months:
         gw_xp = p.months[0].squad_xp / max(p.months[0].n_gws, 1)
         cap = next((x.name for x in p.squad.players if x.pid == p.squad.captain), "")
@@ -547,8 +576,11 @@ def cmd_plan(args) -> None:
 
         month_now = p.months[0].month.name if p.months else None
         tbl = p.tables.get(month_now, {}) if month_now else {}
+        # The last deadline's picks are the most recent ones FPL will show anyone.
+        # The next deadline's are not public until it passes, so asking for them
+        # left the league tab empty all season.
         for lid in args.league:
-            v = rvmod.build(lid, p.next_gw, tbl, my_entry=args.entry)
+            v = rvmod.build(lid, max(p.next_gw - 1, 1), tbl, my_entry=args.entry)
             league_views.append(v)
             state = f"{len(v.with_picks)} rivals priced" if v.available else v.note
             print(f"{DIM}league {lid} ({v.league_name}): {state}{RESET}")

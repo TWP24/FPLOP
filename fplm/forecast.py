@@ -115,6 +115,7 @@ def build(
     rates = xpmod.build_rates(boot)
     names = {r.pid: r.name for r in rates.values()}
     prices = {r.pid: r.price for r in rates.values()}
+    pos_of = {r.pid: r.pos for r in rates.values()}
     months = mo.get_months(boot)
 
     all_gws = sorted({f["event"] for f in fixtures if f["event"]})
@@ -148,8 +149,13 @@ def build(
         return out
 
     squad = {p.pid for p in season_plan.squad.players}
-    bank = round(budget - season_plan.squad.cost, 1)
-    free = 1
+    # Start from what the plan says is actually in the bank and actually free next
+    # week, rather than assuming £100.0m and one transfer. From here on prices are
+    # held flat, so a player is worth what he is listed at.
+    bank = float(getattr(season_plan, "bank", None)
+                 if getattr(season_plan, "bank", None) is not None
+                 else round(budget - season_plan.squad.cost, 1))
+    free = int(getattr(season_plan, "free_after", 1) or 1)
     acquired: dict[int, int] = {p: start for p in squad}
     plans: list[GWPlan] = []
 
@@ -160,6 +166,9 @@ def build(
 
         moves: list[Move] = []
         hits = 0
+        # The fifteen that play this week. Normally the squad; under a free hit it is
+        # a one-week team and the squad itself is untouched.
+        fielded = squad
 
         if g > start:
             # A wildcard or free hit lifts the transfer limit entirely for one week.
@@ -190,7 +199,7 @@ def build(
             if use_horizon and not unlimited:
                 ahead = {x: tables[x] for x in gws if g <= x < g + span and x in tables}
                 if len(ahead) >= 2:
-                    hp = hzmod.solve(ahead, set(squad), bank, cons,
+                    hp = hzmod.solve(ahead, set(squad), cons,
                                      free_transfers=free, max_hits_per_gw=max_hits,
                                      time_limit=20)
                     if hp is not None and g in hp.squads:
@@ -210,32 +219,40 @@ def build(
                 out_ids = squad - chosen
                 in_ids = chosen - squad
                 n = len(out_ids)
-                if n:
-                    for o, i in zip(sorted(out_ids), sorted(in_ids)):
-                        moves.append(Move(names.get(o, str(o)), names.get(i, str(i)),
-                                          prices.get(o, 0.0), prices.get(i, 0.0)))
-                    for i in in_ids:
-                        acquired[i] = g
-                    bank = round(
-                        bank + sum(prices.get(p, 0.0) for p in out_ids)
-                        - sum(prices.get(p, 0.0) for p in in_ids), 1
-                    )
-                    if not unlimited:
+                moves = _pair_moves(out_ids, in_ids, names, prices, pos_of)
+                fielded = chosen
+                if chip == "freehit":
+                    # A one-week team. It plays this week and then everything comes
+                    # back: the fifteen, the bank, and the free transfer, which a
+                    # free hit does not spend. This used to score the week on the
+                    # old squad while showing the free-hit moves, and leave the bank
+                    # permanently moved by a purchase that had been reverted.
+                    free = min(MAX_FREE_TRANSFERS, free + 1)
+                else:
+                    if n:
+                        for i in in_ids:
+                            acquired[i] = g
+                        bank = round(
+                            bank + sum(prices.get(p, 0.0) for p in out_ids)
+                            - sum(prices.get(p, 0.0) for p in in_ids), 1
+                        )
+                        squad = chosen
+                    if unlimited:
+                        # A wildcard rebuilds for nothing and, like a free hit,
+                        # leaves the week's free transfer to roll on.
+                        free = min(MAX_FREE_TRANSFERS, free + 1)
+                    elif n:
                         hits = max(0, n - free)
                         free = min(MAX_FREE_TRANSFERS, max(1, free - n + 1))
-                    # A free hit reverts next week, so the squad does not persist.
-                    if chip != "freehit":
-                        squad = chosen
                     else:
                         free = min(MAX_FREE_TRANSFERS, free + 1)
-                else:
-                    free = min(MAX_FREE_TRANSFERS, free + 1)
             else:
                 free = min(MAX_FREE_TRANSFERS, free + 1)
 
         # --- Field the best legal XI for this gameweek ----------------------
-        scored = {p: table[p].xp if p in table else 0.0 for p in squad}
-        xi = _best_xi(list(squad), scored, {p: table[p].pos for p in squad if p in table})
+        scored = {p: table[p].xp if p in table else 0.0 for p in fielded}
+        xi = _best_xi(list(fielded), scored,
+                      {p: table[p].pos for p in fielded if p in table})
         cap = max(xi, key=lambda p: scored.get(p, 0.0)) if xi else None
         vice = max((p for p in xi if p != cap), key=lambda p: scored.get(p, 0.0), default=cap)
 
@@ -244,7 +261,7 @@ def build(
             # Triple captain pays a third copy rather than the usual second.
             projected += scored.get(cap, 0.0) * (2 if chip == "3xc" else 1)
         if chip == "bboost":
-            projected += sum(scored.get(p, 0.0) for p in squad if p not in set(xi))
+            projected += sum(scored.get(p, 0.0) for p in fielded if p not in set(xi))
 
         counts = {DEF: 0, MID: 0, FWD: 0}
         for p in xi:
@@ -255,7 +272,7 @@ def build(
         plans.append(GWPlan(
             gw=g,
             month=next((m.name for m in months if m.start_event <= g <= m.stop_event), "?"),
-            squad=sorted(squad),
+            squad=sorted(fielded),
             xi=xi,
             captain=cap,
             vice=vice,
@@ -270,6 +287,19 @@ def build(
         ))
 
     return plans
+
+
+def _pair_moves(out_ids, in_ids, names, prices, pos_of) -> list[Move]:
+    """Line each sale up with the purchase that replaced it.
+
+    FPL swaps like for like, so sorting both sides by position and then price pairs
+    them. Sorting by id paired a sold midfielder with a bought defender whenever two
+    moves were made at once.
+    """
+    key = lambda pid: (pos_of.get(pid, 0), -prices.get(pid, 0.0))  # noqa: E731
+    return [Move(names.get(o, str(o)), names.get(i, str(i)),
+                 prices.get(o, 0.0), prices.get(i, 0.0))
+            for o, i in zip(sorted(out_ids, key=key), sorted(in_ids, key=key))]
 
 
 def _best_xi(members: list[int], scored: dict[int, float], pos_of: dict[int, int]) -> list[int]:

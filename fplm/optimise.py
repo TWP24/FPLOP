@@ -235,6 +235,16 @@ class Constraints:
     max_hits: int = 0
     min_expected_minutes: float = 0.0
     roll_value: float | None = None   # None = use the module default
+    # What each held player would fetch if sold, where that differs from his listed
+    # price. FPL pays back the purchase price plus half of any rise, so a player who
+    # has gone up since you bought him is worth less to you than to the market. With
+    # `budget` set to bank plus these, a swap is affordable exactly when FPL says it
+    # is: the incoming price must not exceed the bank plus the outgoing selling price.
+    sell_price: dict[int, float] = field(default_factory=dict)
+
+    def price_of(self, p) -> float:
+        """What this player costs the squad: his selling price if held, else listed."""
+        return self.sell_price.get(p.pid, p.price)
 
 
 def solve(
@@ -319,7 +329,7 @@ def solve(
     for pos, n in SQUAD_QUOTA.items():
         prob += pulp.lpSum(squad[i] for i in ids if P[i].pos == pos) == n
 
-    prob += pulp.lpSum(squad[i] * P[i].price for i in ids) <= cons.budget
+    prob += pulp.lpSum(squad[i] * cons.price_of(P[i]) for i in ids) <= cons.budget
 
     teams = {P[i].team for i in ids}
     for t in teams:

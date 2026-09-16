@@ -26,6 +26,115 @@ LOG = Path(__file__).resolve().parent.parent / "predictions.json"
 
 
 @dataclass
+class SquadState:
+    """What you actually hold going into the next deadline, and what it is worth.
+
+    Everything the optimiser needs to make a legal transfer and nothing it has to
+    be told: the fifteen (with any transfer already made this week applied), the
+    bank, and what each held player would fetch. FPL does not return your selling
+    prices on any public endpoint, so they are rebuilt from the transfer history
+    the way FPL computes them — purchase price plus half of any rise, rounded down
+    to the nearest 0.1 — and a player never transferred in was bought at his
+    season-opening price, which `cost_change_start` recovers.
+    """
+
+    players: set[int]
+    bank: float                     # millions, after any transfers already made
+    sell: dict[int, float]          # pid -> what selling him now would return
+    pending: int = 0                # transfers already made for the next deadline
+    note: str = ""
+
+    @property
+    def budget(self) -> float:
+        """Bank plus the selling value of the fifteen: the most a squad can cost."""
+        return round(self.bank + sum(self.sell.get(p, 0.0) for p in self.players), 1)
+
+
+def sell_price(purchase: float, current: float) -> float:
+    """FPL returns your purchase price plus half the profit, rounded down to 0.1."""
+    if current <= purchase:
+        return current
+    profit = round(current - purchase, 1)
+    return round(purchase + int(profit * 10 // 2) / 10, 1)
+
+
+def squad_state(entry_id: int, next_gw: int, boot: dict) -> SquadState | None:
+    """Rebuild the live squad, bank and selling prices from the public API.
+
+    The fifteen are the last published picks — FPL only serves a gameweek's picks
+    once its deadline has passed — with this week's transfers, which the transfers
+    endpoint does publish as they are made, applied on top. Without that step the
+    plan spends a transfer you have already spent, on a squad you no longer hold.
+
+    A free hit in the last gameweek is the one case where the last published picks
+    are not the squad you hold: they are the one-week team, and the real fifteen
+    are the picks from the week before. Handled, because a plan built on a free-hit
+    squad would sell eleven players nobody owns.
+
+    Returns None if any of it cannot be read; the caller decides whether that is
+    fatal. Before GW1 there are no picks to read and that is not an error.
+    """
+    if next_gw <= 1:
+        return None
+    try:
+        hist = api.fetch(f"entry/{entry_id}/history", key=f"hist_{entry_id}", ttl=900)
+        transfers = api.fetch(f"entry/{entry_id}/transfers",
+                              key=f"transfers_{entry_id}", ttl=600)
+    except Exception:  # noqa: BLE001
+        return None
+
+    chips = {c.get("event"): c.get("name") for c in hist.get("chips", [])}
+    last = next_gw - 1
+    base_gw = last - 1 if chips.get(last) == "freehit" and last > 1 else last
+    try:
+        picks = api.entry_picks(entry_id, base_gw)
+    except Exception:  # noqa: BLE001
+        return None
+    players = {p["element"] for p in picks.get("picks", [])}
+    if len(players) != 15:
+        return None
+    bank = float(picks.get("entry_history", {}).get("bank") or 0) / 10.0
+
+    now_cost = {e["id"]: e["now_cost"] for e in boot["elements"]}
+    change = {e["id"]: e.get("cost_change_start") or 0 for e in boot["elements"]}
+
+    # Purchase price is the last price paid for a player still held. Walk the
+    # transfers in time order so a player sold and bought back carries the later
+    # price. Transfers made under a free hit are reverted by FPL, so they neither
+    # move the squad nor set a purchase price.
+    bought: dict[int, int] = {}
+    pending = 0
+    for t in sorted(transfers, key=lambda t: (t.get("event", 0), t.get("time", ""))):
+        ev = t.get("event")
+        if chips.get(ev) == "freehit":
+            continue
+        if ev is not None and ev > base_gw:
+            # Made since the last published picks, so apply it to the squad. The
+            # bank has already moved in FPL's ledger for these, but the picks were
+            # taken before they happened, so it is moved here too.
+            players.discard(t["element_out"])
+            players.add(t["element_in"])
+            bank += (t.get("element_out_cost", 0) - t.get("element_in_cost", 0)) / 10.0
+            if ev == next_gw:
+                pending += 1
+        bought[t["element_in"]] = t.get("element_in_cost") or now_cost.get(t["element_in"], 0)
+
+    sell: dict[int, float] = {}
+    for pid in players:
+        now = now_cost.get(pid)
+        if now is None:
+            continue
+        paid = bought.get(pid, now - change.get(pid, 0))
+        sell[pid] = sell_price(paid / 10.0, now / 10.0)
+
+    if len(players) != 15:
+        return None
+    note = f"{pending} transfer(s) already made for GW{next_gw}" if pending else ""
+    return SquadState(players=players, bank=round(bank, 1), sell=sell,
+                      pending=pending, note=note)
+
+
+@dataclass
 class GWRecord:
     gw: int
     predicted: float

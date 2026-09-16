@@ -102,7 +102,6 @@ def _prune(tables: dict[int, dict[int, PlayerMonth]], held: set[int],
 def solve(
     tables: dict[int, dict[int, PlayerMonth]],
     held: set[int],
-    bank: float,
     cons: Constraints,
     free_transfers: int = 1,
     max_hits_per_gw: int = 0,   # measured as costing points; see calib/horizon_test
@@ -112,7 +111,14 @@ def solve(
     time_limit: int = 120,
     shuffle_seed: int | None = None,
 ) -> HorizonPlan | None:
-    """Optimise squad and transfers jointly across every gameweek in `tables`."""
+    """Optimise squad and transfers jointly across every gameweek in `tables`.
+
+    `cons.budget` is the whole purse — bank plus what the held fifteen would sell
+    for — and held players are priced at their selling price (`cons.sell_price`), so
+    the budget line reads exactly as FPL's does. This used to take a `bank` it never
+    looked at and cap every week at a flat 100.0, which is only right on the day
+    the squad was bought.
+    """
     if ft_terminal_value is None:
         ft_terminal_value = FT_TERMINAL_VALUE
     gws = sorted(tables)
@@ -138,7 +144,7 @@ def solve(
     ref = {pid: next((tables[g][pid] for g in gws if pid in tables[g]), None)
            for pid in ids}
     ids = [pid for pid in ids if ref[pid] is not None]
-    price = {pid: ref[pid].price for pid in ids}
+    price = {pid: cons.price_of(ref[pid]) for pid in ids}
     pos = {pid: ref[pid].pos for pid in ids}
     team = {pid: ref[pid].team for pid in ids}
     xp = {(pid, g): (tables[g][pid].xp if pid in tables[g] else 0.0)
@@ -150,7 +156,9 @@ def solve(
     c = pulp.LpVariable.dicts("c", (ids, gws), cat="Binary")       # captain
     buy = pulp.LpVariable.dicts("buy", (ids, gws), cat="Binary")
     sell = pulp.LpVariable.dicts("sell", (ids, gws), cat="Binary")
-    f = pulp.LpVariable.dicts("f", gws, lowBound=1, upBound=MAX_FREE, cat="Integer")
+    # Zero is a real balance: a transfer already made this week leaves nothing free
+    # for the deadline, and a lower bound of one used to make that week infeasible.
+    f = pulp.LpVariable.dicts("f", gws, lowBound=0, upBound=MAX_FREE, cat="Integer")
     u = pulp.LpVariable.dicts("u", gws, lowBound=0, upBound=MAX_FREE, cat="Integer")
     h = pulp.LpVariable.dicts("h", gws, lowBound=0, upBound=max_hits_per_gw,
                               cat="Integer")
