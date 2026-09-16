@@ -17,7 +17,7 @@ prediction.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import api
@@ -43,6 +43,14 @@ class SquadState:
     sell: dict[int, float]          # pid -> what selling him now would return
     pending: int = 0                # transfers already made for the next deadline
     note: str = ""
+    # What FPL itself said at the last deadline, kept so the reconstruction can be
+    # checked against it: the gameweek the picks came from, the fifteen held then,
+    # what each of them had been bought for, the bank, and FPL's own team value.
+    base_gw: int = 0
+    deadline_players: set[int] = field(default_factory=set)
+    paid: dict[int, float] = field(default_factory=dict)
+    bank_then: float = 0.0
+    value_then: float | None = None
 
     @property
     def budget(self) -> float:
@@ -93,7 +101,12 @@ def squad_state(entry_id: int, next_gw: int, boot: dict) -> SquadState | None:
     players = {p["element"] for p in picks.get("picks", [])}
     if len(players) != 15:
         return None
-    bank = float(picks.get("entry_history", {}).get("bank") or 0) / 10.0
+    deadline_players = set(players)
+    hist_row = picks.get("entry_history", {}) or {}
+    bank = float(hist_row.get("bank") or 0) / 10.0
+    bank_then = bank
+    value_then = (float(hist_row["value"]) / 10.0
+                  if hist_row.get("value") is not None else None)
 
     now_cost = {e["id"]: e["now_cost"] for e in boot["elements"]}
     change = {e["id"]: e.get("cost_change_start") or 0 for e in boot["elements"]}
@@ -120,18 +133,56 @@ def squad_state(entry_id: int, next_gw: int, boot: dict) -> SquadState | None:
         bought[t["element_in"]] = t.get("element_in_cost") or now_cost.get(t["element_in"], 0)
 
     sell: dict[int, float] = {}
-    for pid in players:
+    paid: dict[int, float] = {}
+    for pid in players | deadline_players:
         now = now_cost.get(pid)
         if now is None:
             continue
-        paid = bought.get(pid, now - change.get(pid, 0))
-        sell[pid] = sell_price(paid / 10.0, now / 10.0)
+        paid[pid] = bought.get(pid, now - change.get(pid, 0)) / 10.0
+        if pid in players:
+            sell[pid] = sell_price(paid[pid], now / 10.0)
 
     if len(players) != 15:
         return None
     note = f"{pending} transfer(s) already made for GW{next_gw}" if pending else ""
     return SquadState(players=players, bank=round(bank, 1), sell=sell,
-                      pending=pending, note=note)
+                      pending=pending, note=note, base_gw=base_gw,
+                      deadline_players=deadline_players, paid=paid,
+                      bank_then=round(bank_then, 1), value_then=value_then)
+
+
+def reconcile(state: SquadState) -> tuple[float, float, str] | None:
+    """Check the rebuilt purse against the team value FPL published at the deadline.
+
+    The selling prices are reconstructed, and a reconstruction needs a witness. FPL
+    gives one: `entry_history.value` on the last deadline's picks is its own figure
+    for squad value plus bank at that moment. Pricing the fifteen held then at that
+    gameweek's prices — each player's price history is public — and adding the bank
+    should land on the same number. If it does, every purchase price is right; if it
+    does not, something is, and a plan built on it should not be published.
+
+    Returns (ours, theirs, detail) in millions, or None when the witness is missing.
+    """
+    if state.value_then is None or not state.deadline_players:
+        return None
+    total = state.bank_then
+    missing = []
+    for pid in sorted(state.deadline_players):
+        try:
+            summ = api.fetch(f"element-summary/{pid}", key=f"summary_{pid}", ttl=3600)
+        except Exception:  # noqa: BLE001
+            return None
+        rows = [r for r in summ.get("history", []) if (r.get("round") or 0) <= state.base_gw]
+        if not rows or pid not in state.paid:
+            missing.append(pid)
+            continue
+        price_then = float(max(rows, key=lambda r: r["round"])["value"]) / 10.0
+        total += sell_price(state.paid[pid], price_then)
+    if missing:
+        return None
+    detail = (f"£{total:.1f}m rebuilt against FPL's £{state.value_then:.1f}m "
+              f"at the GW{state.base_gw} deadline")
+    return round(total, 1), state.value_then, detail
 
 
 @dataclass

@@ -481,20 +481,29 @@ class SquadState(unittest.TestCase):
     coming deadline it is the wrong squad — and the wrong number of free transfers.
     """
 
-    def _fake_api(self, picks_by_gw, transfers, chips=()):
-        """Stand in for the three endpoints `squad_state` reads."""
+    def _fake_api(self, picks_by_gw, transfers, chips=(), value=None, prices_then=None):
+        """Stand in for the endpoints `squad_state` and `reconcile` read."""
+        prices_then = prices_then or {}
+
         def fetch(endpoint, key=None, ttl=0):
             if endpoint.endswith("/history"):
                 return {"current": [], "chips": list(chips)}
             if endpoint.endswith("/transfers"):
                 return list(transfers)
+            if endpoint.startswith("element-summary/"):
+                pid = int(endpoint.split("/")[1])
+                return {"history": [{"round": g, "value": v}
+                                    for g, v in prices_then.get(pid, {}).items()]}
             raise AssertionError(endpoint)
 
         def entry_picks(entry, gw, ttl=0):
             if gw not in picks_by_gw:
                 raise RuntimeError("Not found")
+            hist = {"bank": 12}                      # £1.2m
+            if value is not None:
+                hist["value"] = value
             return {"picks": [{"element": p} for p in picks_by_gw[gw]],
-                    "entry_history": {"bank": 12}}   # £1.2m
+                    "entry_history": hist}
         return fetch, entry_picks
 
     def _boot(self, cost, change=None):
@@ -503,12 +512,14 @@ class SquadState(unittest.TestCase):
                               "cost_change_start": change.get(pid, 0)}
                              for pid, c in cost.items()]}
 
-    def _run(self, next_gw, picks_by_gw, transfers, boot, chips=()):
-        fetch, picks = self._fake_api(picks_by_gw, transfers, chips)
+    def _run(self, next_gw, picks_by_gw, transfers, boot, chips=(), value=None,
+             prices_then=None, reconcile=False):
+        fetch, picks = self._fake_api(picks_by_gw, transfers, chips, value, prices_then)
         orig = tracking.api.fetch, tracking.api.entry_picks
         tracking.api.fetch, tracking.api.entry_picks = fetch, picks
         try:
-            return tracking.squad_state(1, next_gw, boot)
+            st = tracking.squad_state(1, next_gw, boot)
+            return (st, tracking.reconcile(st)) if reconcile and st else st
         finally:
             tracking.api.fetch, tracking.api.entry_picks = orig
 
@@ -566,6 +577,42 @@ class SquadState(unittest.TestCase):
         st = self._run(5, {4: one_week, 3: real}, [], boot,
                        chips=[{"name": "freehit", "event": 4}])
         self.assertEqual(st.players, set(real))
+
+    def test_the_rebuilt_purse_reconciles_with_fpl_at_the_deadline(self):
+        # Fifteen bought at 5.0 at the season's start. By the GW4 deadline player 1
+        # was 5.3 (sells 5.1) and player 2 was 4.8 (sells 4.8); the rest unchanged.
+        # FPL's team value then: 5.1 + 4.8 + 13 x 5.0 + 1.2 bank = 76.1.
+        held = list(range(1, 16))
+        boot = self._boot({p: 50 for p in held})
+        then = {p: {4: 50} for p in held}
+        then[1] = {4: 53}
+        then[2] = {4: 48}
+        st, rec = self._run(5, {4: held}, [], boot, value=761, prices_then=then,
+                            reconcile=True)
+        self.assertIsNotNone(rec)
+        ours, theirs, _ = rec
+        self.assertAlmostEqual(theirs, 76.1)
+        self.assertAlmostEqual(ours, 76.1)
+
+    def test_a_wrong_purchase_price_shows_up_in_the_reconciliation(self):
+        # If the reconstruction thought player 1 was bought at 5.0 but he was really
+        # bought at 4.0 by transfer, his selling price is off and the totals differ.
+        held = list(range(1, 16))
+        boot = self._boot({p: 50 for p in held})
+        then = {p: {4: 50} for p in held}
+        then[1] = {4: 60}                              # rose to 6.0 by GW4
+        # FPL knows he was bought at 4.0: sells 5.0 -> value 5.0 + 14 x 5.0 + 1.2 = 76.2
+        st, rec = self._run(5, {4: held}, [], boot, value=762, prices_then=then,
+                            reconcile=True)
+        ours, theirs, _ = rec
+        # We assumed start price 5.0 -> sells 5.5 -> 76.7. The check must see the gap.
+        self.assertGreater(abs(ours - theirs), selfcheck.PURSE_TOLERANCE)
+
+    def test_no_witness_means_no_verdict(self):
+        held = list(range(1, 16))
+        boot = self._boot({p: 50 for p in held})
+        st, rec = self._run(5, {4: held}, [], boot, value=None, reconcile=True)
+        self.assertIsNone(rec)
 
     def test_unreadable_picks_mean_no_state_not_a_guess(self):
         boot = self._boot({p: 50 for p in range(1, 16)})

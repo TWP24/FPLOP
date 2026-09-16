@@ -59,11 +59,27 @@ class Check:
         return f"  {'PASS' if self.ok else 'FAIL'}  {self.name:34} {self.detail}"
 
 
+# How far the rebuilt purse may sit from FPL's own team value before it is wrong
+# rather than rounded. Every selling price rounds down to 0.1, so fifteen of them can
+# drift a little; anything past this is a purchase price the reconstruction got wrong.
+PURSE_TOLERANCE = 0.15
+
+
 def run(boot, plan, rates, held: set[int] | None = None,
         free_transfers: int = 1, max_hits: int = 0,
-        rivals: int | None = None) -> list[Check]:
+        rivals: int | None = None,
+        purse: tuple[float, float, str] | None = None) -> list[Check]:
     """Every invariant, evaluated against one built plan."""
     out: list[Check] = []
+
+    # --- the purse must agree with FPL -------------------------------------
+    # The selling prices behind the budget are rebuilt from the transfer history;
+    # FPL's published team value at the last deadline is the witness. Skipped when
+    # there was nothing to reconcile against, which is not the same as passing.
+    if purse is not None:
+        ours, theirs, detail = purse
+        out.append(Check("purse reconciles with FPL", abs(ours - theirs) <= PURSE_TOLERANCE,
+                         detail))
 
     # --- minutes are an accounting identity ------------------------------
     by_team: dict[int, float] = {}
