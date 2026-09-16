@@ -14,6 +14,7 @@ import unittest
 
 from fplm import chips as chipmod
 from fplm import optimise as opt
+from fplm import plan as planmod
 from fplm import tracking
 from fplm import selfcheck
 from fplm import xp as xpmod
@@ -360,6 +361,48 @@ class ChipAllocation(unittest.TestCase):
         v = chipmod.ChipValue("3xc", "October", 6, 9.0, "on Haaland",
                               {6: 9.0, 7: 8.0}, {6: "on Haaland", 7: "on Salah"})
         self.assertEqual(v.at(7, 8.0).note, "on Salah")
+
+
+class SeasonObjective(unittest.TestCase):
+    """The season total is what the plan is aimed at; months are where it lands."""
+
+    def test_the_season_default_looks_past_the_month_ahead(self):
+        self.assertLess(planmod.MONTHLY_WEIGHT["season"], 0.5)
+        self.assertGreater(planmod.MONTHLY_WEIGHT["month"], 0.5)
+
+    def test_a_season_plan_does_not_spread_chips_to_contest_months(self):
+        # Spreading buys extra chances at a monthly cheque with points that would
+        # score more elsewhere. Only the one-chip-a-week rule should spread a season
+        # plan's chips.
+        self.assertIsNone(planmod.CHIPS_PER_MONTH["season"])
+        self.assertEqual(planmod.CHIPS_PER_MONTH["month"], 2)
+
+    def test_chips_stack_in_one_month_when_nothing_caps_them(self):
+        months = [Month(1, "December", 13, 18)]
+        vals = [chipmod.ChipValue(n, "December", 13 + i, 10.0 - i,
+                                  "", {gw: 10.0 - i for gw in months[0].events})
+                for i, n in enumerate(("wildcard", "freehit", "bboost", "3xc"))]
+        wins = [chipmod.ChipWindow(n, 1, 19)
+                for n in ("wildcard", "freehit", "bboost", "3xc")]
+        self.assertEqual(len(chipmod.allocate(vals, wins, months)), 4)
+        self.assertEqual(len(chipmod.allocate(vals, wins, months, max_per_month=2)), 2)
+
+    def test_winning_a_season_asks_for_less_of_an_edge_than_winning_a_month(self):
+        # Nobody wins every month. Summing the monthly bar would set a target only a
+        # manager who won all ten could hit.
+        self.assertLess(planmod.season_winner_edge(9), planmod.MONTH_WINNER_EDGE)
+
+    def test_the_season_edge_shrinks_as_the_months_pile_up(self):
+        # The luck half of a month winner's edge averages out; the skill half does not,
+        # so the bar falls toward it and never below it.
+        edges = [planmod.season_winner_edge(n) for n in (1, 4, 9, 38)]
+        self.assertEqual(edges, sorted(edges, reverse=True))
+        floor = planmod.MONTH_WINNER_EDGE * planmod.WINNER_SKILL_SHARE
+        self.assertGreater(edges[-1], floor)
+
+    def test_an_unknown_objective_is_refused_rather_than_guessed(self):
+        with self.assertRaises(ValueError):
+            planmod.build({"events": [], "chips": []}, [], objective="vibes")
 
 
 if __name__ == "__main__":

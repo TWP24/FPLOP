@@ -11,7 +11,8 @@ cd "$(dirname "$0")" || exit 1
   --refresh \
   --rivals "${FPL_RIVALS:-19}" \
   --start "${FPL_START:-template}" \
-  --monthly-weight "${FPL_MONTHLY_WEIGHT:-0.75}" \
+  --objective "${FPL_OBJECTIVE:-season}" \
+  ${FPL_MONTHLY_WEIGHT:+--monthly-weight "$FPL_MONTHLY_WEIGHT"} \
   ${FPL_ENTRY:+--entry "$FPL_ENTRY"} \
   ${FPL_LEAGUE:+--league $FPL_LEAGUE} \
   ${FPL_MINUTES_CSV:+--minutes-csv "$FPL_MINUTES_CSV"} \

@@ -289,15 +289,20 @@ def allocate(
     values: list[ChipValue],
     chip_windows: list[ChipWindow],
     months: list[Month],
-    max_per_month: int = 2,
+    max_per_month: int | None = None,
     real_counts: dict[int, int] | None = None,
 ) -> list[ChipValue]:
     """Assign each available chip to the month, and the week, where it is worth most.
 
     Greedy on value, respecting each chip's gameweek window, FPL's one-chip-a-week
-    rule and a cap on how many chips one month can absorb. Greedy is optimal enough
-    here: chip values are close to independent across months, and the binding
+    rule and an optional cap on how many chips one month can absorb. Greedy is optimal
+    enough here: chip values are close to independent across months, and the binding
     constraints are the windows rather than interactions between chips.
+
+    `max_per_month` is a monthly-prize device: spreading chips over more months buys
+    more chances at a monthly cheque even where the points are worth less. Left unset
+    the chips simply go where they score most, which is what a season objective wants,
+    and FPL's one-chip-a-week rule is the only spreading force left.
 
     When two chips want the same Saturday the loser moves to its next-best week. It
     used to be dropped instead, and the chip it was dropped for was almost always the
@@ -361,7 +366,7 @@ def allocate(
         w, v = candidates[i]
         if id(w) in spent:
             continue
-        if used_per_month.get(v.month, 0) >= max_per_month:
+        if max_per_month is not None and used_per_month.get(v.month, 0) >= max_per_month:
             continue
         # Never play the same chip type twice in one month.
         if any(c.month == v.month and c.chip == v.chip for c in chosen):

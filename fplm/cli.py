@@ -492,7 +492,8 @@ def cmd_plan(args) -> None:
 
     p = planmod.build(
         boot, fixtures, prior_weight=args.prior_weight, minutes_override=overrides,
-        rivals=args.rivals, monthly_weight=args.monthly_weight,
+        rivals=args.rivals, objective=args.objective,
+        monthly_weight=args.monthly_weight,
         min_minutes=args.min_minutes, budget=args.budget, current_squad=current,
         free_transfers=free_now,
         max_hits=getattr(args, "max_hits", 0),
@@ -558,7 +559,10 @@ def cmd_plan(args) -> None:
                     rates_ref=xp.build_rates(boot),
                     deadline_ref=next((e["deadline_time"] for e in boot["events"]
                                        if e.get("is_next")), ""))
-    print(f"\n{BOLD}Season plan — next deadline GW{p.next_gw}{RESET}")
+    aim = ("season — monthly prizes as a by-product" if p.objective == "season"
+           else "monthly prizes")
+    print(f"\n{BOLD}Season plan — next deadline GW{p.next_gw}{RESET}  {DIM}playing for "
+          f"the {aim}{RESET}")
     print(_hr())
     for m in p.months:
         chips = ", ".join(
@@ -569,6 +573,10 @@ def cmd_plan(args) -> None:
         tag = f"{BOLD}TARGET{RESET}" if m.contest else "      "
         print(f"{m.month.name:<11}{m.n_gws}GW  xP {m.squad_xp:>6.0f}  "
               f"need {m.field_target:>6.0f}  {tag}  {DIM}{chips}{RESET}")
+    print(_hr())
+    print(f"{BOLD}{'TO GW38':<11}{sum(m.n_gws for m in p.months)}GW  "
+          f"xP {p.season_xp:>6.0f}  need {p.season_target:>6.0f}{RESET}  "
+          f"{DIM}the number that wins the league{RESET}")
     print(_hr())
     print(f"wrote {out}\n")
 
@@ -663,10 +671,14 @@ def main(argv: list[str] | None = None) -> None:
     sp.add_argument("--budget", type=float, default=100.0)
     sp.add_argument("--rivals", type=int, default=19)
     sp.add_argument("--entry", type=int, help="Your FPL entry id.")
-    sp.add_argument("--monthly-weight", type=float, default=0.75,
-                    help="1.0 plans purely for monthly prizes, 0.0 purely for the season.")
+    sp.add_argument("--objective", choices=["season", "month"], default="season",
+                    help="What the plan is trying to win. Default season: the monthly "
+                         "prizes come with it. 'month' plays for the monthly cheque.")
+    sp.add_argument("--monthly-weight", type=float, default=None,
+                    help="Override the objective's squad horizon. 1.0 values only the "
+                         "month ahead, 0.0 only the rest of the season.")
     sp.add_argument("--out", help="HTML output path (default plan.html)")
-    sp.add_argument("--title", default="FPL monthly plan")
+    sp.add_argument("--title", default="FPL season plan")
     sp.add_argument("--model", choices=["fplm", "dastan"], default="fplm",
                     help="Which expected-points model to use. 'dastan' is measurably "
                          "better where its data reaches (starters rho 0.414 vs 0.356) "
