@@ -445,6 +445,7 @@ def cmd_plan(args) -> None:
 
     current: set[int] = set()
     state = None
+    purse = None
     budget = args.budget
     if args.entry:
         next_ev = next((e["id"] for e in boot["events"] if e.get("is_next")), 1)
@@ -460,12 +461,23 @@ def cmd_plan(args) -> None:
             raise SystemExit(f"could not read entry {args.entry}'s squad for GW{next_ev}"
                              " from the FPL API; refusing to build a plan from a squad"
                              " you do not hold. Try again, or check the entry id.")
+        purse = None
         if state is not None:
             current = state.players
             budget = state.budget
             print(f"{DIM}squad: 15 held, £{state.bank:.1f}m in the bank, "
                   f"£{state.budget:.1f}m to spend"
                   f"{' — ' + state.note if state.note else ''}{RESET}")
+            # Check the reconstruction against FPL's own figure, and say so either
+            # way: a purse that cannot be verified should not read as one that was.
+            purse = tracking.reconcile(state)
+            if purse is None:
+                print(f"{DIM}purse: could not be reconciled against FPL's team value "
+                      f"(no witness readable){RESET}")
+            else:
+                ours, theirs, detail = purse
+                mark = "matches" if abs(ours - theirs) <= 0.15 else "DOES NOT MATCH"
+                print(f"{DIM}purse: {mark} FPL — {detail}{RESET}")
 
     from . import xp as _xpmod
 
@@ -555,7 +567,8 @@ def cmd_plan(args) -> None:
     checks = selfcheck.run(boot, p, rates_for_check, held=current,
                            free_transfers=free_now,
                            max_hits=getattr(args, "max_hits", 0),
-                           rivals=getattr(args, "rivals", None))
+                           rivals=getattr(args, "rivals", None),
+                           purse=purse)
     failed = [c for c in checks if not c.ok]
     if failed:
         print(f"\n{BOLD}self-check FAILED{RESET}", file=sys.stderr)
