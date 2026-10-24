@@ -52,6 +52,36 @@
  "6": {
   "gw": 6,
   "predicted": 60.4,
+  "actual": 58,
+  "rank": 3031047,
+  "captain": "Haaland",
+  "chip": null,
+  "model": "fplm",
+  "note": ""
+ },
+ "7": {
+  "gw": 7,
+  "predicted": 0.0,
+  "actual": 64,
+  "rank": 2978646,
+  "captain": "",
+  "chip": null,
+  "model": "fplm",
+  "note": ""
+ },
+ "8": {
+  "gw": 8,
+  "predicted": 0.0,
+  "actual": 5,
+  "rank": 2709557,
+  "captain": "",
+  "chip": null,
+  "model": "fplm",
+  "note": ""
+ },
+ "9": {
+  "gw": 9,
+  "predicted": 48.8,
   "actual": null,
   "rank": null,
   "captain": "Haaland",
