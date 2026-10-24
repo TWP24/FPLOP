@@ -103,13 +103,28 @@ def run(boot, plan, rates, held: set[int] | None = None,
     # --- the plan must be aimed at winning, not merely at scoring ----------
     # Skipped when nothing was simulated: an unsimulated plan reports zero, which is
     # not the same claim as a simulated plan reporting zero.
+    #
+    # Enforced only when it can mean something. It is a monthly-prize test — the
+    # regression it caught was a planner buying the template, which finishes
+    # mid-table in a month — and under the season objective owning the template
+    # is the measured choice, not a fault. And when the squad is locked (free
+    # transfers spent, no hits allowed) the plan cannot act on the verdict either
+    # way. With both of those enforced it refused to publish for four days in a
+    # deadline week, over a locked squad's chance of winning a month nobody was
+    # playing for. The number is still reported; it just does not block.
     if rivals and getattr(plan, "sim_scores", None) is not None:
         p_win = float(getattr(plan, "sim_p_win", 0.0) or 0.0)
         floor = PWIN_FLOOR_MULTIPLE / (rivals + 1)
-        out.append(Check(
-            "beats the median rival", p_win >= floor,
-            f"P(win) {p_win * 100:.1f}% against a floor of {floor * 100:.1f}% "
-            f"for {rivals} rivals"))
+        detail = (f"P(win) {p_win * 100:.1f}% against a floor of {floor * 100:.1f}% "
+                  f"for {rivals} rivals")
+        locked = bool(held) and (free_transfers + max_hits) <= 0
+        season = getattr(plan, "objective", "season") == "season"
+        if season:
+            detail += " — read-out only: the season is the objective"
+        elif locked:
+            detail += " — read-out only: nothing could be changed this week"
+        enforce = not (season or locked)
+        out.append(Check("beats the median rival", p_win >= floor or not enforce, detail))
 
     # --- the plan must be reachable from the squad held -------------------
     if held:

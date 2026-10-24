@@ -21,6 +21,10 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  # so a failed build can open an issue. The build failed every morning for a
+  # month after a dependency changed under it, and the only signal was a red tick
+  # on a page nobody opens.
+  issues: write
 
 # Never let two rebuilds publish at once.
 concurrency:
@@ -74,6 +78,38 @@ jobs:
           # A plan that failed to build should fail the run rather than publish an
           # empty page over a good one.
           test -s site/index.html
+
+      # A failed build leaves yesterday's page up, which is the right thing to do
+      # and also the easiest thing to miss. Say so where it will be seen: one issue,
+      # appended to on each further failure, closed by the next success.
+      - name: Raise an issue if the build failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Daily rebuild is failing — the live page is stale"
+          body="The build failed on $(date -u '+%Y-%m-%d %H:%M UTC'): $RUN_URL
+
+          Until it passes, the published plan is the last successful one and does not reflect the current squad, prices or fixtures. The log names the failing step or self-check."
+          existing=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi
+
+      - name: Close the failure issue once the build passes again
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Daily rebuild is failing — the live page is stale"
+          existing=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue close "$existing" --comment "Building again as of $(date -u '+%Y-%m-%d %H:%M UTC'): $RUN_URL"
+          fi
 
       # The forecast is written down before each deadline and joined to the real
       # score afterwards. That record only means anything if it survives the run
