@@ -149,6 +149,10 @@ def build(
         return out
 
     squad = {p.pid for p in season_plan.squad.players}
+    # Players you have said you are keeping. The plan honours this; the projection
+    # built its own constraints and never got told, so it sold a kept player in
+    # week two of the forward view while the panel above said he was being held.
+    kept = set(getattr(season_plan, "kept", None) or ())
     # Start from what the plan says is actually in the bank and actually free next
     # week, rather than assuming £100.0m and one transfer. From here on prices are
     # held flat, so a player is worth what he is listed at.
@@ -182,7 +186,7 @@ def build(
             cons = opt.Constraints(
                 budget=round(bank + sum(prices.get(p, 0.0) for p in squad), 1),
                 current_squad=set() if unlimited else set(squad),
-                include=locked,
+                include=locked | kept,
                 free_transfers=15 if unlimited else free,
                 max_hits=0 if unlimited else max_hits,
                 min_expected_minutes=min_minutes,
@@ -253,8 +257,16 @@ def build(
         scored = {p: table[p].xp if p in table else 0.0 for p in fielded}
         xi = _best_xi(list(fielded), scored,
                       {p: table[p].pos for p in fielded if p in table})
-        cap = max(xi, key=lambda p: scored.get(p, 0.0)) if xi else None
-        vice = max((p for p in xi if p != cap), key=lambda p: scored.get(p, 0.0), default=cap)
+        # The armband goes to whoever is expected to *realise* the most, which is not
+        # the same as the highest raw forecast: the top of the defender ranking
+        # realises about 0.84 of it against 1.03 for midfielders (see
+        # CAPTAIN_REALISATION), and the optimiser already chooses the plan's own
+        # captain on that basis. Choosing here on raw xP put the armband on a
+        # defender in two of the first four projected weeks.
+        realised = {p: scored.get(p, 0.0) * opt.CAPTAIN_REALISATION.get(pos_of.get(p), 1.0)
+                    for p in xi}
+        cap = max(xi, key=lambda p: realised[p]) if xi else None
+        vice = max((p for p in xi if p != cap), key=lambda p: realised[p], default=cap)
 
         projected = sum(scored.get(p, 0.0) for p in xi)
         if cap is not None:

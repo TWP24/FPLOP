@@ -808,8 +808,46 @@ class BudgetLine(unittest.TestCase):
         self.assertEqual(plan.free[6], 1)
 
 
+class Armband(unittest.TestCase):
+    """Captaincy decisions use what the player realises, not his raw forecast."""
+
+    def _squad(self, def_xp, mid_xp):
+        # Eleven starters with a defender and a midfielder at the top.
+        players = [_pm(1, 1, 4.5, 2.0)]
+        players += [_pm(i, 2, 4.5, def_xp if i == 2 else 2.0) for i in range(2, 7)]
+        players += [_pm(i, 3, 4.5, mid_xp if i == 7 else 2.0) for i in range(7, 12)]
+        players += [_pm(i, 4, 4.5, 2.0) for i in range(12, 15)]
+        players.append(_pm(15, 1, 4.0, 1.0))
+        starters = [p.pid for p in players if p.pid not in (6, 11, 14, 15)]
+        return opt.Squad(players=players, starters=starters, captain=2, vice=7,
+                         lam=0.0, cost=70.0)
+
+    def test_triple_captain_prefers_the_midfielder_at_equal_raw_xp(self):
+        squad = self._squad(def_xp=8.0, mid_xp=8.0)
+        month = Month(1, "October", 6, 6)
+        per_gw = {6: {p.pid: p.xp for p in squad.players}}
+        v = chipmod.triple_captain_value(squad, {}, month, per_gw)
+        self.assertEqual(v.note, "on P7")                          # the midfielder
+        self.assertAlmostEqual(v.value, 8.0 * opt.CAPTAIN_REALISATION[3])
+
+    def test_triple_captain_still_takes_a_clearly_better_defender(self):
+        squad = self._squad(def_xp=12.0, mid_xp=8.0)
+        month = Month(1, "October", 6, 6)
+        per_gw = {6: {p.pid: p.xp for p in squad.players}}
+        self.assertEqual(chipmod.triple_captain_value(squad, {}, month, per_gw).note,
+                         "on P2")
+
+
 class ForwardPlan(unittest.TestCase):
     """The gameweek-by-gameweek projection must play the chips it shows."""
+
+    def test_a_kept_player_is_never_sold_in_the_forward_plan(self):
+        boot, fixtures, p = self._plan(5, [])
+        keep = max(p.squad.players, key=lambda x: x.price).pid    # the premium
+        p.kept = {keep}
+        gws = fcmod.build(boot, fixtures, p, use_horizon=False, min_minutes=0.0)
+        for g in gws:
+            self.assertIn(keep, g.squad, f"kept player sold by GW{g.gw}")
 
     def _plan(self, next_gw, chips):
         boot = {"elements": make_elements(),
