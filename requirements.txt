@@ -1,3 +1,7 @@
-pulp>=3.0
+# PuLP 4.0 (released late September 2026) removed LpVariable.dicts, which both
+# solvers are built on. Unpinned, the daily rebuild picked it up the day it shipped
+# and failed every morning for a month, loudly but unnoticed. Pinned until the code
+# is ported to the 4.x API and the tests say so.
+pulp>=3.0,<4
 numpy>=1.24
 requests>=2.31

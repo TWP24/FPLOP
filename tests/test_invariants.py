@@ -187,10 +187,44 @@ class SelfCheckHarness(unittest.TestCase):
         boot = {"elements": make_elements()}
         rates = xpmod.build_rates(boot)
         plan = self._plan(55.0)
+        plan.objective = "month"           # the objective this test is about
         plan.sim_scores = [1, 2, 3]        # mark it as actually simulated
         plan.sim_p_win = 0.002
-        checks = selfcheck.run(boot, plan, rates, rivals=48)
+        checks = selfcheck.run(boot, plan, rates, rivals=48, free_transfers=1)
         self.assertIn("beats the median rival", {c.name for c in checks if not c.ok})
+
+    def test_a_low_win_probability_is_a_read_out_under_the_season_objective(self):
+        # Under the season objective a month's win probability is not what the plan
+        # is for, and owning the template is the measured choice rather than the
+        # regression above. The number is still reported; it does not block.
+        boot = {"elements": make_elements()}
+        rates = xpmod.build_rates(boot)
+        plan = self._plan(55.0)
+        plan.objective = "season"
+        plan.sim_scores = [1, 2, 3]
+        plan.sim_p_win = 0.002
+        checks = selfcheck.run(boot, plan, rates, rivals=48, free_transfers=1)
+        chk = next(c for c in checks if c.name == "beats the median rival")
+        self.assertTrue(chk.ok)
+        self.assertIn("read-out only", chk.detail)
+        self.assertIn("0.2%", chk.detail)
+
+    def test_a_locked_squad_is_not_failed_for_what_it_cannot_change(self):
+        # Free transfer already spent, no hits allowed: the plan cannot act on the
+        # verdict, so it must not refuse to publish over it. This blacked the page
+        # out for four days of a deadline week.
+        boot = {"elements": make_elements()}
+        rates = xpmod.build_rates(boot)
+        plan = self._plan(55.0)
+        plan.objective = "month"
+        plan.sim_scores = [1, 2, 3]
+        plan.sim_p_win = 0.002
+        held = {p.pid for p in plan.squad.players}
+        checks = selfcheck.run(boot, plan, rates, held=held, free_transfers=0,
+                               max_hits=0, rivals=48)
+        chk = next(c for c in checks if c.name == "beats the median rival")
+        self.assertTrue(chk.ok)
+        self.assertIn("nothing could be changed", chk.detail)
 
     def test_a_healthy_win_probability_passes(self):
         boot = {"elements": make_elements()}
