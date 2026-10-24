@@ -20,7 +20,7 @@ import heapq
 from dataclasses import dataclass, field
 
 from .monthly import Month, PlayerMonth, fixture_counts
-from .optimise import Constraints, Squad, solve
+from .optimise import CAPTAIN_REALISATION, Constraints, Squad, solve
 
 GK, DEF, MID, FWD = 1, 2, 3, 4
 
@@ -157,12 +157,20 @@ def triple_captain_value(squad: Squad, table: dict[int, PlayerMonth], month: Mon
     expected return — a double gameweek if one exists, otherwise the kindest fixture.
     Every week of the month is priced, not just the best one, because the best one is
     often also the week the bench boost wants and only one of them can have it.
+
+    The captain is chosen, and the extra copy valued, on what he is expected to
+    realise rather than his raw forecast. Defenders at the top of the ranking realise
+    about 0.84 of their expected points against 1.03 for midfielders — measured, and
+    already how the optimiser hands out the plan's own armband — and the chip is a
+    third copy of exactly that number, so the level has to be right. On raw xP this
+    advised a Triple Captain on a defender.
     """
     by_gw: dict[int, float] = {}
     notes: dict[int, str] = {}
     for gw in month.events:
         gw_xp = per_gw.get(gw, {})
-        cands = [(gw_xp.get(p.pid, 0.0), p.name) for p in squad.xi]
+        cands = [(gw_xp.get(p.pid, 0.0) * CAPTAIN_REALISATION.get(p.pos, 1.0), p.name)
+                 for p in squad.xi]
         if not cands:
             continue
         v, nm = max(cands)
