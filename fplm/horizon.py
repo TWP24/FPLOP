@@ -18,7 +18,10 @@ will always prefer a free transfer where one exists. The balance then rolls forw
 `f_next <= min(5, f - u + 1)`; more free transfers are never worse, so the upper bound
 binds on its own.
 
-Prices are held flat, as they are in `forecast`, and chips are left to `chips.py`.
+Prices are held flat, as they are in `forecast`. Chips are *valued* and *placed* by
+`chips.py`; once placed, the schedule is passed back in as `chips` so the transfers
+planned around them know what is coming. A wildcard next week makes this week's
+transfer worthless, and a solver that cannot see the wildcard spends it anyway.
 """
 from __future__ import annotations
 
@@ -64,6 +67,7 @@ DECAY = 0.9
 # correction matters for a solver run once over a fixed window; it has little left to
 # do for one run weekly.
 FT_TERMINAL_VALUE = 0.0
+FT_TIEBREAK = 1e-4
 
 # Pool size per position. A joint model over eight gameweeks has a binary for every
 # player in every week, so the pool has to be cut to something a solver can chew.
@@ -110,8 +114,16 @@ def solve(
     ft_terminal_value: float | None = None,
     time_limit: int = 120,
     shuffle_seed: int | None = None,
+    chips: dict[int, str] | None = None,
 ) -> HorizonPlan | None:
     """Optimise squad and transfers jointly across every gameweek in `tables`.
+
+    `chips` maps a gameweek in the horizon to the chip planned for it, and the rules
+    of each are modelled rather than approximated: a wildcard week has unlimited free
+    moves and the squad stays rebuilt; a free hit week has unlimited free moves and
+    the squad comes back the week after; a bench boost week scores the bench in full;
+    a triple captain week pays the captain a third time. Neither of the two transfer
+    chips spends the week's free transfer, which rolls on as it would on a quiet week.
 
     `cons.budget` is the whole purse — bank plus what the held fifteen would sell
     for — and held players are priced at their selling price (`cons.sell_price`), so
@@ -121,6 +133,7 @@ def solve(
     """
     if ft_terminal_value is None:
         ft_terminal_value = FT_TERMINAL_VALUE
+    chips = dict(chips or {})
     gws = sorted(tables)
     if not gws:
         return None
@@ -174,12 +187,22 @@ def solve(
     obj = []
     for gi, g in enumerate(gws):
         w = decay ** gi
+        chip = chips.get(g)
+        # A boosted bench plays, so it is worth its full points that week; a triple
+        # captain is one more copy of the captain on top of the usual second.
+        bench_w = 1.0 if chip == "bboost" else BENCH_WEIGHT
+        cap_w = 2.0 if chip == "3xc" else 1.0
         for pid in ids:
             j = jitter.get(pid, 1.0)
             obj.append(w * s[pid][g] * (xp[(pid, g)] + lam * dvar[pid]) * j)
-            obj.append(w * c[pid][g] * (xp[(pid, g)] + lam * dvar[pid]) * j)
-            obj.append(w * (x[pid][g] - s[pid][g]) * (BENCH_WEIGHT * xp[(pid, g)]))
+            obj.append(w * cap_w * c[pid][g] * (xp[(pid, g)] + lam * dvar[pid]) * j)
+            obj.append(w * (x[pid][g] - s[pid][g]) * (bench_w * xp[(pid, g)]))
         obj.append(-w * HIT_COST * h[g])
+        # The balance is only bounded from above, so a free transfer the plan has no
+        # use for could be reported at any value under the true one. A reward far
+        # below anything that could change a decision makes the bound bind, so the
+        # count read out is the count you would actually hold.
+        obj.append(FT_TIEBREAK * f[g])
     if ft_terminal_value:
         obj.append(ft_terminal_value * f[gws[-1]])
     prob += pulp.lpSum(obj)
@@ -212,14 +235,32 @@ def solve(
                 prob += x[pid][g] == 1
 
     # --- squad continuity and the transfer ledger --------------------------
+    def squad_before(gi: int, pid: int):
+        """The squad this week's moves start from.
+
+        Normally last week's. After a free hit it is the squad from *before* the free
+        hit, because the one-week team is handed back; and if the plan opened on a
+        free hit, that is the squad actually held.
+        """
+        if gi == 0:
+            return 1 if pid in held else 0
+        if chips.get(gws[gi - 1]) == "freehit":
+            return squad_before(gi - 1, pid)
+        return x[pid][gws[gi - 1]]
+
     for gi, g in enumerate(gws):
+        chip = chips.get(g)
         for pid in ids:
-            prev = (x[pid][gws[gi - 1]] if gi else (1 if pid in held else 0))
-            prob += x[pid][g] == prev + buy[pid][g] - sell[pid][g]
+            prob += x[pid][g] == squad_before(gi, pid) + buy[pid][g] - sell[pid][g]
             prob += buy[pid][g] + sell[pid][g] <= 1
-        moves = pulp.lpSum(buy[pid][g] for pid in ids)
-        prob += moves == u[g] + h[g]
-        prob += u[g] <= f[g]
+        if chip in ("wildcard", "freehit"):
+            # Unlimited moves for nothing, and the week's free transfer is not spent.
+            prob += u[g] == 0
+            prob += h[g] == 0
+        else:
+            moves = pulp.lpSum(buy[pid][g] for pid in ids)
+            prob += moves == u[g] + h[g]
+            prob += u[g] <= f[g]
         if gi == 0:
             prob += f[g] == free_transfers
         else:
