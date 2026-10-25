@@ -91,6 +91,11 @@ class SeasonPlan:
     # Free text from overrides.json, so a manual correction is visible on the page
     # rather than silently in force.
     note: str = ""
+    # The chip the plan wants played *this* week, if any, and the fifteen actually
+    # held going into it. Under a free hit the squad shown is a one-week team, and
+    # the forward plan needs the held fifteen to come back to.
+    chip_now: str | None = None
+    held: set[int] = field(default_factory=set)
 
     @property
     def contested(self) -> list[MonthPlan]:
@@ -117,6 +122,12 @@ MONTHLY_WEIGHT = {"season": 0.2, "month": 0.75}
 # A monthly-prize plan spreads chips so it can contest more months. A season plan
 # spends them where they score most and lets the months fall where they fall.
 CHIPS_PER_MONTH = {"season": None, "month": 2}
+
+# How many gameweeks the transfer planner solves jointly. Measured over four seasons,
+# planning four gameweeks jointly is worth +22.5 points across twenty-one gameweeks.
+# A chip placed inside this window is handed to the planner, so the week before a
+# wildcard it knows not to spend three transfers on a squad about to be rebuilt.
+HORIZON_SPAN = 4
 
 # How far above a good squad's own expectation the winner of a month lands. Calibrated
 # from the three-season backtest.
@@ -379,15 +390,6 @@ def build(
     # --- Per-gameweek expected points, needed to price single-week chips ----
     per_gw = _per_gameweek_xp(boot, fixtures, rates, team_ratings)
 
-    # --- Value every chip in every month -----------------------------------
-    values: list[chipmod.ChipValue] = []
-    for m in live_months:
-        tbl = tables[m.name]
-        values.append(chipmod.triple_captain_value(squad, tbl, m, per_gw))
-        values.append(chipmod.bench_boost_value(squad, m, per_gw))
-        values.append(chipmod.free_hit_value(squad, tbl, m, per_gw, cons))
-        values.append(chipmod.wildcard_value(squad, tbl, m, cons))
-
     live_windows = [w for w in chipmod.windows(boot) if w.stop_event >= next_gw]
     # Real fixture counts per gameweek, so the blank/double prior retires itself as
     # soon as the schedule actually shows one.
@@ -395,12 +397,66 @@ def build(
     for f in fixtures:
         if f["event"]:
             real_counts[f["event"]] = real_counts.get(f["event"], 0) + 2
-    # `first_gw` so a chip you still hold is never advised for a week that has been
-    # played. The month we are in is usually part-spent, and its best week for a chip
-    # is often behind us.
-    allocation = chipmod.allocate(values, live_windows, live_months,
-                                  max_per_month=CHIPS_PER_MONTH[objective],
-                                  real_counts=real_counts, first_gw=next_gw)
+    # A wildcard is priced over the rest of its half, against the squad actually held
+    # — see `chips.wildcard_values`. The table for each half is built once.
+    held_now = set(current_squad) if current_squad else {p.pid for p in squad.players}
+    half_tables = {
+        id(w): mo.build_table(boot, fixtures, rates, team_ratings,
+                              mo.Month(0, f"{w.name}-GW{w.stop_event}",
+                                       max(w.start_event, next_gw), w.stop_event))
+        for w in live_windows if w.name == "wildcard"
+    }
+
+    def value_and_allocate(sq: opt.Squad) -> list[chipmod.ChipValue]:
+        """Price every chip against this squad and put each where it is worth most.
+
+        `first_gw` so a chip you still hold is never advised for a week that has
+        been played. The month we are in is usually part-spent, and its best week
+        for a chip is often behind us.
+        """
+        values: list[chipmod.ChipValue] = []
+        for m in live_months:
+            tbl = tables[m.name]
+            values.append(chipmod.triple_captain_value(sq, tbl, m, per_gw))
+            values.append(chipmod.bench_boost_value(sq, m, per_gw))
+            values.append(chipmod.free_hit_value(sq, tbl, m, per_gw, cons))
+            if objective == "month":
+                values.append(chipmod.wildcard_value(sq, tbl, m, cons))
+        if objective != "month":
+            for w in live_windows:
+                if w.name == "wildcard":
+                    values.extend(chipmod.wildcard_values(
+                        held_now, half_tables[id(w)], per_gw, w, live_months,
+                        next_gw, cons, free_now=cons.free_transfers))
+        return chipmod.allocate(values, live_windows, live_months,
+                                max_per_month=CHIPS_PER_MONTH[objective],
+                                real_counts=real_counts, first_gw=next_gw)
+
+    allocation = value_and_allocate(squad)
+
+    # The transfers and the chips have to be one decision. The planner above chose
+    # this week's moves without knowing a wildcard might be a week away; now that
+    # the chips have been placed, hand the schedule back and let it choose again
+    # with that in view, then re-price the chips against the squad it arrives at.
+    # Two or three rounds is all it ever takes — the schedule stops moving — and if
+    # it does not, the last squad still saw the chips as they stood when it was solved.
+    if current_squad:
+        horizon_gws = range(next_gw, next_gw + HORIZON_SPAN)
+        planned_with: dict[int, str] = {}      # the schedule the squad was solved under
+        seen = {c.gw: c.chip for c in allocation if c.gw in horizon_gws}
+        for _ in range(3):
+            if seen == planned_with:
+                break
+            again = _solve_with_horizon(boot, fixtures, rates, team_ratings, next_gw,
+                                        current_squad, cons, blended, budget, rivals,
+                                        current_month, simulate, objective=objective,
+                                        chips=seen)
+            if again is None:
+                break
+            squad, planned_with = again, seen
+            allocation = value_and_allocate(squad)
+            seen = {c.gw: c.chip for c in allocation if c.gw in horizon_gws}
+    chip_now = next((c.chip for c in allocation if c.gw == next_gw), None)
 
     # --- Assemble the month-by-month view ----------------------------------
     counts_by_month = {m.name: mo.fixture_counts(fixtures, m) for m in live_months}
@@ -480,8 +536,12 @@ def build(
     # What is left in the bank once those moves are made, valuing kept players at
     # what they would sell for and new ones at what they cost.
     bank_after = round(budget - sum(cons.price_of(p) for p in squad.players), 1)
-    used = min(n_moves, cons.free_transfers)
+    # A wildcard or free hit makes the week's moves for nothing and leaves the free
+    # transfer to roll on.
+    used = 0 if chip_now in ("wildcard", "freehit") else min(n_moves, cons.free_transfers)
     free_after = min(opt.MAX_BANKED_TRANSFERS, cons.free_transfers - used + 1)
+    if chip_now in ("wildcard", "freehit") and current_squad:
+        start_note = f"{chipmod.CHIP_LABEL[chip_now]} this week — " + start_note
 
     return SeasonPlan(
         objective=objective,
@@ -493,6 +553,8 @@ def build(
         kept=set(keep or ()),
         moves_now=moves_now,
         note=note,
+        chip_now=chip_now,
+        held=set(current_squad or ()),
         generated=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         next_gw=next_gw,
         squad=squad,
@@ -507,8 +569,8 @@ def build(
 
 def _solve_with_horizon(boot, fixtures, rates, team_ratings, next_gw, current_squad,
                        cons, blended, budget: float, rivals: int = 19,
-                       month=None, simulate: bool = True, span: int = 4,
-                       objective: str = "season"):
+                       month=None, simulate: bool = True, span: int | None = None,
+                       objective: str = "season", chips: dict[int, str] | None = None):
     """Decide this week's transfer as the first move of a multi-gameweek plan.
 
     Two things have to be true of the answer at once. It has to spend transfers at
@@ -534,6 +596,8 @@ def _solve_with_horizon(boot, fixtures, rates, team_ratings, next_gw, current_sq
     """
     if not current_squad:
         return None
+    if span is None:
+        span = HORIZON_SPAN
     try:
         from . import horizon as hzmod
 
@@ -574,7 +638,8 @@ def _solve_with_horizon(boot, fixtures, rates, team_ratings, next_gw, current_sq
             plan = hzmod.solve(tabs, set(current_squad), cons,
                                free_transfers=cons.free_transfers,
                                max_hits_per_gw=cons.max_hits, lam=lam,
-                               time_limit=60)
+                               time_limit=60,
+                               chips={g: c for g, c in (chips or {}).items() if g in tabs})
             if plan is None or next_gw not in plan.squads:
                 continue
             fifteen = plan.squads[next_gw]

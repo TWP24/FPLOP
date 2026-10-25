@@ -61,6 +61,15 @@ and a season plan spends them where they simply score most — which lands them 
 long months anyway, because that is where the points are. `./fplm.sh months` shows the
 live picture.
 
+Under the season objective a **wildcard is priced over the rest of its half**, week by
+week, against the squad you actually hold: the gap to the best squad you could build
+from here to GW19 (or GW38), less the part normal transfers would close anyway. Pricing
+it by month pulled every wildcard to the first Saturday of a month. The chips and the
+transfers are then **one decision**: the transfer planner is handed the chip calendar
+and re-solved under it — it builds a bench before a bench boost, funds a captain before
+a triple captain, and does not plan around a week a free hit covers — and the chips are
+re-priced against the squad it arrives at, until the two agree.
+
 ## Chasing differentials loses
 
 The folk theory — behind on the mean, so buy variance — is sound until you price it. An

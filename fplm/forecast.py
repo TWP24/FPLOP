@@ -203,9 +203,12 @@ def build(
             if use_horizon and not unlimited:
                 ahead = {x: tables[x] for x in gws if g <= x < g + span and x in tables}
                 if len(ahead) >= 2:
+                    # The chips planned inside the window, so it does not spend a
+                    # transfer the week before a wildcard rebuilds everything.
                     hp = hzmod.solve(ahead, set(squad), cons,
                                      free_transfers=free, max_hits_per_gw=max_hits,
-                                     time_limit=20)
+                                     time_limit=20,
+                                     chips={x: chip_at[x] for x in ahead if x in chip_at})
                     if hp is not None and g in hp.squads:
                         fifteen = hp.squads[g]
                         if all(pid in view for pid in fifteen):
@@ -297,6 +300,16 @@ def build(
             chip=chip,
             projected=projected,
         ))
+
+        if g == start and chip == "freehit":
+            # The plan's squad for a free-hit week is the one-week team. Everything
+            # after it starts from the fifteen actually held.
+            held = set(getattr(season_plan, "held", None) or ())
+            if held:
+                squad = held
+                acquired = {p: start for p in squad}
+                bank = round(float(getattr(season_plan, "budget", budget))
+                             - sum(prices.get(p, 0.0) for p in squad), 1)
 
     return plans
 

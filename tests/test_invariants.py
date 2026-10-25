@@ -893,5 +893,162 @@ class ForwardPlan(unittest.TestCase):
         self.assertEqual(by[7].free_transfers, min(5, by[6].free_transfers + 1))
 
 
+class WildcardHorizon(unittest.TestCase):
+    """A wildcard is worth the rest of its half, not the month it lands in."""
+
+    def _world(self, held_xp=2.0, first_gw=9, stop=19):
+        table = _pool(n_per_pos=(4, 10, 10, 6), price=5.0)
+        held = set(list(range(1, 3)) + list(range(5, 10)) + list(range(15, 20))
+                   + list(range(25, 28)))
+        per_gw = {}
+        for g in range(first_gw, stop + 1):
+            per_gw[g] = {pid: (held_xp if pid in held else 4.0) for pid in table}
+        window = chipmod.ChipWindow("wildcard", 1, stop)
+        months = [Month(1, "Oct", 9, 12), Month(2, "Nov", 13, 15), Month(3, "Dec", 16, 19)]
+        cons = opt.Constraints(budget=100.0, min_expected_minutes=0.0)
+        return table, held, per_gw, window, months, cons
+
+    def test_every_week_left_in_the_half_is_priced_and_split_by_month(self):
+        table, held, per_gw, window, months, cons = self._world()
+        got = chipmod.wildcard_values(held, table, per_gw, window, months, 9, cons)
+        self.assertEqual([v.month for v in got], ["Oct", "Nov", "Dec"])
+        weeks = sorted(g for v in got for g in v.by_gw)
+        self.assertEqual(weeks, list(range(9, 20)), "one price per week left in the half")
+        self.assertTrue(all(v.note.startswith("to GW19") for v in got))
+
+    def test_a_squad_already_ideal_makes_the_chip_worthless(self):
+        table, held, per_gw, window, months, cons = self._world(held_xp=6.0)
+        got = chipmod.wildcard_values(held, table, per_gw, window, months, 9, cons)
+        self.assertTrue(all(val == 0.0 for v in got for val in v.by_gw.values()))
+
+    def test_a_weak_squad_is_worth_most_rebuilt_early(self):
+        table, held, per_gw, window, months, cons = self._world(held_xp=2.0)
+        got = chipmod.wildcard_values(held, table, per_gw, window, months, 9, cons)
+        by_gw = {g: v for c in got for g, v in c.by_gw.items()}
+        self.assertGreater(by_gw[9], 0.0)
+        # Flat fixtures: every week you wait is a week of the gap you have paid for,
+        # and more banked transfers you could have used instead.
+        self.assertGreater(by_gw[9], by_gw[13])
+        self.assertGreater(by_gw[13], by_gw[18])
+        # The price is not a month's gain: November's value is not inflated or
+        # deflated by November being three weeks long.
+        nov = next(v for v in got if v.month == "Nov")
+        self.assertEqual(nov.gw, 13, "within a month the earliest week still wins")
+
+    def test_the_value_never_exceeds_the_gap_normal_transfers_cannot_close(self):
+        table, held, per_gw, window, months, cons = self._world(held_xp=2.0)
+        got = chipmod.wildcard_values(held, table, per_gw, window, months, 9, cons,
+                                      free_now=5)
+        by_gw = {g: v for c in got for g, v in c.by_gw.items()}
+        # Eleven starters to change, five banked already: a sixth of the gap is open
+        # in week one and it closes a player a week. The chip cannot be worth more
+        # than the whole gap and must be worth less with five transfers in hand.
+        got1 = chipmod.wildcard_values(held, table, per_gw, window, months, 9, cons,
+                                       free_now=1)
+        by_gw1 = {g: v for c in got1 for g, v in c.by_gw.items()}
+        self.assertLess(by_gw[9], by_gw1[9])
+
+    def test_best_xi_is_exact_on_a_known_fifteen(self):
+        players = ([_pm(1, 1, 4.5, 3.0), _pm(2, 1, 4.5, 1.0)]
+                   + [_pm(10 + i, 2, 4.5, 2.0 + i) for i in range(5)]   # 2..6
+                   + [_pm(20 + i, 3, 4.5, 3.0 + i) for i in range(5)]   # 3..7
+                   + [_pm(30 + i, 4, 4.5, 1.0 + i) for i in range(3)])  # 1..3
+        # 4-5-1: GK 3 + DEF top4 (6+5+4+3) + MID all (7+6+5+4+3) + FWD top1 (3)
+        # = 3 + 18 + 25 + 3 = 49, captain 7 -> 56. 3-5-2 gives 48 + 7 = 55.
+        self.assertAlmostEqual(chipmod.best_xi_xp(players), 56.0)
+
+
+class ChipsInTheTransferPlan(unittest.TestCase):
+    """The transfer planner has to see the chips it is planning around."""
+
+    def _world(self):
+        table = _pool(price=5.0)
+        held = set(list(range(1, 3)) + list(range(5, 10)) + list(range(15, 20))
+                   + list(range(25, 28)))
+        want = sorted(set(table) - held)
+        for pid in want:
+            table[pid].xp = 9.0           # every unowned player is far better
+        return table, held, want
+
+    def test_a_wildcard_week_rebuilds_for_free_and_keeps_the_free_transfer(self):
+        table, held, want = self._world()
+        tables = {g: table for g in (5, 6, 7)}
+        cons = opt.Constraints(budget=100.0, current_squad=held, min_expected_minutes=0.0)
+        plan = hzmod.solve(tables, held, cons, free_transfers=1, max_hits_per_gw=0,
+                           time_limit=20, chips={6: "wildcard"})
+        self.assertIsNotNone(plan)
+        self.assertGreater(len(plan.squads[6] - held), 5, "the wildcard week rebuilds")
+        self.assertEqual(plan.hits[6], 0)
+        self.assertEqual(plan.squads[7], plan.squads[6], "a wildcard squad stays")
+        self.assertEqual(plan.free[7], min(5, plan.free[6] + 1),
+                         "a wildcard does not spend the week's free transfer")
+        # And with the wildcard a week away, this week's single transfer is still
+        # taken — it pays for itself this week — but nothing is wasted on hits.
+        self.assertLessEqual(len(plan.squads[5] - held), 1)
+
+    def test_a_free_hit_week_is_handed_back(self):
+        table, held, want = self._world()
+        tables = {g: table for g in (5, 6, 7)}
+        cons = opt.Constraints(budget=100.0, current_squad=held, min_expected_minutes=0.0)
+        plan = hzmod.solve(tables, held, cons, free_transfers=0, max_hits_per_gw=0,
+                           time_limit=20, chips={6: "freehit"})
+        self.assertIsNotNone(plan)
+        self.assertGreater(len(plan.squads[6] - held), 5, "the free hit week is a new team")
+        # Week seven starts from week five again, plus at most that week's own moves
+        # (one free transfer rolled to two by the chip week).
+        self.assertLessEqual(len(plan.squads[7] - plan.squads[5]), plan.free[7])
+        self.assertEqual(plan.free[7], min(5, plan.free[6] + 1))
+
+    def test_a_bench_boost_ahead_makes_the_planner_build_the_bench_first(self):
+        import copy
+        table, held, want = self._world()
+        for pid in want:
+            table[pid].xp = 4.0
+        for pid in (2, 8, 9, 27):             # a keeper and three dead bench slots
+            table[pid].xp = 0.0
+        mid_up, def_up, fwd_up = 20, 10, 11  # a starter upgrade and two bench ones
+        table[mid_up].xp = 6.5
+        table[def_up].xp = table[fwd_up].xp = 6.0
+        tables = {g: copy.deepcopy(table) for g in (5, 6, 7)}
+        cons = opt.Constraints(budget=100.0, current_squad=held, min_expected_minutes=0.0)
+        plain = hzmod.solve(tables, held, cons, free_transfers=1, max_hits_per_gw=0,
+                            time_limit=20)
+        with_bb = hzmod.solve(tables, held, cons, free_transfers=1, max_hits_per_gw=0,
+                              time_limit=20, chips={6: "bboost"})
+        # Week to week the captain-grade midfielder is the best single move. With the
+        # bench about to be paid in full, two dead bench slots are worth more than
+        # one upgraded starter, and only one of them can be fixed the week of.
+        self.assertIn(mid_up, plain.squads[5], "the starter upgrade is the plain move")
+        self.assertTrue({def_up, fwd_up} & with_bb.squads[5],
+                        "a bench boost next week starts with the bench")
+        self.assertLessEqual({def_up, fwd_up}, with_bb.squads[6],
+                             "both dead slots are filled by the boost week")
+
+    def test_a_triple_captain_ahead_funds_the_captain_instead_of_a_steady_upgrade(self):
+        import copy
+        table, held, want = self._world()
+        for pid in want:
+            table[pid].xp = 4.0
+            table[pid].price = 5.0
+        for pid in held:
+            table[pid].price = 5.0
+        star, filler, steady = 20, 21, 22         # all midfielders
+        table[star].price, table[filler].price = 7.0, 3.0
+        table[filler].xp, table[steady].xp = 3.0, 7.0
+        tables = {g: copy.deepcopy(table) for g in (5, 6, 7)}
+        tables[6][star].xp = 9.9                   # his one big week
+        # No bank: the star needs two moves, one of them a downgrade, so with one
+        # free transfer a week he is a two-week project.
+        cons = opt.Constraints(budget=75.0, current_squad=held, min_expected_minutes=0.0)
+        plain = hzmod.solve(tables, held, cons, free_transfers=1, max_hits_per_gw=0,
+                            time_limit=20)
+        with_tc = hzmod.solve(tables, held, cons, free_transfers=1, max_hits_per_gw=0,
+                              time_limit=20, chips={6: "3xc"})
+        self.assertIn(steady, plain.squads[5], "without the chip the steady upgrade wins")
+        self.assertNotIn(star, plain.squads[6])
+        self.assertIn(star, with_tc.squads[6], "with a triple captain that week, buy him")
+        self.assertIn(filler, with_tc.squads[6], "and the downgrade that pays for him")
+
+
 if __name__ == "__main__":
     unittest.main()

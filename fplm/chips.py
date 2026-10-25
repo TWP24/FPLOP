@@ -10,6 +10,12 @@ You get eight chips and there are ten months, so you cannot contest every month.
 month and then solves the allocation, which turns "win every month" into the question
 that can actually be answered: which months do I contest, and with what.
 
+Under a season objective the wildcard is the exception: it is priced week by week over
+the rest of its half (`wildcard_values`), because a rebuilt squad goes on scoring long
+after the month it was rebuilt in. The allocation is then handed back to the transfer
+planner (`horizon.solve(chips=...)`) so this week's moves are chosen knowing what is
+coming.
+
 Chip rules taken live from the API (`bootstrap-static["chips"]`): two sets, one usable
 GW1-19 and one GW20-38, each set containing a wildcard, a free hit, a bench boost and
 a triple captain.
@@ -230,10 +236,12 @@ def free_hit_value(squad: Squad, table: dict[int, PlayerMonth], month: Month,
 
 def wildcard_value(squad: Squad, table: dict[int, PlayerMonth], month: Month,
                    cons: Constraints) -> ChipValue:
-    """Wildcard rebuilds the squad permanently, so its value is a whole month of gain.
+    """Wildcard priced against one month's table. Kept for the monthly objective.
 
-    Compared against what the current squad would score over the same month using only
-    normal transfers, which is why it is worth most before a long month.
+    `wildcard_values` is the season-objective pricing: it measures the chip over the
+    rest of its half rather than over one month, which is what a wildcard actually
+    buys. This one is worth most before a long month, which is a fact about the
+    calendar rather than about the squad.
     """
     ideal = solve(table, lam=0.0, cons=Constraints(
         budget=cons.budget, max_per_team=cons.max_per_team,
@@ -261,6 +269,123 @@ def wildcard_value(squad: Squad, table: dict[int, PlayerMonth], month: Month,
              for gw in month.events}
     return ChipValue("wildcard", month.name, month.start_event, gain,
                      f"{month.n_events} GWs", by_gw)
+
+
+# How many of the best players in each position the wildcard's ideal squad is chosen
+# from. An ideal fifteen never needs the 40th-best midfielder, and pricing the chip in
+# every week of a half means twenty or so solves, so the pool is cut to keep them fast.
+WILDCARD_POOL = {GK: 12, DEF: 40, MID: 50, FWD: 25}
+MAX_FREE = 5
+
+
+def best_xi_xp(players: list[PlayerMonth]) -> float:
+    """Best legal eleven from these players, captain counted twice, by expected points.
+
+    Exact, by enumerating the eight legal formations; cheap enough to run inside a
+    loop where a solver call is not.
+    """
+    by_pos: dict[int, list[float]] = {GK: [], DEF: [], MID: [], FWD: []}
+    for p in players:
+        if p.pos in by_pos:
+            by_pos[p.pos].append(p.xp)
+    for v in by_pos.values():
+        v.sort(reverse=True)
+    if not by_pos[GK]:
+        return 0.0
+    best = 0.0
+    for d in range(3, 6):
+        for m in range(2, 6):
+            fw = 10 - d - m
+            if not 1 <= fw <= 3:
+                continue
+            if len(by_pos[DEF]) < d or len(by_pos[MID]) < m or len(by_pos[FWD]) < fw:
+                continue
+            xi = [by_pos[GK][0]] + by_pos[DEF][:d] + by_pos[MID][:m] + by_pos[FWD][:fw]
+            best = max(best, sum(xi) + max(xi))
+    return best
+
+
+def wildcard_values(held: set[int], table: dict[int, PlayerMonth],
+                    per_gw: dict[int, dict[int, float]], window: ChipWindow,
+                    months: list[Month], first_gw: int, cons: Constraints,
+                    free_now: int = 1) -> list[ChipValue]:
+    """Price a wildcard in every week it can still be played, over the rest of its half.
+
+    A wildcard rebuilds the squad for good, so what it buys is the gap between the
+    squad you hold and the best squad you could build, counted over every gameweek
+    from the week you play it to the end of its window — not over the month it
+    happens to land in. Pricing it by month pulled every wildcard to the first
+    Saturday of a month, because a month table has nothing to say about the weeks
+    after the month ends.
+
+    Measured against the squad actually *held* rather than the squad this week's
+    plan arrives at: playing the chip is the alternative to making those transfers,
+    not something you do as well as them.
+
+    Only the part of the gap normal transfers would not have closed anyway is
+    credited. Without the chip you can still move one player a week — more if
+    transfers are banked — so the ideal eleven gets built gradually; the chip's value
+    is the points lost while that happens. `k` is the number of ideal starters you do
+    not own, `f` the free transfers you would hold by that week if you spent none,
+    and the gap in week `j` after the chip is assumed closed in proportion to the
+    moves made by then. Bench differences are not counted as moves: a cheaper bench
+    is not what the chip is for.
+
+    Returns one value per month the window overlaps, each carrying the weeks of that
+    month, so the allocator and the month table see the chip as they always have.
+    """
+    start = max(window.start_event, first_gw)
+    stop = window.stop_event
+    if start > stop or not table:
+        return []
+
+    # Cut the pool once, on the whole remaining half, keeping anyone held.
+    total = {pid: sum(per_gw.get(g, {}).get(pid, 0.0) for g in range(start, stop + 1))
+             for pid in table}
+    pool: set[int] = set(held) & set(table)
+    for want_pos, n in WILDCARD_POOL.items():
+        ranked = sorted((pid for pid in table if table[pid].pos == want_pos),
+                        key=lambda pid: -total[pid])
+        pool.update(ranked[:n])
+
+    ideal_cons = Constraints(budget=cons.budget, max_per_team=cons.max_per_team,
+                             min_expected_minutes=cons.min_expected_minutes)
+    by_gw: dict[int, float] = {}
+    note_by_gw: dict[int, str] = {}
+    for g in range(start, stop + 1):
+        n = stop - g + 1
+        horizon = {}
+        for pid in pool:
+            xp = sum(per_gw.get(x, {}).get(pid, 0.0) for x in range(g, stop + 1))
+            q = _as_single_gw(table[pid], xp)
+            q.n_fixtures = n
+            horizon[pid] = q
+        ideal = solve(horizon, lam=0.0, cons=ideal_cons)
+        if ideal is None:
+            continue
+        current = best_xi_xp([horizon[pid] for pid in held if pid in horizon])
+        gap = ideal.xp - current
+        if gap <= 0:
+            by_gw[g] = 0.0
+            continue
+        k = max(1, len({p.pid for p in ideal.xi} - set(held)))
+        f = min(MAX_FREE, max(0, free_now) + (g - first_gw))
+        reachable = sum(min(1.0, min(k, f + j) / k) for j in range(n)) / n
+        # Rounded so that two weeks worth the same to the model tie exactly, and the
+        # tie goes to the earlier week rather than to floating-point noise.
+        by_gw[g] = round(gap * (1.0 - reachable), 6)
+        note_by_gw[g] = f"to GW{stop}"
+
+    out: list[ChipValue] = []
+    for m in months:
+        mine = {g: v for g, v in by_gw.items() if m.start_event <= g <= m.stop_event}
+        if not mine:
+            continue
+        best_gw = max(mine, key=lambda g: (mine[g], -g))
+        out.append(ChipValue("wildcard", m.name, best_gw, mine[best_gw],
+                             note_by_gw.get(best_gw, ""), mine,
+                             {g: note_by_gw[g] for g in mine if g in note_by_gw}))
+    return out
 
 
 def _as_single_gw(p: PlayerMonth, xp: float) -> PlayerMonth:
