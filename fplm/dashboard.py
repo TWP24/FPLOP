@@ -851,6 +851,9 @@ def render(plan: SeasonPlan, rivals: int = 19, title: str = "FPL season plan",
     if chip_now:
         note_chip += (f'<span class="pill accent">play the '
                       f'{_esc(CHIP_LABEL.get(chip_now, chip_now))} this week</span>')
+    for c in getattr(plan, "held_chips", []) or []:
+        note_chip += (f'<span class="pill">holding the {_esc(CHIP_LABEL.get(c.chip, c.chip))}'
+                      f' &mdash; best week GW{c.gw} is only +{c.value:.0f}</span>')
     kept = getattr(plan, "kept", set())
     if kept:
         names = ", ".join(sorted(p.name for p in squad.players if p.pid in kept))

@@ -270,6 +270,17 @@ def build(
                     for p in xi}
         cap = max(xi, key=lambda p: realised[p]) if xi else None
         vice = max((p for p in xi if p != cap), key=lambda p: realised[p], default=cap)
+        if g == start and season_plan.squad.captain in xi:
+            # The deadline week shows the armband the plan actually recommends. The
+            # panel and this row once disagreed in public — Haaland above, a
+            # defender below — because the plan picks its captain on a blended
+            # view and this row on the single week.
+            cap = season_plan.squad.captain
+            vice = (season_plan.squad.vice if season_plan.squad.vice in xi
+                    and season_plan.squad.vice != cap else vice)
+            if vice == cap:
+                vice = max((p for p in xi if p != cap), key=lambda p: realised[p],
+                           default=cap)
 
         projected = sum(scored.get(p, 0.0) for p in xi)
         if cap is not None:

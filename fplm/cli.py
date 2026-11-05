@@ -5,7 +5,7 @@ import argparse
 import csv
 import sys
 
-from . import api, monthly, optimise, ratings, xp
+from . import api, chips as chipmod, monthly, optimise, ratings, xp
 
 POS_NAME = {1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}
 BOLD, DIM, RESET = "\033[1m", "\033[2m", "\033[0m"
@@ -638,6 +638,9 @@ def cmd_plan(args) -> None:
                   if m.gws_played else "")
         print(f"{m.month.name:<11}{m.n_gws}GW  xP {m.squad_xp:>6.0f}  "
               f"need {m.field_target:>6.0f}  {tag}  {DIM}{chips}{RESET}{played}")
+    for c in getattr(p, "held_chips", []) or []:
+        print(f"{DIM}holding {c.chip}: best week GW{c.gw} is worth +{c.value:.0f}, "
+              f"below the +{chipmod.CHIP_FLOOR.get(c.chip, 0):.0f} it takes to spend it{RESET}")
     print(_hr())
     print(f"{BOLD}{'TO GW38':<11}{sum(m.n_gws for m in p.months)}GW  "
           f"xP {p.season_xp:>6.0f}  need {p.season_target:>6.0f}{RESET}  "

@@ -1087,5 +1087,43 @@ class ChipWeekSelfCheck(unittest.TestCase):
         self.assertFalse(got.get("transfers within allowance", True))
 
 
+class ChipFloor(unittest.TestCase):
+    """A transfer chip worth less than its floor is held, not spent."""
+
+    def _setup(self, wc_value):
+        months = [Month(1, "Nov", 10, 12), Month(2, "Dec", 13, 19)]
+        windows = [chipmod.ChipWindow(n, 1, 19) for n in ("wildcard", "freehit", "bboost", "3xc")]
+        vals = []
+        for m in months:
+            for chip, top in (("wildcard", wc_value), ("freehit", 6.0),
+                              ("bboost", 2.0), ("3xc", 1.0)):
+                vals.append(chipmod.ChipValue(chip, m.name, m.start_event, top, "",
+                                              {g: top for g in m.events}))
+        return vals, windows, months
+
+    def test_a_cheap_wildcard_is_held_and_reported(self):
+        vals, windows, months = self._setup(2.0)
+        held = []
+        got = chipmod.allocate(vals, windows, months, first_gw=10, held=held)
+        self.assertNotIn("wildcard", {c.chip for c in got})
+        self.assertEqual([c.chip for c in held], ["wildcard"])
+        self.assertEqual(held[0].value, 2.0)
+        # The cheap chips with no hand value are still spent rather than wasted.
+        self.assertIn("bboost", {c.chip for c in got})
+        self.assertIn("3xc", {c.chip for c in got})
+        self.assertIn("freehit", {c.chip for c in got})
+
+    def test_a_wildcard_worth_two_hits_is_spent(self):
+        vals, windows, months = self._setup(8.0)
+        held = []
+        got = chipmod.allocate(vals, windows, months, first_gw=10, held=held)
+        self.assertIn("wildcard", {c.chip for c in got})
+        self.assertEqual(held, [])
+
+    def test_the_held_chip_reaches_the_plan(self):
+        boot, fixtures, p = ForwardPlan._plan(ForwardPlan(), 5, [])
+        self.assertIsInstance(p.held_chips, list)
+
+
 if __name__ == "__main__":
     unittest.main()
