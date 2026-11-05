@@ -96,6 +96,9 @@ class SeasonPlan:
     # the forward plan needs the held fifteen to come back to.
     chip_now: str | None = None
     held: set[int] = field(default_factory=set)
+    # Chips the plan is deliberately not spending yet: each is its best available
+    # week, priced, which fell short of `chips.CHIP_FLOOR`.
+    held_chips: list = field(default_factory=list)
 
     @property
     def contested(self) -> list[MonthPlan]:
@@ -428,10 +431,13 @@ def build(
                     values.extend(chipmod.wildcard_values(
                         held_now, half_tables[id(w)], per_gw, w, live_months,
                         next_gw, cons, free_now=cons.free_transfers))
+        held_chips.clear()
         return chipmod.allocate(values, live_windows, live_months,
                                 max_per_month=CHIPS_PER_MONTH[objective],
-                                real_counts=real_counts, first_gw=next_gw)
+                                real_counts=real_counts, first_gw=next_gw,
+                                held=held_chips)
 
+    held_chips: list[chipmod.ChipValue] = []
     allocation = value_and_allocate(squad)
 
     # The transfers and the chips have to be one decision. The planner above chose
@@ -555,6 +561,7 @@ def build(
         note=note,
         chip_now=chip_now,
         held=set(current_squad or ()),
+        held_chips=list(held_chips),
         generated=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         next_gw=next_gw,
         squad=squad,

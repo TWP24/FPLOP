@@ -80,6 +80,18 @@ DOUBLE_WINDOW = list(range(34, 38)) + [32]  # GW32 flagged likely; rescheduled g
 DGW_UPLIFT = {"bboost": 1.75, "3xc": 1.70, "wildcard": 1.15}
 BGW_UPLIFT = {"freehit": 2.60, "wildcard": 1.20}
 
+# The least a transfer chip has to be worth before the plan spends it. A chip held in
+# hand has value the model does not price: a wildcard answers a long injury, a
+# price collapse or a fixture swing without hits, and a free hit covers a week the
+# squad cannot field. Once the squad is close to the ideal the measured gain can fall
+# to a point or two, and spending the chip for that is a mistake — the week it did,
+# the plan rebuilt seven players for +2. Below the floor the chip is held and priced
+# again tomorrow; the day the gap opens, it is placed. Two hits for a wildcard, one
+# for a free hit; a bench boost or triple captain has no hand value to speak of,
+# and is worth more played for little than left to expire.
+HIT_COST = 4.0
+CHIP_FLOOR = {"wildcard": 2 * HIT_COST, "freehit": HIT_COST}
+
 
 def window_uplift(chip: str, gw: int, real_counts: dict[int, int] | None = None) -> float:
     """Prior multiplier on a chip's value for landing in a likely blank or double.
@@ -425,8 +437,14 @@ def allocate(
     max_per_month: int | None = None,
     real_counts: dict[int, int] | None = None,
     first_gw: int | None = None,
+    floors: dict[str, float] | None = None,
+    held: list[ChipValue] | None = None,
 ) -> list[ChipValue]:
     """Assign each available chip to the month, and the week, where it is worth most.
+
+    `floors` is the least each chip must be worth to be placed at all (default
+    `CHIP_FLOOR`); a chip whose best week falls short is held rather than spent, and
+    its best option is appended to `held` so the plan can say so.
 
     Greedy on value, respecting each chip's gameweek window, FPL's one-chip-a-week
     rule and an optional cap on how many chips one month can absorb. Greedy is optimal
@@ -451,6 +469,8 @@ def allocate(
     """
     by_key = {(v.chip, v.month): v for v in values}
     month_of = {m.name: m for m in months}
+    if floors is None:
+        floors = CHIP_FLOOR
 
     chosen: list[ChipValue] = []
     used_per_month: dict[str, int] = {}
@@ -502,6 +522,7 @@ def allocate(
         if p is not None:
             heapq.heappush(heap, (-p[0], i))
 
+    best_seen: dict[int, ChipValue] = {}
     while heap:
         _neg, i = heapq.heappop(heap)
         w, v = candidates[i]
@@ -523,9 +544,20 @@ def allocate(
             heapq.heappush(heap, (-val, i))
             continue
 
+        if val < floors.get(v.chip, 0.0) - 1e-9:
+            # Not worth spending. Remember the best week in case nothing better
+            # comes, so the plan can show what holding it is passing up.
+            if id(w) not in best_seen or best_seen[id(w)].value < val:
+                best_seen[id(w)] = v.at(gw, val)
+            continue
+
         chosen.append(v.at(gw, val))
         spent.add(id(w))
         used_gws.add(gw)
         used_per_month[v.month] = used_per_month.get(v.month, 0) + 1
 
+    if held is not None:
+        for w in chip_windows:
+            if id(w) not in spent and id(w) in best_seen:
+                held.append(best_seen[id(w)])
     return sorted(chosen, key=lambda v: (month_of[v.month].start_event, -v.value))
