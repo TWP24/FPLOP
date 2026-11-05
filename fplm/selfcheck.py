@@ -131,9 +131,18 @@ def run(boot, plan, rates, held: set[int] | None = None,
         shown = {p.pid for p in plan.squad.players}
         moves = len(shown - held)
         allowed = free_transfers + max_hits
+        # A wildcard or free hit planned for this week lifts the limit: the plan is
+        # *meant* to rebuild. Without this the first week the planner placed a chip
+        # on the coming deadline failed its own check as a seven-transfer week and
+        # the page went stale for five days.
+        chip_now = getattr(plan, "chip_now", None)
+        unlimited = chip_now in ("wildcard", "freehit")
+        if unlimited:
+            allowed = 15
         out.append(Check(
             "transfers within allowance", moves <= allowed,
-            f"{moves} transfer(s), {allowed} allowed"))
+            f"{moves} transfer(s), {allowed} allowed"
+            + (f" — {chip_now} this week" if unlimited else "")))
         # What the page tells you to do must match the squad it shows you. These are
         # produced by different code paths — the transfer comes from the plan, the
         # forward view from a separate planner — and they once disagreed in public,
@@ -144,7 +153,8 @@ def run(boot, plan, rates, held: set[int] | None = None,
             f"panel states {stated} transfer(s), squad shows {moves}"))
         out.append(Check(
             "plan built on the squad held", moves <= allowed and len(shown & held) >= 15 - allowed,
-            f"{len(shown & held)} of 15 held players retained"))
+            f"{len(shown & held)} of 15 held players retained"
+            + (f" — a {chip_now} rebuilds from them" if unlimited else "")))
 
     # --- players you said to keep must actually be kept --------------------
     # A setting that silently fails to protect a player is worse than not offering
