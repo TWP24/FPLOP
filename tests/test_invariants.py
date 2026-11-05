@@ -1050,5 +1050,42 @@ class ChipsInTheTransferPlan(unittest.TestCase):
         self.assertIn(filler, with_tc.squads[6], "and the downgrade that pays for him")
 
 
+class ChipWeekSelfCheck(unittest.TestCase):
+    """A transfer chip planned for this week must not fail the transfer-count check."""
+
+    def _plan(self, chip_now):
+        table = _pool(price=5.0)
+        held = set(list(range(1, 3)) + list(range(5, 10)) + list(range(15, 20))
+                   + list(range(25, 28)))
+        rebuilt = set(list(range(3, 5)) + list(range(10, 15)) + list(range(20, 25))
+                      + list(range(28, 31)))         # fifteen, none of them held
+        players = [table[p] for p in rebuilt]
+        sq = opt.Squad(players=players, starters=[p.pid for p in players][:11],
+                       captain=players[0].pid, vice=players[1].pid, lam=0.0, cost=75.0)
+        plan = planmod.SeasonPlan(generated="", next_gw=10, squad=sq, months=[],
+                                  tables={}, budget=75.0, bank=0.0,
+                                  moves_now=[("a", "b")] * 15, chip_now=chip_now,
+                                  held=held)
+        return plan, held
+
+    def _names(self, checks):
+        return {c.name: c.ok for c in checks}
+
+    def test_a_wildcard_week_may_change_all_fifteen(self):
+        plan, held = self._plan("wildcard")
+        checks = selfcheck.run({"elements": [], "events": []}, plan, {}, held=held,
+                               free_transfers=1, max_hits=0)
+        got = self._names(checks)
+        self.assertTrue(got.get("transfers within allowance", False))
+        self.assertTrue(got.get("plan built on the squad held", False))
+
+    def test_a_plain_week_still_may_not(self):
+        plan, held = self._plan(None)
+        checks = selfcheck.run({"elements": [], "events": []}, plan, {}, held=held,
+                               free_transfers=1, max_hits=0)
+        got = self._names(checks)
+        self.assertFalse(got.get("transfers within allowance", True))
+
+
 if __name__ == "__main__":
     unittest.main()

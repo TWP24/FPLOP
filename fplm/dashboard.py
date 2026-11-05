@@ -506,6 +506,12 @@ def _action_panel(plan, squad, rates, gwplans, deadline: str) -> str:
     if getattr(plan, "moves_now", None):
         moves = "".join(f'<span class="move"><s>{_esc(o)}</s> &rarr; '
                         f'<b>{_esc(i)}</b></span>' for o, i in plan.moves_now)
+        chip_now = getattr(plan, "chip_now", None)
+        if chip_now in ("wildcard", "freehit"):
+            # Fifteen arrows with no explanation reads as a bug. Say which chip
+            # pays for them.
+            moves = (f'<span class="chip">{_esc(CHIP_LABEL.get(chip_now, chip_now))}'
+                     f' &mdash; play it, then make these</span>' + moves)
     elif nxt and nxt.moves:
         moves = "".join(f'<span class="move"><s>{_esc(m.out_name)}</s> &rarr; '
                         f'<b>{_esc(m.in_name)}</b></span>' for m in nxt.moves)
