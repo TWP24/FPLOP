@@ -102,8 +102,8 @@
  "11": {
   "gw": 11,
   "predicted": 51.0,
-  "actual": 45,
-  "rank": 2293260,
+  "actual": 47,
+  "rank": 2264588,
   "captain": "Haaland",
   "chip": null,
   "model": "fplm",
